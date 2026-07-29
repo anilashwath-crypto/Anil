@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#3c7a2e">
-<title>Farm Monitor</title>
+<title>Smart Farm — Anil's Farm</title>
 <style>
   :root {
     color-scheme: light;
@@ -27,6 +27,7 @@
     --s1: #2a78d6;
     --s2: #eb6834;
     --s3: #1baf7a;
+    --s4: #eda100;
   }
   @media (prefers-color-scheme: dark) {
     :root:where(:not([data-theme="light"])) {
@@ -46,6 +47,7 @@
       --s1: #3987e5;
       --s2: #d95926;
       --s3: #199e70;
+      --s4: #c98500;
     }
   }
   :root[data-theme="dark"] {
@@ -65,6 +67,7 @@
     --s1: #3987e5;
     --s2: #d95926;
     --s3: #199e70;
+    --s4: #c98500;
   }
 
   * { box-sizing: border-box; }
@@ -79,7 +82,7 @@
   .app {
     max-width: 480px;
     margin: 0 auto;
-    padding: 0 14px calc(28px + env(safe-area-inset-bottom));
+    padding: 0 14px calc(84px + env(safe-area-inset-bottom));
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -90,43 +93,39 @@
     top: 0;
     z-index: 5;
     background: var(--page);
-    padding: 14px 2px 10px;
+    padding: 14px 2px 8px;
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 8px;
   }
-  .farm-name {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    margin: 0;
-  }
+  .farm-name { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
   .farm-name span { color: var(--accent); }
-  .live {
+  .live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.35; } }
+  @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+
+  .statusrow { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .statusrow::-webkit-scrollbar { display: none; }
+  .schip {
+    flex: none;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
     color: var(--ink-2);
-    white-space: nowrap;
-  }
-  .live-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--good);
-    animation: pulse 2.4s ease-in-out infinite;
-  }
-  @keyframes pulse { 50% { opacity: 0.35; } }
-  @media (prefers-reduced-motion: reduce) {
-    .live-dot { animation: none; }
-  }
-
-  .card {
     background: var(--surface);
     border: 1px solid var(--ring);
-    border-radius: 14px;
-    padding: 14px;
+    border-radius: 99px;
+    padding: 4px 10px;
+    white-space: nowrap;
   }
+  .schip i { width: 7px; height: 7px; border-radius: 50%; background: var(--good); flex: none; }
+  .schip.off i { background: var(--critical); }
+
+  .card { background: var(--surface); border: 1px solid var(--ring); border-radius: 14px; padding: 14px; }
   .card h2 {
     margin: 0 0 10px;
     font-size: 12px;
@@ -134,315 +133,477 @@
     text-transform: uppercase;
     letter-spacing: 0.07em;
     color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
   }
+  .card h2 small { font-size: 11px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted); }
+
+  /* Tabs */
+  .tab { display: none; flex-direction: column; gap: 14px; }
+  .tab.active { display: flex; }
+  nav.bottom {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: var(--surface);
+    border-top: 1px solid var(--ring);
+    display: flex;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    z-index: 10;
+  }
+  nav.bottom button {
+    flex: 1;
+    border: 0;
+    background: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 5px 2px;
+    cursor: pointer;
+    border-radius: 10px;
+  }
+  nav.bottom button svg { width: 22px; height: 22px; }
+  nav.bottom button[aria-current="true"] { color: var(--accent); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* Alerts */
   .alerts { display: flex; flex-direction: column; gap: 8px; }
+  .alerts:empty { display: none; }
   .alert {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    border-radius: 12px;
-    border: 1px solid var(--ring);
-    background: var(--surface);
-    padding: 10px 12px;
+    display: flex; align-items: flex-start; gap: 10px;
+    border-radius: 12px; border: 1px solid var(--ring);
+    background: var(--surface); padding: 10px 12px;
     border-left: 4px solid var(--warning);
   }
   .alert.critical { border-left-color: var(--critical); }
+  .alert.serious { border-left-color: var(--serious); }
   .alert svg { flex: none; margin-top: 2px; }
-  .alert-body { flex: 1; font-size: 13px; color: var(--ink); }
+  .alert-body { flex: 1; font-size: 13px; }
   .alert-body strong { display: block; font-size: 13px; }
   .alert-body span { color: var(--ink-2); font-size: 12.5px; }
-  .alert-dismiss {
-    flex: none;
-    border: 0;
-    background: none;
-    color: var(--muted);
-    font-size: 18px;
-    line-height: 1;
-    padding: 2px 4px;
-    cursor: pointer;
-    border-radius: 6px;
-  }
-  .alert-dismiss:focus-visible,
-  button:focus-visible, .seg button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+  .alert-dismiss { flex: none; border: 0; background: none; color: var(--muted); font-size: 18px; line-height: 1; padding: 2px 4px; cursor: pointer; border-radius: 6px; }
 
   /* KPI tiles */
-  .kpis {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .kpi {
-    background: var(--surface);
-    border: 1px solid var(--ring);
-    border-radius: 14px;
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    background: var(--surface); border: 1px solid var(--ring); border-radius: 14px;
+    padding: 12px 14px; display: flex; flex-direction: column; gap: 2px;
   }
-  .kpi .label {
-    font-size: 11.5px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--muted);
-  }
-  .kpi .value {
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-  }
+  .kpi .label { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .kpi .value { font-size: 25px; font-weight: 700; letter-spacing: -0.01em; }
   .kpi .value small { font-size: 14px; font-weight: 500; color: var(--ink-2); }
   .kpi .delta { font-size: 12px; color: var(--ink-2); }
   .kpi .delta.up { color: var(--good-text); }
   .kpi .delta.down { color: var(--critical); }
-  .meter {
-    margin-top: 6px;
-    height: 6px;
-    border-radius: 4px;
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-  .meter > i {
-    display: block;
-    height: 100%;
-    border-radius: 4px;
-    background: var(--s1);
-    transition: width 0.6s ease;
-  }
+  .meter { margin-top: 6px; height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+  .meter > i { display: block; height: 100%; border-radius: 4px; background: var(--s1); transition: width 0.6s ease; }
   .meter.low > i { background: var(--critical); }
 
   /* Chart */
-  .seg {
-    display: flex;
-    gap: 4px;
-    background: var(--surface-2);
-    border-radius: 10px;
-    padding: 3px;
-    margin-bottom: 10px;
-  }
+  .seg { display: flex; gap: 4px; background: var(--surface-2); border-radius: 10px; padding: 3px; margin-bottom: 10px; }
   .seg button {
-    flex: 1;
-    border: 0;
-    background: none;
-    border-radius: 8px;
-    padding: 7px 4px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--ink-2);
-    cursor: pointer;
+    flex: 1; border: 0; background: none; border-radius: 8px; padding: 7px 4px;
+    font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer;
   }
-  .seg button[aria-pressed="true"] {
-    background: var(--surface);
-    color: var(--ink);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
-  }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
   .chart-wrap { position: relative; }
   .chart-wrap svg { width: 100%; height: auto; display: block; touch-action: pan-y; }
   .tooltip {
-    position: absolute;
-    pointer-events: none;
-    background: var(--ink);
-    color: var(--page);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 5px 9px;
-    border-radius: 8px;
-    white-space: nowrap;
-    transform: translate(-50%, -130%);
-    opacity: 0;
-    transition: opacity 0.12s ease;
+    position: absolute; pointer-events: none;
+    background: var(--ink); color: var(--page);
+    font-size: 12px; font-weight: 600; padding: 5px 9px; border-radius: 8px;
+    white-space: nowrap; transform: translate(-50%, -130%);
+    opacity: 0; transition: opacity 0.12s ease;
   }
   .tooltip small { display: block; font-weight: 400; opacity: 0.75; }
   .chart-title { font-size: 13px; color: var(--ink-2); margin: 0 0 4px; }
   .chart-title b { color: var(--ink); }
 
-  /* Zones */
-  .zones { display: flex; flex-direction: column; }
-  .zone {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas: "head toggle" "bar toggle";
-    align-items: center;
-    column-gap: 12px;
-    row-gap: 6px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--ring);
-  }
-  .zone:last-child { border-bottom: 0; padding-bottom: 2px; }
+  /* Rows (zones, animals, tasks) */
+  .rows { display: flex; flex-direction: column; }
+  .row { padding: 11px 0; border-bottom: 1px solid var(--ring); }
+  .row:last-child { border-bottom: 0; padding-bottom: 2px; }
+  .zone { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "head toggle" "bar toggle" "meta toggle"; align-items: center; column-gap: 12px; row-gap: 5px; }
   .zone-head { grid-area: head; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
   .zone-head strong { font-size: 14px; }
   .zone-head .crop { font-size: 12px; color: var(--muted); }
-  .chip {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 99px;
-    background: var(--surface-2);
-    color: var(--accent);
-  }
+  .chip { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--accent); }
+  .chip.warn { color: var(--ink); background: color-mix(in srgb, var(--warning) 25%, var(--surface-2)); }
   .zone-bar { grid-area: bar; display: flex; align-items: center; gap: 8px; }
   .zone-bar .meter { flex: 1; margin: 0; }
-  .zone-bar .pct {
-    font-size: 12px;
-    color: var(--ink-2);
-    min-width: 34px;
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-  }
+  .zone-bar .pct { font-size: 12px; color: var(--ink-2); min-width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+  .zone-meta { grid-area: meta; font-size: 11.5px; color: var(--muted); }
   .switch {
-    grid-area: toggle;
-    position: relative;
-    width: 46px; height: 28px;
-    border-radius: 99px;
-    border: 1px solid var(--ring);
-    background: var(--surface-2);
-    cursor: pointer;
-    transition: background 0.2s ease;
-    flex: none;
+    grid-area: toggle; position: relative;
+    width: 46px; height: 28px; border-radius: 99px;
+    border: 1px solid var(--ring); background: var(--surface-2);
+    cursor: pointer; transition: background 0.2s ease; flex: none;
   }
   .switch::after {
-    content: "";
-    position: absolute;
-    top: 3px; left: 3px;
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: var(--surface);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,0.25);
     transition: transform 0.2s ease;
   }
   .switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
   .switch[aria-checked="true"]::after { transform: translateX(18px); }
 
-  /* Weather */
-  .forecast {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-    text-align: center;
+  /* Pump / stat lists */
+  .statlist { display: flex; flex-direction: column; }
+  .stat { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--ring); font-size: 13.5px; }
+  .stat:last-child { border-bottom: 0; padding-bottom: 2px; }
+  .stat .k { color: var(--ink-2); }
+  .stat .v { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+  .stat .v small { font-weight: 500; color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: var(--surface-2); }
+  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .pill.on { color: var(--good-text); } .pill.on i { background: var(--good); }
+  .pill.alert-p { color: var(--critical); } .pill.alert-p i { background: var(--critical); }
+
+  /* Animals */
+  .animal { display: flex; align-items: center; gap: 10px; }
+  .animal .avatar {
+    flex: none; width: 36px; height: 36px; border-radius: 10px;
+    background: var(--surface-2); display: grid; place-items: center;
+    font-size: 12px; font-weight: 700; color: var(--accent);
   }
+  .animal .info { flex: 1; min-width: 0; }
+  .animal .info b { font-size: 13.5px; display: block; }
+  .animal .info span { font-size: 12px; color: var(--ink-2); display: block; }
+  .badge { flex: none; display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; }
+  .badge svg { flex: none; }
+  .badge.heat { background: color-mix(in srgb, var(--serious) 22%, var(--surface)); color: var(--ink); }
+  .badge.watch { background: color-mix(in srgb, var(--warning) 25%, var(--surface)); color: var(--ink); }
+  .badge.ok { background: var(--surface-2); color: var(--good-text); }
+  .herd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 4px; }
+  .herd .h {
+    background: var(--surface-2); border-radius: 12px; padding: 10px;
+    display: flex; flex-direction: column; gap: 1px; text-align: center;
+  }
+  .herd .h b { font-size: 19px; }
+  .herd .h span { font-size: 11px; color: var(--ink-2); }
+
+  /* Tasks */
+  .task { display: flex; align-items: flex-start; gap: 10px; }
+  .task button.check {
+    flex: none; width: 24px; height: 24px; margin-top: 1px;
+    border-radius: 8px; border: 1.5px solid var(--baseline);
+    background: var(--surface); cursor: pointer;
+    display: grid; place-items: center; color: transparent;
+  }
+  .task.done button.check { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .task .t { flex: 1; font-size: 13.5px; }
+  .task .t span { display: block; font-size: 12px; color: var(--muted); }
+  .task.done .t { text-decoration: line-through; color: var(--muted); }
+
+  /* Cameras */
+  .cams { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cam { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 12.5px; }
+  .cam b { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  .cam b i { width: 7px; height: 7px; border-radius: 50%; background: var(--good); }
+  .cam.off b i { background: var(--critical); }
+  .cam span { color: var(--muted); font-size: 11.5px; display: block; margin-top: 2px; }
+
+  /* Ledger */
+  .ledger .stat .v.pos { color: var(--good-text); }
+  .ledger .stat .v.neg { color: var(--critical); }
+
+  /* Forecast */
+  .forecast { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; text-align: center; }
   .day { display: flex; flex-direction: column; gap: 3px; align-items: center; font-size: 12px; }
   .day .dow { color: var(--muted); font-weight: 600; }
   .day svg { width: 26px; height: 26px; }
   .day .hi { font-weight: 700; }
   .day .lo { color: var(--muted); }
   .day .rain { font-size: 11px; color: var(--s1); font-weight: 600; }
+  .spray { margin-top: 10px; font-size: 12.5px; color: var(--ink-2); background: var(--surface-2); border-radius: 10px; padding: 8px 11px; }
+  .spray b { color: var(--ink); }
 
   /* Insights */
   .insights { display: flex; flex-direction: column; gap: 10px; }
-  .insight {
-    display: flex;
-    gap: 10px;
-    background: var(--surface-2);
-    border-radius: 12px;
-    padding: 10px 12px;
-    font-size: 13px;
-  }
+  .insight { display: flex; gap: 10px; background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 13px; }
   .insight svg { flex: none; margin-top: 1px; }
   .insight b { display: block; }
   .insight span { color: var(--ink-2); font-size: 12.5px; }
 
-  footer.note {
-    font-size: 12px;
-    color: var(--muted);
-    text-align: center;
-    padding: 4px 20px 0;
-  }
+  footer.note { font-size: 12px; color: var(--muted); text-align: center; padding: 4px 20px 0; }
 </style>
 </head>
 <body>
 
 <div class="app">
   <header class="topbar">
-    <h1 class="farm-name">Anil's <span>Farm</span></h1>
+    <h1 class="farm-name">Anil's <span>Smart Farm</span></h1>
     <span class="live"><span class="live-dot" aria-hidden="true"></span>Live · <span id="clock">--:--</span></span>
   </header>
 
-  <section class="alerts" id="alerts" aria-live="polite"></section>
+  <div class="statusrow" aria-label="System status">
+    <span class="schip"><i></i>Gateway online</span>
+    <span class="schip"><i></i>LoRa 9/9 sensors</span>
+    <span class="schip"><i></i>4G Jio · 2 bars</span>
+    <span class="schip"><i></i>SMS fallback ready</span>
+    <span class="schip"><i></i>Solar <span id="chip-batt">--</span>%</span>
+  </div>
 
-  <section class="kpis" aria-label="Current readings">
-    <div class="kpi">
-      <span class="label">Soil moisture</span>
-      <span class="value"><span id="kpi-moisture">--</span><small>%</small></span>
-      <span class="delta" id="kpi-moisture-d"></span>
+  <!-- ============ OVERVIEW ============ -->
+  <section class="tab active" id="tab-home">
+    <div class="alerts" id="alerts" aria-live="polite"></div>
+
+    <div class="kpis" aria-label="Current readings">
+      <div class="kpi">
+        <span class="label">Soil moisture</span>
+        <span class="value"><span id="kpi-moisture">--</span><small>%</small></span>
+        <span class="delta" id="kpi-moisture-d"></span>
+      </div>
+      <div class="kpi">
+        <span class="label">Air temp</span>
+        <span class="value"><span id="kpi-temp">--</span><small>°C</small></span>
+        <span class="delta" id="kpi-temp-d"></span>
+      </div>
+      <div class="kpi">
+        <span class="label">Wind</span>
+        <span class="value"><span id="kpi-wind">--</span><small>km/h</small></span>
+        <span class="delta" id="kpi-wind-d"></span>
+      </div>
+      <div class="kpi">
+        <span class="label">Soil pH</span>
+        <span class="value"><span id="kpi-ph">--</span></span>
+        <span class="delta" id="kpi-ph-d">target 6.0–7.5</span>
+      </div>
+      <div class="kpi">
+        <span class="label">Milk today</span>
+        <span class="value"><span id="kpi-milk">--</span><small>L</small></span>
+        <span class="delta" id="kpi-milk-d"></span>
+      </div>
+      <div class="kpi">
+        <span class="label">Water tank</span>
+        <span class="value"><span id="kpi-tank">--</span><small>%</small></span>
+        <div class="meter" id="tank-meter"><i style="width:0%"></i></div>
+      </div>
     </div>
-    <div class="kpi">
-      <span class="label">Air temp</span>
-      <span class="value"><span id="kpi-temp">--</span><small>°C</small></span>
-      <span class="delta" id="kpi-temp-d"></span>
+
+    <div class="card">
+      <h2>Last 24 hours <small>weather station + field probes</small></h2>
+      <div class="seg" role="group" aria-label="Chart metric">
+        <button type="button" data-metric="moisture" aria-pressed="true">Moisture</button>
+        <button type="button" data-metric="temp" aria-pressed="false">Temp</button>
+        <button type="button" data-metric="humidity" aria-pressed="false">Humidity</button>
+        <button type="button" data-metric="wind" aria-pressed="false">Wind</button>
+      </div>
+      <p class="chart-title" id="chart-title"></p>
+      <div class="chart-wrap">
+        <svg id="chart" viewBox="0 0 360 190" role="img" aria-label="24 hour sensor history"></svg>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
     </div>
-    <div class="kpi">
-      <span class="label">Humidity</span>
-      <span class="value"><span id="kpi-hum">--</span><small>%</small></span>
-      <span class="delta" id="kpi-hum-d"></span>
+
+    <div class="card">
+      <h2>5-day forecast</h2>
+      <div class="forecast" id="forecast"></div>
+      <div class="spray" id="spray"></div>
     </div>
-    <div class="kpi">
-      <span class="label">Water tank</span>
-      <span class="value"><span id="kpi-tank">--</span><small>%</small></span>
-      <div class="meter" id="tank-meter"><i style="width:0%"></i></div>
+
+    <div class="card">
+      <h2>AI insights</h2>
+      <div class="insights" id="insights"></div>
     </div>
   </section>
 
-  <section class="card">
-    <h2>Last 24 hours</h2>
-    <div class="seg" role="group" aria-label="Chart metric">
-      <button type="button" data-metric="moisture" aria-pressed="true">Moisture</button>
-      <button type="button" data-metric="temp" aria-pressed="false">Temp</button>
-      <button type="button" data-metric="humidity" aria-pressed="false">Humidity</button>
+  <!-- ============ WATER ============ -->
+  <section class="tab" id="tab-water">
+    <div class="card">
+      <h2>Pump &amp; borewell <small>GSM starter</small></h2>
+      <div class="statlist">
+        <div class="stat"><span class="k">Pump</span><span class="v" id="pump-state"></span></div>
+        <div class="stat"><span class="k">Flow rate</span><span class="v"><span id="pump-flow">0</span> <small>L/min</small></span></div>
+        <div class="stat"><span class="k">Borewell water level</span><span class="v"><span id="borewell">--</span> <small>m depth</small></span></div>
+        <div class="stat"><span class="k">Energy today</span><span class="v"><span id="pump-kwh">--</span> <small>kWh</small></span></div>
+        <div class="stat"><span class="k">Dry-run / phase protection</span><span class="v"><span class="pill on"><i></i>Armed</span></span></div>
+      </div>
     </div>
-    <p class="chart-title" id="chart-title"></p>
-    <div class="chart-wrap">
-      <svg id="chart" viewBox="0 0 360 190" role="img" aria-label="24 hour sensor history"></svg>
-      <div class="tooltip" id="tooltip"></div>
+
+    <div class="card">
+      <h2>Irrigation zones <small>valves via edge gateway</small></h2>
+      <div class="rows" id="zones"></div>
+    </div>
+
+    <div class="card">
+      <h2>Soil health <small>IoT field stations</small></h2>
+      <div class="rows" id="soil"></div>
+    </div>
+
+    <div class="card">
+      <h2>Fertigation <small>jeevamrutha · 15-day cycle</small></h2>
+      <div class="statlist">
+        <div class="stat"><span class="k">Venturi diffuser</span><span class="v" id="diffuser-state"></span></div>
+        <div class="stat"><span class="k">Injection rate</span><span class="v"><span id="diffuser-rate">0</span> <small>L/h</small></span></div>
+        <div class="stat"><span class="k">Line pressure</span><span class="v"><span id="line-pressure">--</span> <small>bar</small></span></div>
+        <div class="stat"><span class="k">Diffuser dosing valve</span>
+          <span class="v"><button class="switch" id="diffuser-switch" role="switch" aria-checked="false" aria-label="Diffuser dosing valve"></button></span></div>
+        <div class="stat"><span class="k">Jeevamrutha batch</span><span class="v">Day 5 of 7 <small>fermenting</small></span></div>
+        <div class="stat"><span class="k">Next cycle — Zone 1 &amp; 2</span><span class="v">Thu <small>200 L/acre</small></span></div>
+        <div class="stat"><span class="k">Next cycle — Orchard</span><span class="v">In 6 days</span></div>
+        <div class="stat"><span class="k">Filter back-flush</span><span class="v"><span class="pill on"><i></i>Clean</span></span></div>
+      </div>
     </div>
   </section>
 
-  <section class="card">
-    <h2>Irrigation zones</h2>
-    <div class="zones" id="zones"></div>
+  <!-- ============ LIVESTOCK ============ -->
+  <section class="tab" id="tab-stock">
+    <div class="card">
+      <h2>Herd</h2>
+      <div class="herd">
+        <div class="h"><b>8</b><span>Gir cows</span></div>
+        <div class="h"><b>26</b><span>Boer goats</span></div>
+        <div class="h"><b>200</b><span>Giriraja birds</span></div>
+      </div>
+      <div class="statlist">
+        <div class="stat"><span class="k">Eggs collected today</span><span class="v" id="eggs">--</span></div>
+        <div class="stat"><span class="k">Kidding due this week</span><span class="v">2 does</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Collar alerts <small>heat · rumination · health</small></h2>
+      <div class="rows" id="animals"></div>
+    </div>
+
+    <div class="card">
+      <h2>Milk — last 7 days <small>A2 · ₹60/L farm-gate</small></h2>
+      <p class="chart-title" id="milk-title"></p>
+      <div class="chart-wrap">
+        <svg id="milk-chart" viewBox="0 0 360 150" role="img" aria-label="Daily milk yield, last 7 days"></svg>
+        <div class="tooltip" id="milk-tooltip"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Shed climate</h2>
+      <div class="statlist">
+        <div class="stat"><span class="k">Temperature</span><span class="v"><span id="shed-temp">--</span> <small>°C</small></span></div>
+        <div class="stat"><span class="k">Humidity</span><span class="v"><span id="shed-rh">--</span> <small>%</small></span></div>
+        <div class="stat"><span class="k">Fan / fogger (auto ≥ 30 °C)</span><span class="v" id="fogger"></span></div>
+      </div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>5-day forecast</h2>
-    <div class="forecast" id="forecast"></div>
+  <!-- ============ FARM OPS ============ -->
+  <section class="tab" id="tab-ops">
+    <div class="card">
+      <h2>Today's tasks <small>worker board</small></h2>
+      <div class="rows" id="tasks"></div>
+    </div>
+
+    <div class="card">
+      <h2>Power</h2>
+      <div class="statlist">
+        <div class="stat"><span class="k">Grid supply</span><span class="v" id="grid-state"></span></div>
+        <div class="stat"><span class="k">Control-system battery</span><span class="v"><span id="batt">--</span> <small>% · solar</small></span></div>
+        <div class="stat"><span class="k">Pump energy this month</span><span class="v">148 <small>kWh</small></span></div>
+        <div class="stat"><span class="k">Diesel this month</span><span class="v">0 <small>L</small></span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Cameras <small>local NVR</small></h2>
+      <div class="cams" id="cams"></div>
+    </div>
+
+    <div class="card ledger">
+      <h2>July P&amp;L <small>digital ledger</small></h2>
+      <div class="statlist">
+        <div class="stat"><span class="k">Crops &amp; vegetables</span><span class="v pos">+₹42,300</span></div>
+        <div class="stat"><span class="k">Orchard</span><span class="v pos">+₹18,750</span></div>
+        <div class="stat"><span class="k">Dairy (A2 milk)</span><span class="v pos">+₹56,900</span></div>
+        <div class="stat"><span class="k">Goats &amp; poultry</span><span class="v pos">+₹21,400</span></div>
+        <div class="stat"><span class="k">Wages &amp; power</span><span class="v neg">−₹38,200</span></div>
+        <div class="stat"><span class="k">Net (month to date)</span><span class="v pos">+₹1,01,150</span></div>
+      </div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>AI insights</h2>
-    <div class="insights" id="insights"></div>
-  </section>
-
-  <footer class="note">Simulated sensor feed for preview — connect your field gateway API to go live.</footer>
+  <footer class="note">Simulated feed for preview — the edge gateway API plugs in here. Offline-first: schedules keep running locally if this page can't reach the farm.</footer>
 </div>
+
+<nav class="bottom" aria-label="Sections">
+  <button type="button" data-tab="home" aria-current="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/></svg>
+    Overview
+  </button>
+  <button type="button" data-tab="water" aria-current="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z"/></svg>
+    Water
+  </button>
+  <button type="button" data-tab="stock" aria-current="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8c-1.5 0-2.5-1.2-2.5-3M19 8c1.5 0 2.5-1.2 2.5-3"/><path d="M7 7.5h10l1.5 5.5-2 6.5h-9L5.5 13 7 7.5Z"/><circle cx="9.5" cy="13" r="0.8" fill="currentColor" stroke="none"/><circle cx="14.5" cy="13" r="0.8" fill="currentColor" stroke="none"/><path d="M10.5 16.5c.9.7 2.1.7 3 0"/></svg>
+    Livestock
+  </button>
+  <button type="button" data-tab="ops" aria-current="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 4.5V3h6v1.5M8.5 9.5h7M8.5 13h7M8.5 16.5h4"/></svg>
+    Farm ops
+  </button>
+</nav>
 
 <script>
 (function () {
   "use strict";
 
-  /* ---------- simulated data ---------- */
+  /* ---------- simulated data (replace with edge-gateway API) ---------- */
   var POINTS = 49; // 24h at 30-min intervals
   var state = {
     metric: "moisture",
-    series: { moisture: [], temp: [], humidity: [] },
+    series: { moisture: [], temp: [], humidity: [], wind: [] },
+    soil: [
+      { name: "Station A — crop block", ph: 6.8, ec: 0.44, stemp: 24.2 },
+      { name: "Station B — orchard", ph: 7.2, ec: 0.38, stemp: 23.6 }
+    ],
+    diffuser: { on: false, pressure: 1.2 },
     tank: 68,
     dismissed: {},
     zones: [
-      { id: "z1", name: "Zone 1", crop: "Tomatoes", moisture: 46, valve: false },
-      { id: "z2", name: "Zone 2", crop: "Peppers", moisture: 41, valve: false },
-      { id: "z3", name: "Zone 3", crop: "Leafy greens", moisture: 27, valve: false },
-      { id: "z4", name: "Zone 4", crop: "Maize", moisture: 52, valve: false }
+      { id: "z1", name: "Zone 1", crop: "Tomato — flowering", trigger: 28, moisture: 33, valve: false },
+      { id: "z2", name: "Zone 2", crop: "Beans & chilli", trigger: 26, moisture: 38, valve: false },
+      { id: "z3", name: "Zone 3", crop: "Leafy greens", trigger: 30, moisture: 25, valve: false },
+      { id: "z4", name: "Zone 4", crop: "Napier fodder", trigger: 22, moisture: 41, valve: false },
+      { id: "z5", name: "Zone 5", crop: "Orchard — mango", trigger: 20, moisture: 34, valve: false },
+      { id: "z6", name: "Zone 6", crop: "Orchard — sapota", trigger: 20, moisture: 31, valve: false }
+    ],
+    pump: { kwh: 4.2, borewell: 42.6, flow: 0 },
+    solar: { batt: 86, grid: true },
+    shed: { temp: 29.2, rh: 72 },
+    milk: [61, 64, 62, 66, 63, 65, 58], // last value = today so far
+    eggs: 142,
+    animals: [
+      { name: "Ganga", tag: "GIR-03", note: "Standing heat detected 04:20 — inseminate before 16:00 (sexed semen booked)", status: "heat" },
+      { name: "Kaveri", tag: "GIR-07", note: "Rumination down 18% since yesterday — watch feed intake", status: "watch" },
+      { name: "Tunga", tag: "GIR-01", note: "305-day yield on track · 8.1 L/day avg", status: "ok" },
+      { name: "Boer B-2", tag: "BUCK-2", note: "Stud service booked Sat — Hoskote farm", status: "ok" }
+    ],
+    tasks: [
+      { id: "t1", who: "Manju", task: "Open mulch around Zone 1 tomato drippers", done: false },
+      { id: "t2", who: "Shivamma", task: "Stir jeevamrutha barrel · photo when done", done: true },
+      { id: "t3", who: "Manju", task: "Refill neemastra sprayer for evening window", done: false },
+      { id: "t4", who: "Ravi", task: "Weigh-band the March Boer kids", done: false }
+    ],
+    cams: [
+      { name: "Gate", ev: "Vehicle 06:12", on: true },
+      { name: "Pump house", ev: "Person 05:48 (Manju)", on: true },
+      { name: "Cattle shed", ev: "Motion 04:22", on: true },
+      { name: "Store", ev: "No events tonight", on: true }
     ]
   };
 
   var METRICS = {
-    moisture: { label: "Soil moisture", unit: "%", color: "--s1", min: 15, max: 65 },
+    moisture: { label: "Soil moisture (field avg)", unit: "%", color: "--s1", min: 15, max: 65 },
     temp:     { label: "Air temperature", unit: "°C", color: "--s2", min: 12, max: 40 },
-    humidity: { label: "Relative humidity", unit: "%", color: "--s3", min: 30, max: 95 }
+    humidity: { label: "Relative humidity", unit: "%", color: "--s3", min: 30, max: 95 },
+    wind:     { label: "Wind speed", unit: " km/h", color: "--s4", min: 0, max: 32 }
   };
 
   function seedSeries() {
@@ -450,10 +611,11 @@
     for (var i = 0; i < POINTS; i++) {
       var t = now - (POINTS - 1 - i) * 30 * 60 * 1000;
       var hour = new Date(t).getHours() + new Date(t).getMinutes() / 60;
-      var sun = Math.sin(((hour - 6) / 24) * Math.PI * 2); // day/night cycle
-      state.series.moisture.push({ t: t, v: clamp(44 - sun * 6 + noise(2.2), 10, 70) });
-      state.series.temp.push({ t: t, v: clamp(24 + sun * 7 + noise(1.2), 5, 45) });
-      state.series.humidity.push({ t: t, v: clamp(62 - sun * 14 + noise(3), 20, 98) });
+      var sun = Math.sin(((hour - 6) / 24) * Math.PI * 2);
+      state.series.moisture.push({ t: t, v: clamp(40 - sun * 6 + noise(2.2), 10, 70) });
+      state.series.temp.push({ t: t, v: clamp(25 + sun * 6 + noise(1.2), 5, 45) });
+      state.series.humidity.push({ t: t, v: clamp(64 - sun * 14 + noise(3), 20, 98) });
+      state.series.wind.push({ t: t, v: clamp(8 + sun * 5 + noise(2.5), 0, 32) });
     }
   }
   function noise(a) { return (Math.random() - 0.5) * 2 * a; }
@@ -467,13 +629,30 @@
     var irrigating = state.zones.some(function (z) { return z.valve; });
 
     push("moisture", clamp(last(state.series.moisture).v + (irrigating ? 0.9 : -0.15) + noise(0.5), 10, 70), t);
-    push("temp", clamp(24 + sun * 7 + noise(0.8), 5, 45), t);
-    push("humidity", clamp(62 - sun * 14 + noise(1.5), 20, 98), t);
+    push("temp", clamp(25 + sun * 6 + noise(0.8), 5, 45), t);
+    push("humidity", clamp(64 - sun * 14 + noise(1.5), 20, 98), t);
+    push("wind", clamp(last(state.series.wind).v + noise(1.4) + (8 + sun * 5 - last(state.series.wind).v) * 0.08, 0, 32), t);
+
+    state.soil.forEach(function (s) {
+      s.ph = clamp(s.ph + noise(0.015) + (state.diffuser.on ? -0.01 : 0), 5.4, 8.2);
+      s.ec = clamp(s.ec + noise(0.008) + (state.diffuser.on ? 0.01 : -0.002), 0.1, 1.5);
+      s.stemp = clamp(s.stemp + noise(0.1), 15, 32);
+    });
+    state.diffuser.pressure = clamp(1.2 + (irrigating ? 0.25 : 0) + noise(0.05), 0.8, 2.0);
 
     state.zones.forEach(function (z) {
       z.moisture = clamp(z.moisture + (z.valve ? 1.4 : -0.12) + noise(0.25), 5, 90);
     });
-    if (irrigating) state.tank = clamp(state.tank - 0.35, 0, 100);
+    if (irrigating) {
+      state.tank = clamp(state.tank - 0.35, 0, 100);
+      state.pump.flow = clamp(112 + noise(6), 0, 140);
+      state.pump.kwh += 0.005;
+    } else {
+      state.pump.flow = 0;
+    }
+    state.shed.temp = clamp(state.shed.temp + noise(0.15) + (sun > 0.3 ? 0.05 : -0.04), 22, 36);
+    state.shed.rh = clamp(state.shed.rh + noise(0.4), 40, 95);
+    state.milk[state.milk.length - 1] = clamp(state.milk[state.milk.length - 1] + (Math.random() < 0.12 ? 0.4 : 0), 0, 80);
 
     render();
   }
@@ -482,27 +661,43 @@
     if (state.series[key].length > POINTS) state.series[key].shift();
   }
 
-  /* ---------- rendering ---------- */
-  function css(name) {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  }
+  /* ---------- helpers ---------- */
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
   function fmtTime(t) {
     var d = new Date(t);
     return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
   }
+  var warnIcon = function (color) {
+    return '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 15 14H1L8 1.5Z" fill="' + color +
+      '"/><rect x="7.3" y="6" width="1.4" height="4" rx="0.7" fill="var(--surface)"/><circle cx="8" cy="11.8" r="0.9" fill="var(--surface)"/></svg>';
+  };
 
+  /* ---------- overview ---------- */
   function renderKpis() {
     setKpi("kpi-moisture", "kpi-moisture-d", state.series.moisture, 0);
     setKpi("kpi-temp", "kpi-temp-d", state.series.temp, 1);
-    setKpi("kpi-hum", "kpi-hum-d", state.series.humidity, 0);
+    setKpi("kpi-wind", "kpi-wind-d", state.series.wind, 0);
+    var avgPh = (state.soil[0].ph + state.soil[1].ph) / 2;
+    document.getElementById("kpi-ph").textContent = avgPh.toFixed(1);
+    var phEl = document.getElementById("kpi-ph-d");
+    var phOk = avgPh >= 6.0 && avgPh <= 7.5;
+    phEl.textContent = phOk ? "in range 6.0–7.5" : "outside 6.0–7.5";
+    phEl.className = "delta " + (phOk ? "up" : "down");
+    document.getElementById("kpi-milk").textContent = state.milk[state.milk.length - 1].toFixed(0);
+    var y = state.milk[state.milk.length - 2];
+    var md = state.milk[state.milk.length - 1] - y;
+    var mdEl = document.getElementById("kpi-milk-d");
+    mdEl.textContent = (md >= 0 ? "▲ " : "▼ ") + Math.abs(md).toFixed(0) + " L vs yesterday";
+    mdEl.className = "delta " + (md >= 0 ? "up" : "down");
     document.getElementById("kpi-tank").textContent = Math.round(state.tank);
     var meter = document.getElementById("tank-meter");
     meter.classList.toggle("low", state.tank < 20);
     meter.firstElementChild.style.width = state.tank + "%";
+    document.getElementById("chip-batt").textContent = Math.round(state.solar.batt);
   }
   function setKpi(valId, dId, series, dp) {
     var cur = last(series).v;
-    var ago = series[Math.max(0, series.length - 7)].v; // ~3h back
+    var ago = series[Math.max(0, series.length - 7)].v;
     var d = cur - ago;
     document.getElementById(valId).textContent = cur.toFixed(dp);
     var el = document.getElementById(dId);
@@ -589,32 +784,20 @@
     document.getElementById("tooltip").style.opacity = "0";
   }
 
-  function renderZones() {
-    var host = document.getElementById("zones");
-    host.innerHTML = state.zones.map(function (z) {
-      var low = z.moisture < 30;
-      return '<div class="zone">' +
-        '<div class="zone-head"><strong>' + z.name + "</strong>" +
-          '<span class="crop">' + z.crop + "</span>" +
-          (z.valve ? '<span class="chip">Irrigating</span>' : "") +
-        "</div>" +
-        '<div class="zone-bar">' +
-          '<div class="meter' + (low ? " low" : "") + '"><i style="width:' + Math.round(z.moisture) + '%"></i></div>' +
-          '<span class="pct">' + Math.round(z.moisture) + "%</span>" +
-        "</div>" +
-        '<button class="switch" role="switch" aria-checked="' + z.valve + '" aria-label="' +
-          z.name + ' irrigation valve" data-zone="' + z.id + '"></button>' +
-      "</div>";
-    }).join("");
-  }
-
   function renderAlerts() {
     var items = [];
+    state.animals.forEach(function (a) {
+      if (a.status === "heat") {
+        items.push({ id: "heat-" + a.tag, level: "serious",
+          title: a.name + " (" + a.tag + ") — standing heat",
+          body: "Detected 04:20 by collar. Best AI window closes ~16:00. Sexed semen straw reserved." });
+      }
+    });
     state.zones.forEach(function (z) {
-      if (z.moisture < 30 && !z.valve) {
+      if (z.moisture < z.trigger && !z.valve) {
         items.push({ id: "low-" + z.id, level: "warning",
-          title: z.name + " soil moisture low (" + Math.round(z.moisture) + "%)",
-          body: "Below the 30% threshold for " + z.crop.toLowerCase() + ". Consider opening the valve." });
+          title: z.name + " below trigger (" + Math.round(z.moisture) + "% < " + z.trigger + "%)",
+          body: z.crop + ". Scheduler will irrigate at 18:30 unless you start it now." });
       }
     });
     if (state.tank < 20) {
@@ -622,12 +805,28 @@
         title: "Water tank low (" + Math.round(state.tank) + "%)",
         body: "Refill soon — active irrigation will drain the remainder quickly." });
     }
+    state.soil.forEach(function (s, i) {
+      if (s.ph < 6.0 || s.ph > 7.5) {
+        items.push({ id: "ph-" + i, level: "warning",
+          title: s.name + " — pH " + s.ph.toFixed(1) + " out of range",
+          body: (s.ph > 7.5 ? "Trending alkaline — schedule an extra jeevamrutha + mulch round; recheck after Thursday's fertigation."
+                            : "Trending acidic — hold fertigation on this block and recheck; consider ghanjeevamrutha basal dose.") });
+      }
+    });
+    if (last(state.series.wind).v > 18) {
+      items.push({ id: "wind", level: "warning",
+        title: "High wind (" + Math.round(last(state.series.wind).v) + " km/h)",
+        body: "Hold neemastra/drone spraying until wind drops below 12 km/h — drift wastes the batch." });
+    }
+    if (state.shed.temp >= 30) {
+      items.push({ id: "shed", level: "warning",
+        title: "Shed heat stress (" + state.shed.temp.toFixed(1) + " °C)",
+        body: "Fans and foggers switched on automatically. Check water troughs." });
+    }
     var host = document.getElementById("alerts");
     host.innerHTML = items.filter(function (a) { return !state.dismissed[a.id]; }).map(function (a) {
-      var color = a.level === "critical" ? css("--critical") : css("--warning");
-      return '<div class="alert ' + a.level + '">' +
-        '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 15 14H1L8 1.5Z" fill="' +
-          color + '"/><rect x="7.3" y="6" width="1.4" height="4" rx="0.7" fill="var(--surface)"/><circle cx="8" cy="11.8" r="0.9" fill="var(--surface)"/></svg>' +
+      var color = a.level === "critical" ? css("--critical") : a.level === "serious" ? css("--serious") : css("--warning");
+      return '<div class="alert ' + a.level + '">' + warnIcon(color) +
         '<div class="alert-body"><strong>' + a.title + "</strong><span>" + a.body + "</span></div>" +
         '<button class="alert-dismiss" data-dismiss="' + a.id + '" aria-label="Dismiss alert">×</button>' +
       "</div>";
@@ -636,11 +835,11 @@
 
   function renderForecast() {
     var days = [
-      { dow: "Wed", icon: "sun", hi: 31, lo: 21, rain: 0 },
-      { dow: "Thu", icon: "sun", hi: 33, lo: 22, rain: 0 },
-      { dow: "Fri", icon: "cloud", hi: 29, lo: 21, rain: 20 },
-      { dow: "Sat", icon: "rain", hi: 26, lo: 20, rain: 70 },
-      { dow: "Sun", icon: "rain", hi: 25, lo: 19, rain: 55 }
+      { dow: "Wed", icon: "sun", hi: 30, lo: 20, rain: 0 },
+      { dow: "Thu", icon: "sun", hi: 31, lo: 21, rain: 10 },
+      { dow: "Fri", icon: "cloud", hi: 28, lo: 20, rain: 25 },
+      { dow: "Sat", icon: "rain", hi: 26, lo: 19, rain: 70 },
+      { dow: "Sun", icon: "rain", hi: 25, lo: 19, rain: 60 }
     ];
     var icons = {
       sun: '<circle cx="12" cy="12" r="5" fill="var(--s2)"/><g stroke="var(--s2)" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="2.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21.5" y2="12"/><line x1="5.3" y1="5.3" x2="7" y2="7"/><line x1="17" y1="17" x2="18.7" y2="18.7"/><line x1="18.7" y1="5.3" x2="17" y2="7"/><line x1="7" y1="17" x2="5.3" y2="18.7"/></g>',
@@ -654,30 +853,212 @@
         (d.rain ? '<span class="rain">' + d.rain + "%</span>" : '<span class="rain">&nbsp;</span>') +
       "</div>";
     }).join("");
+    renderSpray();
+  }
+
+  function renderSpray() {
+    var w = last(state.series.wind).v;
+    var windNote = w > 18 ? "wind too high right now (" + Math.round(w) + " km/h) — wait for the morning calm"
+                          : "wind now " + Math.round(w) + " km/h — OK below 12–15";
+    document.getElementById("spray").innerHTML =
+      "<b>Spray window:</b> neemastra on Zone 1–2 best <b>tomorrow 06:00–09:00</b>; " + windNote +
+      ". Avoid Sat–Sun (rain 60–70%).";
   }
 
   function renderInsights() {
     var leaf = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 2.5C8 2.5 3.5 5.5 3.5 11c0 .8.1 1.5.3 2.2C5.5 9 9 6.5 12 5.5c-2.8 1.7-5.8 4.6-7 8 .9.3 1.9.5 3 .5 5.5 0 5.5-6.5 5.5-11.5Z" fill="var(--accent)"/></svg>';
     var items = [
-      { t: "Irrigate Zone 3 before Saturday", b: "Moisture is trending down and rain isn't expected until the weekend. A 20-minute cycle tonight avoids crop stress." },
-      { t: "Skip watering Sat–Sun", b: "Forecast shows 55–70% rain probability. Letting rainfall cover the weekend saves roughly 400 L of tank water." },
-      { t: "Tomatoes on track", b: "Zone 1 has held 40–50% moisture for 6 days — ideal for fruit set at this growth stage." }
+      { t: "Inseminate Ganga today", b: "Collar confirmed standing heat at 04:20. Hitting this cycle instead of the next is worth ₹8,000–15,000 — the KLDB sexed straw is reserved." },
+      { t: "Irrigate Zone 3 tonight, then skip the weekend", b: "Leafy greens are 5% under trigger and rain arrives Saturday (70%). One 25-minute cycle now, then let the rain cover Sat–Sun — saves ~2,800 L of tank water." },
+      { t: "Early blight risk on tomato: LOW → MODERATE by Friday", b: "Humidity rising ahead of the rain band. The neemastra window tomorrow morning is preventive — mulch and marigold borders are already in place." },
+      { t: "Jeevamrutha cycle lands well", b: "Thursday's Zone 1–2 fertigation comes 2 days before rain — nutrients settle in before the soil saturates." }
     ];
     document.getElementById("insights").innerHTML = items.map(function (i) {
       return '<div class="insight">' + leaf + "<div><b>" + i.t + "</b><span>" + i.b + "</span></div></div>";
     }).join("");
   }
 
+  /* ---------- water tab ---------- */
+  function renderWater() {
+    var running = state.zones.some(function (z) { return z.valve; });
+    document.getElementById("pump-state").innerHTML = running
+      ? '<span class="pill on"><i></i>Running</span>'
+      : '<span class="pill"><i></i>Idle</span>';
+    document.getElementById("pump-flow").textContent = Math.round(state.pump.flow);
+    document.getElementById("borewell").textContent = state.pump.borewell.toFixed(1);
+    document.getElementById("pump-kwh").textContent = state.pump.kwh.toFixed(1);
+
+    document.getElementById("soil").innerHTML = state.soil.map(function (s) {
+      var phOk = s.ph >= 6.0 && s.ph <= 7.5;
+      return '<div class="row"><div class="zone-head" style="margin-bottom:4px"><strong>' + s.name + "</strong>" +
+        (phOk ? "" : '<span class="chip warn">pH check</span>') + "</div>" +
+        '<div class="statlist">' +
+        '<div class="stat"><span class="k">Soil pH</span><span class="v">' + s.ph.toFixed(1) +
+          ' <small>' + (phOk ? "in range" : "out of range") + "</small></span></div>" +
+        '<div class="stat"><span class="k">EC (salts)</span><span class="v">' + s.ec.toFixed(2) + " <small>mS/cm</small></span></div>" +
+        '<div class="stat"><span class="k">Soil temp</span><span class="v">' + s.stemp.toFixed(1) + " <small>°C</small></span></div>" +
+        "</div></div>";
+    }).join("");
+
+    var diff = state.diffuser;
+    document.getElementById("diffuser-state").innerHTML = diff.on
+      ? '<span class="pill on"><i></i>Injecting</span>'
+      : '<span class="pill"><i></i>Standby</span>';
+    document.getElementById("diffuser-rate").textContent = diff.on ? Math.round(38 + Math.random() * 4) : 0;
+    document.getElementById("line-pressure").textContent = diff.pressure.toFixed(1);
+    document.getElementById("diffuser-switch").setAttribute("aria-checked", String(diff.on));
+
+    document.getElementById("zones").innerHTML = state.zones.map(function (z) {
+      var low = z.moisture < z.trigger;
+      return '<div class="row zone">' +
+        '<div class="zone-head"><strong>' + z.name + "</strong>" +
+          '<span class="crop">' + z.crop + "</span>" +
+          (z.valve ? '<span class="chip">Irrigating</span>' : low ? '<span class="chip warn">Below trigger</span>' : "") +
+        "</div>" +
+        '<div class="zone-bar">' +
+          '<div class="meter' + (low ? " low" : "") + '"><i style="width:' + Math.round(z.moisture) + '%"></i></div>' +
+          '<span class="pct">' + Math.round(z.moisture) + "%</span>" +
+        "</div>" +
+        '<div class="zone-meta">Trigger ' + z.trigger + "% · next scheduled 18:30</div>" +
+        '<button class="switch" role="switch" aria-checked="' + z.valve + '" aria-label="' +
+          z.name + ' valve" data-zone="' + z.id + '"></button>' +
+      "</div>";
+    }).join("");
+  }
+
+  /* ---------- livestock tab ---------- */
+  function renderStock() {
+    document.getElementById("eggs").textContent = state.eggs;
+    var badges = {
+      heat: '<span class="badge heat">HEAT</span>',
+      watch: '<span class="badge watch">WATCH</span>',
+      ok: '<span class="badge ok">OK</span>'
+    };
+    document.getElementById("animals").innerHTML = state.animals.map(function (a) {
+      return '<div class="row animal">' +
+        '<span class="avatar">' + a.tag.split("-").pop() + "</span>" +
+        '<span class="info"><b>' + a.name + " · " + a.tag + "</b><span>" + a.note + "</span></span>" +
+        badges[a.status] +
+      "</div>";
+    }).join("");
+
+    renderMilkChart();
+
+    document.getElementById("shed-temp").textContent = state.shed.temp.toFixed(1);
+    document.getElementById("shed-rh").textContent = Math.round(state.shed.rh);
+    var hot = state.shed.temp >= 30;
+    document.getElementById("fogger").innerHTML = hot
+      ? '<span class="pill on"><i></i>Running</span>'
+      : '<span class="pill"><i></i>Standby</span>';
+  }
+
+  function renderMilkChart() {
+    var data = state.milk;
+    var labels7 = [];
+    for (var d = data.length - 1; d >= 0; d--) {
+      var dt = new Date(Date.now() - d * 86400000);
+      labels7.push(["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][dt.getDay()]);
+    }
+    var MW = 360, MH = 150, P = { l: 30, r: 8, t: 10, b: 22 };
+    var hi = 80, iw = MW - P.l - P.r, ih = MH - P.t - P.b;
+    var bw = iw / data.length;
+    var color = css("--s3");
+    var out = "";
+    for (var g = 0; g <= 4; g++) {
+      var gv = (hi * g) / 4, gy = P.t + (1 - gv / hi) * ih;
+      out += '<line x1="' + P.l + '" y1="' + gy + '" x2="' + (MW - P.r) + '" y2="' + gy +
+             '" stroke="' + css("--grid") + '" stroke-width="1"/>' +
+             '<text x="' + (P.l - 5) + '" y="' + (gy + 3) + '" text-anchor="end" font-size="9" fill="' +
+             css("--muted") + '">' + Math.round(gv) + "</text>";
+    }
+    data.forEach(function (v, i) {
+      var bx = P.l + i * bw + bw * 0.18, bwid = bw * 0.64;
+      var by = P.t + (1 - v / hi) * ih, bh = Math.max(2, ih - (by - P.t));
+      var today = i === data.length - 1;
+      out += '<path d="M' + bx + " " + (by + 4) + " q0 -4 4 -4 h" + (bwid - 8) +
+             ' q4 0 4 4 v' + (bh - 4) + " h-" + bwid + ' Z" fill="' + color +
+             '" opacity="' + (today ? 1 : 0.55) + '" data-mi="' + i + '"/>' +
+             '<text x="' + (bx + bwid / 2) + '" y="' + (MH - 7) + '" text-anchor="middle" font-size="9" fill="' +
+             css("--muted") + '"' + (today ? ' font-weight="700"' : "") + ">" + labels7[i] + "</text>";
+      if (today) {
+        out += '<text x="' + (bx + bwid / 2) + '" y="' + (by - 5) + '" text-anchor="middle" font-size="10" font-weight="700" fill="' +
+               css("--ink") + '">' + v.toFixed(0) + "</text>";
+      }
+    });
+    out += '<line x1="' + P.l + '" y1="' + (MH - P.b) + '" x2="' + (MW - P.r) + '" y2="' + (MH - P.b) +
+           '" stroke="' + css("--baseline") + '" stroke-width="1"/>';
+    document.getElementById("milk-chart").innerHTML = out;
+
+    var week = data.reduce(function (a, b) { return a + b; }, 0);
+    document.getElementById("milk-title").innerHTML =
+      "Week total <b>" + week.toFixed(0) + " L</b> ≈ ₹" + (week * 60).toLocaleString("en-IN") + " · today so far <b>" +
+      data[data.length - 1].toFixed(0) + " L</b>";
+  }
+
+  function milkHover(evt) {
+    var svg = document.getElementById("milk-chart");
+    var rect = svg.getBoundingClientRect();
+    var data = state.milk;
+    var P = { l: 30, r: 8 }, MW = 360;
+    var relX = ((evt.clientX - rect.left) / rect.width) * MW;
+    var iw = MW - P.l - P.r;
+    var idx = Math.floor((relX - P.l) / (iw / data.length));
+    if (idx < 0 || idx >= data.length) return;
+    var tip = document.getElementById("milk-tooltip");
+    var cx = P.l + (idx + 0.5) * (iw / data.length);
+    tip.innerHTML = data[idx].toFixed(0) + " L<small>₹" + (data[idx] * 60).toLocaleString("en-IN") + "</small>";
+    tip.style.left = (cx / MW) * rect.width + "px";
+    tip.style.top = "30px";
+    tip.style.opacity = "1";
+  }
+  function milkLeave() { document.getElementById("milk-tooltip").style.opacity = "0"; }
+
+  /* ---------- ops tab ---------- */
+  function renderOps() {
+    var check = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 7.5 5.5 10.5 11.5 3.5"/></svg>';
+    document.getElementById("tasks").innerHTML = state.tasks.map(function (t) {
+      return '<div class="row task' + (t.done ? " done" : "") + '">' +
+        '<button class="check" data-task="' + t.id + '" role="checkbox" aria-checked="' + t.done +
+          '" aria-label="Mark done: ' + t.task + '">' + check + "</button>" +
+        '<span class="t">' + t.task + "<span>" + t.who + (t.done ? " · done, photo received" : "") + "</span></span>" +
+      "</div>";
+    }).join("");
+
+    document.getElementById("grid-state").innerHTML = state.solar.grid
+      ? '<span class="pill on"><i></i>On</span>'
+      : '<span class="pill alert-p"><i></i>Power cut — on solar</span>';
+    document.getElementById("batt").textContent = Math.round(state.solar.batt);
+
+    document.getElementById("cams").innerHTML = state.cams.map(function (c) {
+      return '<div class="cam' + (c.on ? "" : " off") + '"><b><i></i>' + c.name + "</b><span>Last: " + c.ev + "</span></div>";
+    }).join("");
+  }
+
+  /* ---------- render root ---------- */
   function render() {
     document.getElementById("clock").textContent = fmtTime(Date.now());
     renderKpis();
     renderChart();
-    renderZones();
     renderAlerts();
+    renderSpray();
+    renderWater();
+    renderStock();
+    renderOps();
   }
 
   /* ---------- events ---------- */
   document.addEventListener("click", function (e) {
+    var nav = e.target.closest("nav.bottom button");
+    if (nav) {
+      document.querySelectorAll("nav.bottom button").forEach(function (b) {
+        b.setAttribute("aria-current", String(b === nav));
+      });
+      document.querySelectorAll(".tab").forEach(function (s) {
+        s.classList.toggle("active", s.id === "tab-" + nav.dataset.tab);
+      });
+      window.scrollTo({ top: 0 });
+      return;
+    }
     var seg = e.target.closest(".seg button");
     if (seg) {
       state.metric = seg.dataset.metric;
@@ -690,10 +1071,21 @@
     }
     var sw = e.target.closest(".switch");
     if (sw) {
-      var zone = state.zones.find(function (z) { return z.id === sw.dataset.zone; });
-      zone.valve = !zone.valve;
-      renderZones();
+      if (sw.id === "diffuser-switch") {
+        state.diffuser.on = !state.diffuser.on;
+      } else {
+        var zone = state.zones.find(function (z) { return z.id === sw.dataset.zone; });
+        zone.valve = !zone.valve;
+      }
+      renderWater();
       renderAlerts();
+      return;
+    }
+    var chk = e.target.closest(".task .check");
+    if (chk) {
+      var task = state.tasks.find(function (t) { return t.id === chk.dataset.task; });
+      task.done = !task.done;
+      renderOps();
       return;
     }
     var dis = e.target.closest(".alert-dismiss");
@@ -707,8 +1099,12 @@
   chartEl.addEventListener("pointermove", chartHover);
   chartEl.addEventListener("pointerdown", chartHover);
   chartEl.addEventListener("pointerleave", chartLeave);
+  var milkEl = document.getElementById("milk-chart");
+  milkEl.addEventListener("pointermove", milkHover);
+  milkEl.addEventListener("pointerdown", milkHover);
+  milkEl.addEventListener("pointerleave", milkLeave);
 
-  /* re-render chart when theme flips so SVG picks up new token values */
+  /* re-render when theme flips so SVG picks up new token values */
   var mq = window.matchMedia("(prefers-color-scheme: dark)");
   if (mq.addEventListener) mq.addEventListener("change", render);
   new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });

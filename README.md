@@ -1,22 +1,43 @@
-# Farm Monitor
+# Smart Farm Monitor
 
-A mobile-first, interactive dashboard for monitoring a smart farm from your phone.
-Everything lives in a single `index.html` — no build step, no dependencies — so it
-can be opened directly in a browser, hosted on GitHub Pages, or added to a phone
-home screen.
+Mobile-first control dashboard for the farm described in
+*Smart_Farm_AI_System_Design* — a 10-acre mixed farm (6 acres crops/vegetables,
+2.5-acre orchard, Gir dairy + Boer goats + Giriraja poultry) in rural
+Karnataka. This is the "one dashboard" from Section 1 of the blueprint: water,
+power, crops, cattle, tasks and expenses on a single phone screen.
 
-## Features
+Everything lives in one `index.html` — no build step, no dependencies — so it
+can be opened directly in a browser, hosted on GitHub Pages, or added to a
+phone home screen.
 
-- **Live readings** — soil moisture, air temperature, humidity, and water tank
-  level, with 3-hour trend deltas.
-- **24-hour history chart** — switch between moisture, temperature, and humidity;
-  tap or drag on the chart for a crosshair tooltip at any point in time.
-- **Irrigation zones** — per-zone moisture bars and valve toggles. Opening a
-  valve raises that zone's moisture over time and draws down the tank.
-- **Alerts** — automatic warnings when a zone drops below 30% moisture and a
-  critical alert when the tank falls below 20%. Dismissible per alert.
-- **5-day forecast** and an **AI insights** feed with irrigation recommendations.
-- **Light and dark themes** — follows the phone's system setting.
+## Tabs
+
+**Overview** — system status chips (edge gateway, LoRa sensor count, 4G, SMS
+fallback, solar battery); live KPIs (field soil moisture, air temp, wind, soil
+pH, today's milk, water tank); 24-hour history chart (moisture / temp /
+humidity / wind) with touch crosshair; 5-day forecast with a neemastra spray
+window that reacts to live wind; AI insight cards.
+
+**Water** — pump & borewell card (GSM starter state, flow, water level, energy,
+dry-run protection); six irrigation zones matching the blueprint's valve plan
+(tomato, beans & chilli, leafy greens, napier, mango, sapota) with per-zone
+moisture triggers and valve toggles; soil-health card per IoT field station
+(pH, EC, soil temperature); fertigation card with the venturi diffuser
+(injection state, rate, line pressure, dosing-valve toggle) and the
+15-day jeevamrutha cycle.
+
+**Livestock** — herd summary (Gir / Boer / Giriraja), collar alerts (standing
+heat, rumination drop), 7-day milk bar chart with ₹ value at farm-gate A2
+pricing, shed climate with the auto fan/fogger threshold.
+
+**Farm ops** — worker task board with done-check, power card (grid, solar
+control battery, pump energy, diesel), the four cameras (gate, pump house,
+shed, store) with last events, and a month-to-date P&L per enterprise from
+the digital ledger.
+
+Alert logic runs continuously: zone below its moisture trigger, tank below
+20%, soil pH outside 6.0–7.5, wind too high to spray, shed heat stress, and
+collar heat detection.
 
 ## Running it
 
@@ -28,19 +49,23 @@ python3 -m http.server 8000
 ```
 
 To publish it at a permanent URL, enable **GitHub Pages** for this repository
-(Settings → Pages → deploy from the main branch) and open the page on your
-phone, then "Add to Home Screen" for an app-like experience.
+(Settings → Pages → deploy from the branch) and open the page on your phone,
+then "Add to Home Screen" for an app-like experience.
 
-## Connecting real sensors
+## Connecting the real farm
 
-The dashboard currently runs on a simulated sensor feed (see the
-`seedSeries`/`tick` functions in `index.html`). To go live, replace those with
-`fetch()` calls to your field gateway or IoT platform API that return the same
-shapes:
+The dashboard currently runs on a simulated feed (see `seedSeries`/`tick` in
+`index.html`). Per the blueprint's architecture, the real data source is the
+**edge gateway** (Layer 2): replace the simulation with `fetch()` calls to the
+gateway/vendor API returning the same shapes —
 
-- time series: `[{ t: <epoch ms>, v: <number> }, …]` per metric
-- zones: `[{ id, name, crop, moisture, valve }, …]`
-- tank level: a number 0–100
+- time series per metric: `[{ t: <epoch ms>, v: <number> }, …]`
+- zones: `[{ id, name, crop, trigger, moisture, valve }, …]`
+- soil stations: `[{ name, ph, ec, stemp }, …]`
+- pump/tank/shed/solar: plain numbers as in the `state` object
 
-Valve toggles call the same code path as the simulation, so wiring them to a
-`POST /zones/:id/valve` endpoint is a one-line change in the click handler.
+Valve, diffuser, and task toggles already route through single code paths in
+the click handler, so wiring them to gateway commands (`POST /zones/:id/valve`
+etc.) is a small change. The dashboard is deliberately read-mostly: per the
+design's offline-first principle, schedules always run locally on the gateway
+even when this page can't reach the farm.
