@@ -95,16 +95,39 @@
     background: var(--page);
     padding: 14px 2px 8px;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 8px;
   }
-  .farm-name { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+  .farm-name { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
   .farm-name span { color: var(--accent); }
+  .top-right { display: flex; align-items: center; gap: 8px; flex: none; }
   .live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); white-space: nowrap; }
   .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); animation: pulse 2.4s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.35; } }
   @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+  select.lang {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 1px solid var(--ring);
+    background: var(--surface);
+    color: var(--ink);
+    font: 600 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    border-radius: 99px;
+    padding: 4px 12px;
+    cursor: pointer;
+  }
+  select.lang:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .iconbtn {
+    width: 30px; height: 30px; flex: none;
+    border: 1px solid var(--ring);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 99px;
+    display: grid; place-items: center;
+    cursor: pointer; padding: 0;
+  }
+  .iconbtn svg { width: 16px; height: 16px; }
 
   .statusrow { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
   .statusrow::-webkit-scrollbar { display: none; }
@@ -136,8 +159,9 @@
     display: flex;
     justify-content: space-between;
     align-items: baseline;
+    gap: 8px;
   }
-  .card h2 small { font-size: 11px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted); }
+  .card h2 small { font-size: 11px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--muted); text-align: right; }
 
   /* Tabs */
   .tab { display: none; flex-direction: column; gap: 14px; }
@@ -259,10 +283,11 @@
   .stat { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--ring); font-size: 13.5px; }
   .stat:last-child { border-bottom: 0; padding-bottom: 2px; }
   .stat .k { color: var(--ink-2); }
+  .stat .k small { color: var(--muted); font-size: 11.5px; }
   .stat .v { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
   .stat .v small { font-weight: 500; color: var(--muted); }
   .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: var(--surface-2); }
-  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
   .pill.on { color: var(--good-text); } .pill.on i { background: var(--good); }
   .pill.alert-p { color: var(--critical); } .pill.alert-p i { background: var(--critical); }
 
@@ -277,7 +302,6 @@
   .animal .info b { font-size: 13.5px; display: block; }
   .animal .info span { font-size: 12px; color: var(--ink-2); display: block; }
   .badge { flex: none; display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; }
-  .badge svg { flex: none; }
   .badge.heat { background: color-mix(in srgb, var(--serious) 22%, var(--surface)); color: var(--ink); }
   .badge.watch { background: color-mix(in srgb, var(--warning) 25%, var(--surface)); color: var(--ink); }
   .badge.ok { background: var(--surface-2); color: var(--good-text); }
@@ -306,9 +330,28 @@
   .cams { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .cam { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 12.5px; }
   .cam b { display: flex; align-items: center; gap: 6px; font-size: 13px; }
-  .cam b i { width: 7px; height: 7px; border-radius: 50%; background: var(--good); }
+  .cam b i { width: 7px; height: 7px; border-radius: 50%; background: var(--good); flex: none; }
   .cam.off b i { background: var(--critical); }
   .cam span { color: var(--muted); font-size: 11.5px; display: block; margin-top: 2px; }
+
+  /* Fertigation params */
+  .params { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+  .param {
+    background: var(--surface-2); border-radius: 10px; padding: 8px 11px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted); display: flex; flex-direction: column; gap: 1px; cursor: text;
+  }
+  .param .pv { display: flex; align-items: baseline; gap: 4px; }
+  .param input {
+    border: 0; background: none; padding: 0; width: 100%; min-width: 0;
+    font: 700 17px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink); font-variant-numeric: tabular-nums;
+  }
+  .param input:focus { outline: none; }
+  .param:focus-within { box-shadow: 0 0 0 2px var(--accent); }
+  .param .unit { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: none; letter-spacing: 0; flex: none; }
+  .dose-status { display: flex; flex-direction: column; gap: 7px; margin: 4px 0 10px; }
+  .dose-status .meter { margin: 0; }
 
   /* Ledger */
   .ledger .stat .v.pos { color: var(--good-text); }
@@ -339,16 +382,24 @@
 
 <div class="app">
   <header class="topbar">
-    <h1 class="farm-name">Anil's <span>Smart Farm</span></h1>
-    <span class="live"><span class="live-dot" aria-hidden="true"></span>Live · <span id="clock">--:--</span></span>
+    <h1 class="farm-name" data-i18n-html="farmName">Anil's <span>Smart Farm</span></h1>
+    <div class="top-right">
+      <button id="theme-btn" class="iconbtn" type="button" aria-label="Day / night mode"></button>
+      <select id="lang" class="lang" aria-label="Language / ಭಾಷೆ / भाषा">
+        <option value="en">EN</option>
+        <option value="kn">ಕನ್ನಡ</option>
+        <option value="hi">हिंदी</option>
+      </select>
+      <span class="live"><span class="live-dot" aria-hidden="true"></span><span data-i18n="live">Live</span> · <span id="clock">--:--</span></span>
+    </div>
   </header>
 
   <div class="statusrow" aria-label="System status">
-    <span class="schip"><i></i>Gateway online</span>
-    <span class="schip"><i></i>LoRa 9/9 sensors</span>
-    <span class="schip"><i></i>4G Jio · 2 bars</span>
-    <span class="schip"><i></i>SMS fallback ready</span>
-    <span class="schip"><i></i>Solar <span id="chip-batt">--</span>%</span>
+    <span class="schip"><i></i><span data-i18n="chipGateway">Gateway online</span></span>
+    <span class="schip"><i></i><span data-i18n="chipLora">LoRa 9/9 sensors</span></span>
+    <span class="schip"><i></i><span data-i18n="chip4g">4G Jio · 2 bars</span></span>
+    <span class="schip"><i></i><span data-i18n="chipSms">SMS fallback ready</span></span>
+    <span class="schip"><i></i><span data-i18n="chipSolar">Solar</span> <span id="chip-batt">--</span>%</span>
   </div>
 
   <!-- ============ OVERVIEW ============ -->
@@ -357,44 +408,44 @@
 
     <div class="kpis" aria-label="Current readings">
       <div class="kpi">
-        <span class="label">Soil moisture</span>
+        <span class="label" data-i18n="kSoil">Soil moisture</span>
         <span class="value"><span id="kpi-moisture">--</span><small>%</small></span>
         <span class="delta" id="kpi-moisture-d"></span>
       </div>
       <div class="kpi">
-        <span class="label">Air temp</span>
+        <span class="label" data-i18n="kAir">Air temp</span>
         <span class="value"><span id="kpi-temp">--</span><small>°C</small></span>
         <span class="delta" id="kpi-temp-d"></span>
       </div>
       <div class="kpi">
-        <span class="label">Wind</span>
+        <span class="label" data-i18n="kWind">Wind</span>
         <span class="value"><span id="kpi-wind">--</span><small>km/h</small></span>
         <span class="delta" id="kpi-wind-d"></span>
       </div>
       <div class="kpi">
-        <span class="label">Soil pH</span>
+        <span class="label" data-i18n="kPh">Soil pH</span>
         <span class="value"><span id="kpi-ph">--</span></span>
-        <span class="delta" id="kpi-ph-d">target 6.0–7.5</span>
+        <span class="delta" id="kpi-ph-d"></span>
       </div>
       <div class="kpi">
-        <span class="label">Milk today</span>
+        <span class="label" data-i18n="kMilk">Milk today</span>
         <span class="value"><span id="kpi-milk">--</span><small>L</small></span>
         <span class="delta" id="kpi-milk-d"></span>
       </div>
       <div class="kpi">
-        <span class="label">Water tank</span>
+        <span class="label" data-i18n="kTank">Water tank</span>
         <span class="value"><span id="kpi-tank">--</span><small>%</small></span>
         <div class="meter" id="tank-meter"><i style="width:0%"></i></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Last 24 hours <small>weather station + field probes</small></h2>
+      <h2><span data-i18n="hLast24">Last 24 hours</span> <small data-i18n="sLast24">weather station + field probes</small></h2>
       <div class="seg" role="group" aria-label="Chart metric">
-        <button type="button" data-metric="moisture" aria-pressed="true">Moisture</button>
-        <button type="button" data-metric="temp" aria-pressed="false">Temp</button>
-        <button type="button" data-metric="humidity" aria-pressed="false">Humidity</button>
-        <button type="button" data-metric="wind" aria-pressed="false">Wind</button>
+        <button type="button" data-metric="moisture" aria-pressed="true" data-i18n="mMoisture">Moisture</button>
+        <button type="button" data-metric="temp" aria-pressed="false" data-i18n="mTemp">Temp</button>
+        <button type="button" data-metric="humidity" aria-pressed="false" data-i18n="mHumidity">Humidity</button>
+        <button type="button" data-metric="wind" aria-pressed="false" data-i18n="mWind">Wind</button>
       </div>
       <p class="chart-title" id="chart-title"></p>
       <div class="chart-wrap">
@@ -404,13 +455,19 @@
     </div>
 
     <div class="card">
-      <h2>5-day forecast</h2>
+      <h2 data-i18n="hForecast">5-day forecast</h2>
       <div class="forecast" id="forecast"></div>
       <div class="spray" id="spray"></div>
     </div>
 
     <div class="card">
-      <h2>AI insights</h2>
+      <h2><span data-i18n="hPest">Pest &amp; weed watch</span> <small data-i18n="sPest">traps · scouting · drone NDVI</small></h2>
+      <div class="statlist" id="pest"></div>
+      <div class="rows" id="weeds"></div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="hInsights">AI insights</h2>
       <div class="insights" id="insights"></div>
     </div>
   </section>
@@ -418,38 +475,48 @@
   <!-- ============ WATER ============ -->
   <section class="tab" id="tab-water">
     <div class="card">
-      <h2>Pump &amp; borewell <small>GSM starter</small></h2>
+      <h2><span data-i18n="hPump">Pump &amp; borewell</span> <small data-i18n="sPump">GSM starter</small></h2>
       <div class="statlist">
-        <div class="stat"><span class="k">Pump</span><span class="v" id="pump-state"></span></div>
-        <div class="stat"><span class="k">Flow rate</span><span class="v"><span id="pump-flow">0</span> <small>L/min</small></span></div>
-        <div class="stat"><span class="k">Borewell water level</span><span class="v"><span id="borewell">--</span> <small>m depth</small></span></div>
-        <div class="stat"><span class="k">Energy today</span><span class="v"><span id="pump-kwh">--</span> <small>kWh</small></span></div>
-        <div class="stat"><span class="k">Dry-run / phase protection</span><span class="v"><span class="pill on"><i></i>Armed</span></span></div>
+        <div class="stat"><span class="k" data-i18n="pumpK">Pump</span><span class="v" id="pump-state"></span></div>
+        <div class="stat"><span class="k" data-i18n="flowK">Flow rate</span><span class="v"><span id="pump-flow">0</span> <small>L/min</small></span></div>
+        <div class="stat"><span class="k" data-i18n="boreK">Borewell water level</span><span class="v"><span id="borewell">--</span> <small>m</small></span></div>
+        <div class="stat"><span class="k" data-i18n="energyK">Energy today</span><span class="v"><span id="pump-kwh">--</span> <small>kWh</small></span></div>
+        <div class="stat"><span class="k" data-i18n="protK">Dry-run / phase protection</span><span class="v"><span class="pill on"><i></i><span data-i18n="armed">Armed</span></span></span></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Irrigation zones <small>valves via edge gateway</small></h2>
+      <h2><span data-i18n="hZones">Irrigation zones</span> <small data-i18n="sZones">valves via edge gateway</small></h2>
       <div class="rows" id="zones"></div>
     </div>
 
     <div class="card">
-      <h2>Soil health <small>IoT field stations</small></h2>
+      <h2><span data-i18n="hSoil">Soil health</span> <small data-i18n="sSoil">IoT field stations</small></h2>
       <div class="rows" id="soil"></div>
     </div>
 
     <div class="card">
-      <h2>Fertigation <small>jeevamrutha · 15-day cycle</small></h2>
+      <h2><span data-i18n="hFert">Fertigation</span> <small data-i18n="sFert">jeevamrutha · venturi diffuser</small></h2>
       <div class="statlist">
-        <div class="stat"><span class="k">Venturi diffuser</span><span class="v" id="diffuser-state"></span></div>
-        <div class="stat"><span class="k">Injection rate</span><span class="v"><span id="diffuser-rate">0</span> <small>L/h</small></span></div>
-        <div class="stat"><span class="k">Line pressure</span><span class="v"><span id="line-pressure">--</span> <small>bar</small></span></div>
-        <div class="stat"><span class="k">Diffuser dosing valve</span>
-          <span class="v"><button class="switch" id="diffuser-switch" role="switch" aria-checked="false" aria-label="Diffuser dosing valve"></button></span></div>
-        <div class="stat"><span class="k">Jeevamrutha batch</span><span class="v">Day 5 of 7 <small>fermenting</small></span></div>
-        <div class="stat"><span class="k">Next cycle — Zone 1 &amp; 2</span><span class="v">Thu <small>200 L/acre</small></span></div>
-        <div class="stat"><span class="k">Next cycle — Orchard</span><span class="v">In 6 days</span></div>
-        <div class="stat"><span class="k">Filter back-flush</span><span class="v"><span class="pill on"><i></i>Clean</span></span></div>
+        <div class="stat"><span class="k"><span data-i18n="autoK">Auto-dosing</span> <small data-i18n="autoSub">computes dose from zone area</small></span>
+          <span class="v"><button class="switch" id="fert-auto" role="switch" aria-checked="true" aria-label="Auto-dosing"></button></span></div>
+      </div>
+      <div class="params" aria-label="Dosing parameters">
+        <label class="param"><span data-i18n="pRate">Dose rate</span><span class="pv"><input id="p-rate" class="fert-param" data-key="rate" type="number" inputmode="numeric" value="200" min="50" max="500" step="10"><span class="unit">L/acre</span></span></label>
+        <label class="param"><span data-i18n="pCycle">Cycle</span><span class="pv"><input id="p-days" class="fert-param" data-key="days" type="number" inputmode="numeric" value="15" min="5" max="30" step="1"><span class="unit" data-i18n="uDays">days</span></span></label>
+        <label class="param"><span data-i18n="pInj">Injection</span><span class="pv"><input id="p-inj" class="fert-param" data-key="inj" type="number" inputmode="numeric" value="40" min="10" max="80" step="5"><span class="unit">L/h</span></span></label>
+        <label class="param"><span data-i18n="pEc">EC guard</span><span class="pv"><input id="p-ec" class="fert-param" data-key="ec" type="number" inputmode="decimal" value="0.9" min="0.3" max="1.5" step="0.05"><span class="unit">mS/cm</span></span></label>
+      </div>
+      <div class="dose-status" id="fert-status"></div>
+      <div class="statlist" id="fert-plan"></div>
+      <div class="statlist">
+        <div class="stat"><span class="k" data-i18n="venturi">Venturi diffuser</span><span class="v" id="diffuser-state"></span></div>
+        <div class="stat"><span class="k" data-i18n="injRateK">Injection rate</span><span class="v"><span id="diffuser-rate">0</span> <small>L/h</small></span></div>
+        <div class="stat"><span class="k" data-i18n="lineK">Line pressure</span><span class="v"><span id="line-pressure">--</span> <small>bar</small></span></div>
+        <div class="stat" id="manual-valve-row"><span class="k"><span data-i18n="manualValveK">Manual dosing valve</span> <small data-i18n="whenAutoOff">when auto is off</small></span>
+          <span class="v"><button class="switch" id="diffuser-switch" role="switch" aria-checked="false" aria-label="Manual dosing valve"></button></span></div>
+        <div class="stat"><span class="k" data-i18n="batchK">Jeevamrutha batch</span><span class="v"><span data-i18n="batchV">Day 5 of 7</span> <small data-i18n="fermenting">fermenting</small></span></div>
+        <div class="stat"><span class="k" data-i18n="flushK">Filter back-flush</span><span class="v"><span class="pill on"><i></i><span data-i18n="clean">Clean</span></span></span></div>
       </div>
     </div>
   </section>
@@ -457,25 +524,25 @@
   <!-- ============ LIVESTOCK ============ -->
   <section class="tab" id="tab-stock">
     <div class="card">
-      <h2>Herd</h2>
+      <h2 data-i18n="hHerd">Herd</h2>
       <div class="herd">
-        <div class="h"><b>8</b><span>Gir cows</span></div>
-        <div class="h"><b>26</b><span>Boer goats</span></div>
-        <div class="h"><b>200</b><span>Giriraja birds</span></div>
+        <div class="h"><b>8</b><span data-i18n="girCows">Gir cows</span></div>
+        <div class="h"><b>26</b><span data-i18n="boerGoats">Boer goats</span></div>
+        <div class="h"><b>200</b><span data-i18n="girBirds">Giriraja birds</span></div>
       </div>
       <div class="statlist">
-        <div class="stat"><span class="k">Eggs collected today</span><span class="v" id="eggs">--</span></div>
-        <div class="stat"><span class="k">Kidding due this week</span><span class="v">2 does</span></div>
+        <div class="stat"><span class="k" data-i18n="eggsK">Eggs collected today</span><span class="v" id="eggs">--</span></div>
+        <div class="stat"><span class="k" data-i18n="kidK">Kidding due this week</span><span class="v" data-i18n="kidV">2 does</span></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Collar alerts <small>heat · rumination · health</small></h2>
+      <h2><span data-i18n="hCollar">Collar alerts</span> <small data-i18n="sCollar">heat · rumination · health</small></h2>
       <div class="rows" id="animals"></div>
     </div>
 
     <div class="card">
-      <h2>Milk — last 7 days <small>A2 · ₹60/L farm-gate</small></h2>
+      <h2><span data-i18n="hMilk">Milk — last 7 days</span> <small data-i18n="sMilk">A2 · ₹60/L farm-gate</small></h2>
       <p class="chart-title" id="milk-title"></p>
       <div class="chart-wrap">
         <svg id="milk-chart" viewBox="0 0 360 150" role="img" aria-label="Daily milk yield, last 7 days"></svg>
@@ -484,11 +551,11 @@
     </div>
 
     <div class="card">
-      <h2>Shed climate</h2>
+      <h2 data-i18n="hShed">Shed climate</h2>
       <div class="statlist">
-        <div class="stat"><span class="k">Temperature</span><span class="v"><span id="shed-temp">--</span> <small>°C</small></span></div>
-        <div class="stat"><span class="k">Humidity</span><span class="v"><span id="shed-rh">--</span> <small>%</small></span></div>
-        <div class="stat"><span class="k">Fan / fogger (auto ≥ 30 °C)</span><span class="v" id="fogger"></span></div>
+        <div class="stat"><span class="k" data-i18n="shedTempK">Temperature</span><span class="v"><span id="shed-temp">--</span> <small>°C</small></span></div>
+        <div class="stat"><span class="k" data-i18n="shedRhK">Humidity</span><span class="v"><span id="shed-rh">--</span> <small>%</small></span></div>
+        <div class="stat"><span class="k" data-i18n="fogK">Fan / fogger (auto ≥ 30 °C)</span><span class="v" id="fogger"></span></div>
       </div>
     </div>
   </section>
@@ -496,57 +563,57 @@
   <!-- ============ FARM OPS ============ -->
   <section class="tab" id="tab-ops">
     <div class="card">
-      <h2>Today's tasks <small>worker board</small></h2>
+      <h2><span data-i18n="hTasks">Today's tasks</span> <small data-i18n="sTasks">worker board</small></h2>
       <div class="rows" id="tasks"></div>
     </div>
 
     <div class="card">
-      <h2>Power</h2>
+      <h2 data-i18n="hPower">Power</h2>
       <div class="statlist">
-        <div class="stat"><span class="k">Grid supply</span><span class="v" id="grid-state"></span></div>
-        <div class="stat"><span class="k">Control-system battery</span><span class="v"><span id="batt">--</span> <small>% · solar</small></span></div>
-        <div class="stat"><span class="k">Pump energy this month</span><span class="v">148 <small>kWh</small></span></div>
-        <div class="stat"><span class="k">Diesel this month</span><span class="v">0 <small>L</small></span></div>
+        <div class="stat"><span class="k" data-i18n="gridK">Grid supply</span><span class="v" id="grid-state"></span></div>
+        <div class="stat"><span class="k" data-i18n="battK">Control-system battery</span><span class="v"><span id="batt">--</span> <small data-i18n="battUnit">% · solar</small></span></div>
+        <div class="stat"><span class="k" data-i18n="pumpMonK">Pump energy this month</span><span class="v">148 <small>kWh</small></span></div>
+        <div class="stat"><span class="k" data-i18n="dieselK">Diesel this month</span><span class="v">0 <small>L</small></span></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Cameras <small>local NVR</small></h2>
+      <h2><span data-i18n="hCams">Cameras</span> <small data-i18n="sCams">local NVR</small></h2>
       <div class="cams" id="cams"></div>
     </div>
 
     <div class="card ledger">
-      <h2>July P&amp;L <small>digital ledger</small></h2>
+      <h2><span data-i18n="hLedger">July P&amp;L</span> <small data-i18n="sLedger">digital ledger</small></h2>
       <div class="statlist">
-        <div class="stat"><span class="k">Crops &amp; vegetables</span><span class="v pos">+₹42,300</span></div>
-        <div class="stat"><span class="k">Orchard</span><span class="v pos">+₹18,750</span></div>
-        <div class="stat"><span class="k">Dairy (A2 milk)</span><span class="v pos">+₹56,900</span></div>
-        <div class="stat"><span class="k">Goats &amp; poultry</span><span class="v pos">+₹21,400</span></div>
-        <div class="stat"><span class="k">Wages &amp; power</span><span class="v neg">−₹38,200</span></div>
-        <div class="stat"><span class="k">Net (month to date)</span><span class="v pos">+₹1,01,150</span></div>
+        <div class="stat"><span class="k" data-i18n="lCrops">Crops &amp; vegetables</span><span class="v pos">+₹42,300</span></div>
+        <div class="stat"><span class="k" data-i18n="lOrchard">Orchard</span><span class="v pos">+₹18,750</span></div>
+        <div class="stat"><span class="k" data-i18n="lDairy">Dairy (A2 milk)</span><span class="v pos">+₹56,900</span></div>
+        <div class="stat"><span class="k" data-i18n="lGoat">Goats &amp; poultry</span><span class="v pos">+₹21,400</span></div>
+        <div class="stat"><span class="k" data-i18n="lWages">Wages &amp; power</span><span class="v neg">−₹38,200</span></div>
+        <div class="stat"><span class="k" data-i18n="lNet">Net (month to date)</span><span class="v pos">+₹1,01,150</span></div>
       </div>
     </div>
   </section>
 
-  <footer class="note">Simulated feed for preview — the edge gateway API plugs in here. Offline-first: schedules keep running locally if this page can't reach the farm.</footer>
+  <footer class="note" data-i18n="footNote">Simulated feed for preview — the edge gateway API plugs in here. Offline-first: schedules keep running locally if this page can't reach the farm.</footer>
 </div>
 
 <nav class="bottom" aria-label="Sections">
   <button type="button" data-tab="home" aria-current="true">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/></svg>
-    Overview
+    <span data-i18n="navHome">Overview</span>
   </button>
   <button type="button" data-tab="water" aria-current="false">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z"/></svg>
-    Water
+    <span data-i18n="navWater">Water</span>
   </button>
   <button type="button" data-tab="stock" aria-current="false">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8c-1.5 0-2.5-1.2-2.5-3M19 8c1.5 0 2.5-1.2 2.5-3"/><path d="M7 7.5h10l1.5 5.5-2 6.5h-9L5.5 13 7 7.5Z"/><circle cx="9.5" cy="13" r="0.8" fill="currentColor" stroke="none"/><circle cx="14.5" cy="13" r="0.8" fill="currentColor" stroke="none"/><path d="M10.5 16.5c.9.7 2.1.7 3 0"/></svg>
-    Livestock
+    <span data-i18n="navStock">Livestock</span>
   </button>
   <button type="button" data-tab="ops" aria-current="false">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 4.5V3h6v1.5M8.5 9.5h7M8.5 13h7M8.5 16.5h4"/></svg>
-    Farm ops
+    <span data-i18n="navOps">Farm ops</span>
   </button>
 </nav>
 
@@ -554,91 +621,402 @@
 (function () {
   "use strict";
 
+  /* ---------- i18n ---------- */
+  var L = {
+    en: {
+      farmName: "Anil's <span>Smart Farm</span>", live: "Live",
+      chipGateway: "Gateway online", chipLora: "LoRa 9/9 sensors", chip4g: "4G Jio · 2 bars",
+      chipSms: "SMS fallback ready", chipSolar: "Solar",
+      kSoil: "Soil moisture", kAir: "Air temp", kWind: "Wind", kPh: "Soil pH", kMilk: "Milk today", kTank: "Water tank",
+      vs3h: "vs 3 h ago", vsY: "L vs yesterday", phIn: "in range 6.0–7.5", phOut: "outside 6.0–7.5",
+      hLast24: "Last 24 hours", sLast24: "weather station + field probes",
+      mMoisture: "Moisture", mTemp: "Temp", mHumidity: "Humidity", mWind: "Wind",
+      lblMoisture: "Soil moisture (field avg)", lblTemp: "Air temperature", lblHumidity: "Relative humidity", lblWind: "Wind speed", chartNow: "now",
+      hForecast: "5-day forecast", hInsights: "AI insights",
+      wdShort: "Sun,Mon,Tue,Wed,Thu,Fri,Sat",
+      sprayTpl: "<b>Spray window:</b> neemastra on Zone 1–2 best <b>tomorrow 06:00–09:00</b>; {wind}. Avoid Sat–Sun (rain 60–70%).",
+      windOk: "wind now {w} km/h — OK below 12–15", windHigh: "wind too high right now ({w} km/h) — wait for the morning calm",
+      hPump: "Pump & borewell", sPump: "GSM starter", pumpK: "Pump", flowK: "Flow rate",
+      boreK: "Borewell water level", energyK: "Energy today", protK: "Dry-run / phase protection",
+      armed: "Armed", running: "Running", idle: "Idle",
+      hZones: "Irrigation zones", sZones: "valves via edge gateway", zoneWord: "Zone",
+      trigger: "Trigger", nextSched: "next scheduled", irrigating: "Irrigating", belowTrig: "Below trigger", phCheck: "pH check",
+      hSoil: "Soil health", sSoil: "IoT field stations",
+      stationA: "Station A — crop block", stationB: "Station B — orchard",
+      ecK: "EC (salts)", stempK: "Soil temp", inRange: "in range", outRange: "out of range",
+      hFert: "Fertigation", sFert: "jeevamrutha · venturi diffuser",
+      autoK: "Auto-dosing", autoSub: "computes dose from zone area",
+      pRate: "Dose rate", pCycle: "Cycle", pInj: "Injection", pEc: "EC guard", uDays: "days",
+      manualMode: "Manual mode — use the dosing valve below",
+      pausedTpl: "Paused — EC {ec} > guard {g} mS/cm", pausedShort: "Paused — EC guard",
+      dosingTpl: "Dosing {zone} — {done} / {target} L",
+      idleTpl: "Idle — doses run automatically with irrigation, every {days} days",
+      dosed: "Dosed", pctDone: "% done",
+      venturi: "Venturi diffuser", injRateK: "Injection rate", lineK: "Line pressure",
+      manualValveK: "Manual dosing valve", whenAutoOff: "when auto is off",
+      batchK: "Jeevamrutha batch", batchV: "Day 5 of 7", fermenting: "fermenting",
+      flushK: "Filter back-flush", clean: "Clean", injecting: "Injecting", standby: "Standby",
+      hHerd: "Herd", girCows: "Gir cows", boerGoats: "Boer goats", girBirds: "Giriraja birds",
+      eggsK: "Eggs collected today", kidK: "Kidding due this week", kidV: "2 does",
+      hCollar: "Collar alerts", sCollar: "heat · rumination · health",
+      bHeat: "HEAT", bWatch: "WATCH", bOk: "OK",
+      nGanga: "Standing heat detected 04:20 — inseminate before 16:00 (sexed semen booked)",
+      nKaveri: "Rumination down 18% since yesterday — watch feed intake",
+      nTunga: "305-day yield on track · 8.1 L/day avg",
+      nBoer: "Stud service booked Sat — Hoskote farm",
+      hMilk: "Milk — last 7 days", sMilk: "A2 · ₹60/L farm-gate",
+      milkTitleTpl: "Week total <b>{wk} L</b> ≈ ₹{val} · today so far <b>{t} L</b>",
+      hShed: "Shed climate", shedTempK: "Temperature", shedRhK: "Humidity", fogK: "Fan / fogger (auto ≥ 30 °C)",
+      hTasks: "Today's tasks", sTasks: "worker board", taskDoneNote: "done, photo received",
+      tT1: "Open mulch around Zone 1 tomato drippers", tT2: "Stir jeevamrutha barrel · photo when done",
+      tT3: "Refill neemastra sprayer for evening window", tT4: "Weigh-band the March Boer kids",
+      hPower: "Power", gridK: "Grid supply", gridOn: "On", gridCut: "Power cut — on solar",
+      battK: "Control-system battery", battUnit: "% · solar",
+      pumpMonK: "Pump energy this month", dieselK: "Diesel this month",
+      hCams: "Cameras", sCams: "local NVR", lastK: "Last:",
+      camGate: "Gate", camPump: "Pump house", camShed: "Cattle shed", camStore: "Store",
+      evGate: "Vehicle 06:12", evPump: "Person 05:48 (Manju)", evShed: "Motion 04:22", evStore: "No events tonight",
+      hLedger: "July P&L", sLedger: "digital ledger",
+      lCrops: "Crops & vegetables", lOrchard: "Orchard", lDairy: "Dairy (A2 milk)",
+      lGoat: "Goats & poultry", lWages: "Wages & power", lNet: "Net (month to date)",
+      navHome: "Overview", navWater: "Water", navStock: "Livestock", navOps: "Farm ops",
+      footNote: "Simulated feed for preview — the edge gateway API plugs in here. Offline-first: schedules keep running locally if this page can't reach the farm.",
+      cropZ1: "Tomato — flowering", cropZ2: "Beans & chilli", cropZ3: "Leafy greens",
+      cropZ4: "Napier fodder", cropZ5: "Orchard — mango", cropZ6: "Orchard — sapota",
+      aHeatTitle: "{name} ({tag}) — standing heat",
+      aHeatBody: "Detected 04:20 by collar. Best AI window closes ~16:00. Sexed semen straw reserved.",
+      aZoneTitle: "{zone} below trigger ({m}% < {t}%)",
+      aZoneBody: "{crop}. Scheduler will irrigate at 18:30 unless you start it now.",
+      aTankTitle: "Water tank low ({p}%)", aTankBody: "Refill soon — active irrigation will drain the remainder quickly.",
+      aPhTitle: "{station} — pH {ph} out of range",
+      aPhAlk: "Trending alkaline — schedule an extra jeevamrutha + mulch round; recheck after Thursday's fertigation.",
+      aPhAcid: "Trending acidic — hold fertigation on this block and recheck; consider ghanjeevamrutha basal dose.",
+      aEcTitle: "Fertigation paused — EC guard tripped",
+      aEcBody: "Soil salts above {g} mS/cm. Dosing resumes automatically once EC settles.",
+      aWindTitle: "High wind ({w} km/h)",
+      aWindBody: "Hold neemastra/drone spraying until wind drops below 12 km/h — drift wastes the batch.",
+      aShedTitle: "Shed heat stress ({t} °C)",
+      aShedBody: "Fans and foggers switched on automatically. Check water troughs.",
+      i1t: "Inseminate Ganga today",
+      i1b: "Collar confirmed standing heat at 04:20. Hitting this cycle instead of the next is worth ₹8,000–15,000 — the KLDB sexed straw is reserved.",
+      i2t: "Irrigate Zone 3 tonight, then skip the weekend",
+      i2b: "Leafy greens are 5% under trigger and rain arrives Saturday (70%). One 25-minute cycle now, then let the rain cover Sat–Sun — saves ~2,800 L of tank water.",
+      i3t: "Early blight risk on tomato: LOW → MODERATE by Friday",
+      i3b: "Humidity rising ahead of the rain band. The neemastra window tomorrow morning is preventive — mulch and marigold borders are already in place.",
+      i4t: "Jeevamrutha cycle lands well",
+      i4b: "Thursday's Zone 1–2 fertigation comes 2 days before rain — nutrients settle in before the soil saturates.",
+      hPest: "Pest & weed watch", sPest: "traps · scouting · drone NDVI",
+      termiteK: "Termite bait stations", termiteHitsTpl: "{h} / {n} hits — orchard NE",
+      riskLow: "LOW", riskMod: "MODERATE",
+      trapYK: "Yellow sticky traps", trapYV: "{n} whitefly/day",
+      trapPK: "Pheromone traps (FAW)", trapPV: "{n} moths",
+      blockCrop: "Crop block", blockOrchard: "Orchard", blockFodder: "Fodder plot",
+      weedCover: "weed cover", ndviNote: "drone NDVI · Jul 21", cultivateChip: "cultivate",
+      aTermiteTitle: "Termite activity in orchard ({h}/{n} stations)",
+      aTermiteBody: "Fresh hits on NE bait stations. Apply neem-cake slurry around affected tree basins and recheck in 5 days.",
+      aWeedTitle: "Weed pressure high — {block} ({c}%)",
+      aWeedBody: "Above 25% cover. Schedule inter-row cultivation / mulching this week before the weekend rain."
+    },
+    kn: {
+      farmName: "ಅನಿಲ್ ಅವರ <span>ಸ್ಮಾರ್ಟ್ ಫಾರ್ಮ್</span>", live: "ಲೈವ್",
+      chipGateway: "ಗೇಟ್‌ವೇ ಆನ್‌ಲೈನ್", chipLora: "LoRa 9/9 ಸಂವೇದಕ", chip4g: "4G ಜಿಯೋ · 2 ಬಾರ್",
+      chipSms: "SMS ಬ್ಯಾಕಪ್ ಸಿದ್ಧ", chipSolar: "ಸೌರ",
+      kSoil: "ಮಣ್ಣಿನ ತೇವಾಂಶ", kAir: "ಗಾಳಿ ಉಷ್ಣತೆ", kWind: "ಗಾಳಿ ವೇಗ", kPh: "ಮಣ್ಣಿನ pH", kMilk: "ಇಂದಿನ ಹಾಲು", kTank: "ನೀರಿನ ಟ್ಯಾಂಕ್",
+      vs3h: "3 ಗಂ. ಹಿಂದಿನಿಂದ", vsY: "ಲೀ. ನಿನ್ನೆಗಿಂತ", phIn: "6.0–7.5 ಒಳಗೆ ಇದೆ", phOut: "6.0–7.5 ಮೀರಿದೆ",
+      hLast24: "ಕಳೆದ 24 ಗಂಟೆ", sLast24: "ಹವಾಮಾನ ಕೇಂದ್ರ + ಮಣ್ಣಿನ ಸಂವೇದಕ",
+      mMoisture: "ತೇವಾಂಶ", mTemp: "ಉಷ್ಣತೆ", mHumidity: "ಆರ್ದ್ರತೆ", mWind: "ಗಾಳಿ",
+      lblMoisture: "ಮಣ್ಣಿನ ತೇವಾಂಶ (ಸರಾಸರಿ)", lblTemp: "ಗಾಳಿ ಉಷ್ಣತೆ", lblHumidity: "ಸಾಪೇಕ್ಷ ಆರ್ದ್ರತೆ", lblWind: "ಗಾಳಿ ವೇಗ", chartNow: "ಈಗ",
+      hForecast: "5 ದಿನದ ಮುನ್ಸೂಚನೆ", hInsights: "AI ಸಲಹೆಗಳು",
+      wdShort: "ಭಾನು,ಸೋಮ,ಮಂಗಳ,ಬುಧ,ಗುರು,ಶುಕ್ರ,ಶನಿ",
+      sprayTpl: "<b>ಸಿಂಪಡಣೆ ಸಮಯ:</b> ವಲಯ 1–2ಕ್ಕೆ ನೀಮಾಸ್ತ್ರ <b>ನಾಳೆ 06:00–09:00</b> ಉತ್ತಮ; {wind}. ಶನಿ–ಭಾನು ಬೇಡ (ಮಳೆ 60–70%).",
+      windOk: "ಈಗ ಗಾಳಿ {w} km/h — 12–15ಕ್ಕಿಂತ ಕಡಿಮೆ ಸರಿ", windHigh: "ಗಾಳಿ ಜಾಸ್ತಿ ({w} km/h) — ಬೆಳಗಿನ ಶಾಂತ ಹೊತ್ತಿಗೆ ಕಾಯಿರಿ",
+      hPump: "ಪಂಪ್ ಮತ್ತು ಬೋರ್‌ವೆಲ್", sPump: "GSM ಸ್ಟಾರ್ಟರ್", pumpK: "ಪಂಪ್", flowK: "ಹರಿವಿನ ದರ",
+      boreK: "ಬೋರ್‌ವೆಲ್ ನೀರಿನ ಮಟ್ಟ", energyK: "ಇಂದಿನ ವಿದ್ಯುತ್", protK: "ಡ್ರೈ-ರನ್ / ಫೇಸ್ ರಕ್ಷಣೆ",
+      armed: "ಸಿದ್ಧ", running: "ಚಾಲೂ", idle: "ನಿಂತಿದೆ",
+      hZones: "ನೀರಾವರಿ ವಲಯಗಳು", sZones: "ಗೇಟ್‌ವೇ ಮೂಲಕ ವಾಲ್ವ್", zoneWord: "ವಲಯ",
+      trigger: "ಮಿತಿ", nextSched: "ಮುಂದಿನ ನೀರಾವರಿ", irrigating: "ನೀರು ಹರಿಯುತ್ತಿದೆ", belowTrig: "ಮಿತಿಗಿಂತ ಕಡಿಮೆ", phCheck: "pH ಪರಿಶೀಲನೆ",
+      hSoil: "ಮಣ್ಣಿನ ಆರೋಗ್ಯ", sSoil: "IoT ಕ್ಷೇತ್ರ ಕೇಂದ್ರಗಳು",
+      stationA: "ಕೇಂದ್ರ A — ಬೆಳೆ ಜಮೀನು", stationB: "ಕೇಂದ್ರ B — ತೋಟ",
+      ecK: "EC (ಲವಣಾಂಶ)", stempK: "ಮಣ್ಣಿನ ಉಷ್ಣತೆ", inRange: "ಸರಿ ಇದೆ", outRange: "ಮಿತಿ ಮೀರಿದೆ",
+      hFert: "ಫರ್ಟಿಗೇಶನ್", sFert: "ಜೀವಾಮೃತ · ವೆಂಚುರಿ ಡಿಫ್ಯೂಸರ್",
+      autoK: "ಸ್ವಯಂ ಡೋಸಿಂಗ್", autoSub: "ವಲಯದ ವಿಸ್ತೀರ್ಣದಿಂದ ಡೋಸ್ ಲೆಕ್ಕ",
+      pRate: "ಡೋಸ್ ದರ", pCycle: "ಆವರ್ತ", pInj: "ಇಂಜೆಕ್ಷನ್", pEc: "EC ಮಿತಿ", uDays: "ದಿನ",
+      manualMode: "ಮ್ಯಾನುವಲ್ ಮೋಡ್ — ಕೆಳಗಿನ ಡೋಸಿಂಗ್ ವಾಲ್ವ್ ಬಳಸಿ",
+      pausedTpl: "ನಿಲ್ಲಿಸಿದೆ — EC {ec} > ಮಿತಿ {g} mS/cm", pausedShort: "ನಿಲ್ಲಿಸಿದೆ — EC ಮಿತಿ",
+      dosingTpl: "{zone} ಡೋಸ್ ಆಗುತ್ತಿದೆ — {done} / {target} ಲೀ.",
+      idleTpl: "ನಿಷ್ಕ್ರಿಯ — ನೀರಾವರಿ ಜೊತೆ ಪ್ರತಿ {days} ದಿನಕ್ಕೆ ಸ್ವಯಂ ಡೋಸ್",
+      dosed: "ಡೋಸ್ ಮುಗಿದಿದೆ", pctDone: "% ಆಗಿದೆ",
+      venturi: "ವೆಂಚುರಿ ಡಿಫ್ಯೂಸರ್", injRateK: "ಇಂಜೆಕ್ಷನ್ ದರ", lineK: "ಲೈನ್ ಒತ್ತಡ",
+      manualValveK: "ಮ್ಯಾನುವಲ್ ಡೋಸಿಂಗ್ ವಾಲ್ವ್", whenAutoOff: "ಸ್ವಯಂ ಆಫ್ ಇದ್ದಾಗ",
+      batchK: "ಜೀವಾಮೃತ ಬ್ಯಾಚ್", batchV: "ದಿನ 5 / 7", fermenting: "ಹುದುಗುತ್ತಿದೆ",
+      flushK: "ಫಿಲ್ಟರ್ ಬ್ಯಾಕ್-ಫ್ಲಶ್", clean: "ಸ್ವಚ್ಛ", injecting: "ಇಂಜೆಕ್ಟ್ ಆಗುತ್ತಿದೆ", standby: "ಸಿದ್ಧ",
+      hHerd: "ಹಿಂಡು", girCows: "ಗಿರ್ ಹಸುಗಳು", boerGoats: "ಬೋಯರ್ ಮೇಕೆಗಳು", girBirds: "ಗಿರಿರಾಜ ಕೋಳಿ",
+      eggsK: "ಇಂದು ಸಂಗ್ರಹಿಸಿದ ಮೊಟ್ಟೆ", kidK: "ಈ ವಾರ ಮರಿ ಹಾಕಲಿರುವ", kidV: "2 ಮೇಕೆ",
+      hCollar: "ಕಾಲರ್ ಎಚ್ಚರಿಕೆಗಳು", sCollar: "ಬೆದೆ · ಮೆಲುಕು · ಆರೋಗ್ಯ",
+      bHeat: "ಬೆದೆ", bWatch: "ಗಮನಿಸಿ", bOk: "ಸರಿ",
+      nGanga: "ಬೆಳಿಗ್ಗೆ 04:20ಕ್ಕೆ ಬೆದೆ ಪತ್ತೆ — 16:00 ಒಳಗೆ ಗರ್ಭಧಾರಣೆ ಮಾಡಿಸಿ (ಸೆಕ್ಸ್ಡ್ ವೀರ್ಯ ಕಾಯ್ದಿರಿಸಿದೆ)",
+      nKaveri: "ಮೆಲುಕು ನಿನ್ನೆಗಿಂತ 18% ಕಡಿಮೆ — ಮೇವು ಸೇವನೆ ಗಮನಿಸಿ",
+      nTunga: "305-ದಿನದ ಇಳುವರಿ ಸರಿಯಿದೆ · ದಿನಕ್ಕೆ ಸರಾಸರಿ 8.1 ಲೀ.",
+      nBoer: "ಶನಿವಾರ ಸ್ಟಡ್ ಸೇವೆ — ಹೊಸಕೋಟೆ ಫಾರ್ಮ್",
+      hMilk: "ಹಾಲು — ಕಳೆದ 7 ದಿನ", sMilk: "A2 · ₹60/ಲೀ. ಫಾರ್ಮ್ ದರ",
+      milkTitleTpl: "ವಾರದ ಒಟ್ಟು <b>{wk} ಲೀ.</b> ≈ ₹{val} · ಇಂದು ಇಲ್ಲಿಯವರೆಗೆ <b>{t} ಲೀ.</b>",
+      hShed: "ಕೊಟ್ಟಿಗೆ ವಾತಾವರಣ", shedTempK: "ಉಷ್ಣತೆ", shedRhK: "ಆರ್ದ್ರತೆ", fogK: "ಫ್ಯಾನ್ / ಫಾಗರ್ (30 °C ಮೇಲೆ ಸ್ವಯಂ)",
+      hTasks: "ಇಂದಿನ ಕೆಲಸಗಳು", sTasks: "ಕೆಲಸಗಾರರ ಪಟ್ಟಿ", taskDoneNote: "ಮುಗಿದಿದೆ, ಫೋಟೋ ಬಂದಿದೆ",
+      tT1: "ವಲಯ 1 ಟೊಮೇಟೊ ಡ್ರಿಪ್ಪರ್ ಸುತ್ತ ಮಲ್ಚ್ ಸಡಿಲಿಸಿ", tT2: "ಜೀವಾಮೃತ ಬ್ಯಾರೆಲ್ ಕಲಕಿ · ಮುಗಿದ ಮೇಲೆ ಫೋಟೋ",
+      tT3: "ಸಂಜೆಯ ಸಿಂಪಡಣೆಗೆ ನೀಮಾಸ್ತ್ರ ತುಂಬಿಸಿ", tT4: "ಮಾರ್ಚ್ ಬೋಯರ್ ಮರಿಗಳ ತೂಕ ಅಳೆಯಿರಿ",
+      hPower: "ವಿದ್ಯುತ್", gridK: "ಗ್ರಿಡ್ ವಿದ್ಯುತ್", gridOn: "ಇದೆ", gridCut: "ಕರೆಂಟ್ ಕಡಿತ — ಸೌರದಲ್ಲಿ",
+      battK: "ನಿಯಂತ್ರಣ ವ್ಯವಸ್ಥೆ ಬ್ಯಾಟರಿ", battUnit: "% · ಸೌರ",
+      pumpMonK: "ಈ ತಿಂಗಳ ಪಂಪ್ ವಿದ್ಯುತ್", dieselK: "ಈ ತಿಂಗಳ ಡೀಸೆಲ್",
+      hCams: "ಕ್ಯಾಮೆರಾಗಳು", sCams: "ಸ್ಥಳೀಯ NVR", lastK: "ಕೊನೆಯದು:",
+      camGate: "ಗೇಟ್", camPump: "ಪಂಪ್ ಮನೆ", camShed: "ದನದ ಕೊಟ್ಟಿಗೆ", camStore: "ಗೋದಾಮು",
+      evGate: "ವಾಹನ 06:12", evPump: "ವ್ಯಕ್ತಿ 05:48 (ಮಂಜು)", evShed: "ಚಲನೆ 04:22", evStore: "ರಾತ್ರಿ ಏನೂ ಇಲ್ಲ",
+      hLedger: "ಜುಲೈ ಲಾಭ-ನಷ್ಟ", sLedger: "ಡಿಜಿಟಲ್ ಲೆಕ್ಕ",
+      lCrops: "ಬೆಳೆ ಮತ್ತು ತರಕಾರಿ", lOrchard: "ತೋಟ", lDairy: "ಹೈನುಗಾರಿಕೆ (A2 ಹಾಲು)",
+      lGoat: "ಮೇಕೆ ಮತ್ತು ಕೋಳಿ", lWages: "ಕೂಲಿ ಮತ್ತು ವಿದ್ಯುತ್", lNet: "ನಿವ್ವಳ (ಈ ತಿಂಗಳು)",
+      navHome: "ಅವಲೋಕನ", navWater: "ನೀರು", navStock: "ಜಾನುವಾರು", navOps: "ಕೃಷಿ ಕೆಲಸ",
+      footNote: "ಪೂರ್ವವೀಕ್ಷಣೆಗೆ ಮಾದರಿ ಡೇಟಾ — ಗೇಟ್‌ವೇ API ಇಲ್ಲಿ ಜೋಡಿಸಬಹುದು. ನೆಟ್‌ವರ್ಕ್ ಇಲ್ಲದಿದ್ದರೂ ವೇಳಾಪಟ್ಟಿ ಫಾರ್ಮ್‌ನಲ್ಲೇ ನಡೆಯುತ್ತದೆ.",
+      cropZ1: "ಟೊಮೇಟೊ — ಹೂಬಿಡುವ ಹಂತ", cropZ2: "ಹುರುಳಿ ಮತ್ತು ಮೆಣಸಿನಕಾಯಿ", cropZ3: "ಸೊಪ್ಪು ತರಕಾರಿ",
+      cropZ4: "ನೇಪಿಯರ್ ಮೇವು", cropZ5: "ತೋಟ — ಮಾವು", cropZ6: "ತೋಟ — ಸಪೋಟ",
+      aHeatTitle: "{name} ({tag}) — ಬೆದೆಯಲ್ಲಿದೆ",
+      aHeatBody: "ಕಾಲರ್ 04:20ಕ್ಕೆ ಪತ್ತೆ ಮಾಡಿದೆ. ~16:00 ಒಳಗೆ ಗರ್ಭಧಾರಣೆ ಉತ್ತಮ. ಸೆಕ್ಸ್ಡ್ ವೀರ್ಯ ಕಾಯ್ದಿರಿಸಿದೆ.",
+      aZoneTitle: "{zone} ಮಿತಿಗಿಂತ ಕಡಿಮೆ ({m}% < {t}%)",
+      aZoneBody: "{crop}. ನೀವು ಈಗ ಶುರು ಮಾಡದಿದ್ದರೆ 18:30ಕ್ಕೆ ಸ್ವಯಂ ನೀರಾವರಿ ಆಗುತ್ತದೆ.",
+      aTankTitle: "ನೀರಿನ ಟ್ಯಾಂಕ್ ಕಡಿಮೆ ({p}%)", aTankBody: "ಬೇಗ ತುಂಬಿಸಿ — ನೀರಾವರಿ ನಡೆದರೆ ಬೇಗ ಖಾಲಿಯಾಗುತ್ತದೆ.",
+      aPhTitle: "{station} — pH {ph} ಮಿತಿ ಮೀರಿದೆ",
+      aPhAlk: "ಕ್ಷಾರೀಯವಾಗುತ್ತಿದೆ — ಹೆಚ್ಚುವರಿ ಜೀವಾಮೃತ + ಮಲ್ಚ್ ಮಾಡಿ; ಗುರುವಾರದ ಫರ್ಟಿಗೇಶನ್ ನಂತರ ಪರಿಶೀಲಿಸಿ.",
+      aPhAcid: "ಆಮ್ಲೀಯವಾಗುತ್ತಿದೆ — ಈ ಜಮೀನಿನ ಫರ್ಟಿಗೇಶನ್ ತಡೆಹಿಡಿಯಿರಿ; ಘನಜೀವಾಮೃತ ಪರಿಗಣಿಸಿ.",
+      aEcTitle: "ಫರ್ಟಿಗೇಶನ್ ನಿಲ್ಲಿಸಿದೆ — EC ಮಿತಿ",
+      aEcBody: "ಮಣ್ಣಿನ ಲವಣ {g} mS/cm ಮೀರಿದೆ. EC ಇಳಿದ ಮೇಲೆ ತಾನಾಗಿಯೇ ಮುಂದುವರಿಯುತ್ತದೆ.",
+      aWindTitle: "ಗಾಳಿ ಜಾಸ್ತಿ ({w} km/h)",
+      aWindBody: "12 km/h ಕೆಳಗೆ ಇಳಿಯುವವರೆಗೆ ನೀಮಾಸ್ತ್ರ/ಡ್ರೋನ್ ಸಿಂಪಡಣೆ ಬೇಡ — ಗಾಳಿಗೆ ಔಷಧ ವ್ಯರ್ಥ.",
+      aShedTitle: "ಕೊಟ್ಟಿಗೆ ಬಿಸಿ ಒತ್ತಡ ({t} °C)",
+      aShedBody: "ಫ್ಯಾನ್/ಫಾಗರ್ ತಾನಾಗಿ ಚಾಲೂ ಆಗಿದೆ. ನೀರಿನ ತೊಟ್ಟಿ ಪರಿಶೀಲಿಸಿ.",
+      i1t: "ಗಂಗಾಗೆ ಇಂದೇ ಗರ್ಭಧಾರಣೆ ಮಾಡಿಸಿ",
+      i1b: "ಕಾಲರ್ 04:20ಕ್ಕೆ ಬೆದೆ ದೃಢಪಡಿಸಿದೆ. ಈ ಚಕ್ರ ತಪ್ಪಿಸದಿದ್ದರೆ ₹8,000–15,000 ಲಾಭ — KLDB ಸೆಕ್ಸ್ಡ್ ವೀರ್ಯ ಕಾಯ್ದಿರಿಸಿದೆ.",
+      i2t: "ವಲಯ 3ಕ್ಕೆ ಇಂದು ರಾತ್ರಿ ನೀರು, ವಾರಾಂತ್ಯ ಬಿಡಿ",
+      i2b: "ಸೊಪ್ಪು ಮಿತಿಗಿಂತ 5% ಕಡಿಮೆ; ಶನಿವಾರ ಮಳೆ (70%). ಈಗ 25 ನಿಮಿಷ ನೀರು ಕೊಟ್ಟು ವಾರಾಂತ್ಯ ಮಳೆಗೆ ಬಿಡಿ — ~2,800 ಲೀ. ಉಳಿತಾಯ.",
+      i3t: "ಟೊಮೇಟೊ ಅಂಗಮಾರಿ ಅಪಾಯ: ಶುಕ್ರವಾರಕ್ಕೆ ಕಡಿಮೆ → ಮಧ್ಯಮ",
+      i3b: "ಮಳೆಗೆ ಮುನ್ನ ಆರ್ದ್ರತೆ ಏರುತ್ತಿದೆ. ನಾಳೆ ಬೆಳಿಗ್ಗೆಯ ನೀಮಾಸ್ತ್ರ ತಡೆಗಟ್ಟುವ ಕ್ರಮ — ಮಲ್ಚ್ ಮತ್ತು ಚೆಂಡುಹೂ ಅಂಚು ಈಗಾಗಲೇ ಇವೆ.",
+      i4t: "ಜೀವಾಮೃತ ಚಕ್ರ ಸರಿಯಾಗಿ ಹೊಂದುತ್ತದೆ",
+      i4b: "ಗುರುವಾರದ ವಲಯ 1–2 ಫರ್ಟಿಗೇಶನ್ ಮಳೆಗೆ 2 ದಿನ ಮೊದಲು — ಪೋಷಕಾಂಶ ಮಣ್ಣಿನಲ್ಲಿ ನೆಲೆಗೊಳ್ಳುತ್ತದೆ.",
+      hPest: "ಕೀಟ ಮತ್ತು ಕಳೆ ನಿಗಾ", sPest: "ಬಲೆ · ಪರಿಶೀಲನೆ · ಡ್ರೋನ್ NDVI",
+      termiteK: "ಗೆದ್ದಲು ಬೈಟ್ ಕೇಂದ್ರಗಳು", termiteHitsTpl: "{h} / {n} ಪತ್ತೆ — ತೋಟದ ಈಶಾನ್ಯ",
+      riskLow: "ಕಡಿಮೆ", riskMod: "ಮಧ್ಯಮ",
+      trapYK: "ಹಳದಿ ಅಂಟು ಬಲೆ", trapYV: "ದಿನಕ್ಕೆ {n} ಬಿಳಿನೊಣ",
+      trapPK: "ಫೆರೊಮೋನ್ ಬಲೆ (ಸೈನಿಕ ಹುಳು)", trapPV: "{n} ಪತಂಗ",
+      blockCrop: "ಬೆಳೆ ಜಮೀನು", blockOrchard: "ತೋಟ", blockFodder: "ಮೇವಿನ ಜಮೀನು",
+      weedCover: "ಕಳೆ ಹರಡುವಿಕೆ", ndviNote: "ಡ್ರೋನ್ NDVI · ಜುಲೈ 21", cultivateChip: "ಕಳೆ ತೆಗೆಯಿರಿ",
+      aTermiteTitle: "ತೋಟದಲ್ಲಿ ಗೆದ್ದಲು ಚಟುವಟಿಕೆ ({h}/{n} ಕೇಂದ್ರ)",
+      aTermiteBody: "ಈಶಾನ್ಯ ಬೈಟ್ ಕೇಂದ್ರಗಳಲ್ಲಿ ಹೊಸ ಪತ್ತೆ. ಬಾಧಿತ ಮರಗಳ ಪಾತಿಗೆ ಬೇವಿನ ಹಿಂಡಿ ದ್ರಾವಣ ಹಾಕಿ, 5 ದಿನದಲ್ಲಿ ಮತ್ತೆ ಪರಿಶೀಲಿಸಿ.",
+      aWeedTitle: "ಕಳೆ ಒತ್ತಡ ಹೆಚ್ಚು — {block} ({c}%)",
+      aWeedBody: "25% ಮೀರಿದೆ. ವಾರಾಂತ್ಯದ ಮಳೆಗೆ ಮೊದಲು ಸಾಲುಗಳ ನಡುವೆ ಕಳೆ ತೆಗೆಯಿರಿ / ಮಲ್ಚ್ ಮಾಡಿ."
+    },
+    hi: {
+      farmName: "अनिल का <span>स्मार्ट फ़ार्म</span>", live: "लाइव",
+      chipGateway: "गेटवे ऑनलाइन", chipLora: "LoRa 9/9 सेंसर", chip4g: "4G जियो · 2 बार",
+      chipSms: "SMS बैकअप तैयार", chipSolar: "सौर",
+      kSoil: "मिट्टी की नमी", kAir: "हवा का तापमान", kWind: "हवा की गति", kPh: "मिट्टी का pH", kMilk: "आज का दूध", kTank: "पानी की टंकी",
+      vs3h: "3 घं. पहले से", vsY: "ली. कल से", phIn: "6.0–7.5 के भीतर", phOut: "6.0–7.5 से बाहर",
+      hLast24: "पिछले 24 घंटे", sLast24: "मौसम केंद्र + मिट्टी सेंसर",
+      mMoisture: "नमी", mTemp: "तापमान", mHumidity: "आर्द्रता", mWind: "हवा",
+      lblMoisture: "मिट्टी की नमी (औसत)", lblTemp: "हवा का तापमान", lblHumidity: "सापेक्ष आर्द्रता", lblWind: "हवा की गति", chartNow: "अभी",
+      hForecast: "5 दिन का पूर्वानुमान", hInsights: "AI सुझाव",
+      wdShort: "रवि,सोम,मंगल,बुध,गुरु,शुक्र,शनि",
+      sprayTpl: "<b>छिड़काव समय:</b> ज़ोन 1–2 पर नीमास्त्र <b>कल 06:00–09:00</b> सबसे अच्छा; {wind}. शनि–रवि टालें (बारिश 60–70%).",
+      windOk: "हवा अभी {w} km/h — 12–15 से नीचे ठीक", windHigh: "हवा अभी तेज़ है ({w} km/h) — सुबह की शांति का इंतज़ार करें",
+      hPump: "पंप और बोरवेल", sPump: "GSM स्टार्टर", pumpK: "पंप", flowK: "प्रवाह दर",
+      boreK: "बोरवेल जल स्तर", energyK: "आज की बिजली", protK: "ड्राई-रन / फेज़ सुरक्षा",
+      armed: "तैयार", running: "चालू", idle: "बंद",
+      hZones: "सिंचाई ज़ोन", sZones: "गेटवे से वाल्व नियंत्रण", zoneWord: "ज़ोन",
+      trigger: "सीमा", nextSched: "अगली सिंचाई", irrigating: "सिंचाई चालू", belowTrig: "सीमा से नीचे", phCheck: "pH जाँच",
+      hSoil: "मिट्टी का स्वास्थ्य", sSoil: "IoT फ़ील्ड स्टेशन",
+      stationA: "स्टेशन A — फ़सल क्षेत्र", stationB: "स्टेशन B — बाग़",
+      ecK: "EC (लवण)", stempK: "मिट्टी का तापमान", inRange: "ठीक है", outRange: "सीमा से बाहर",
+      hFert: "फर्टिगेशन", sFert: "जीवामृत · वेंचुरी डिफ्यूज़र",
+      autoK: "ऑटो-डोज़िंग", autoSub: "ज़ोन क्षेत्रफल से खुराक की गणना",
+      pRate: "खुराक दर", pCycle: "चक्र", pInj: "इंजेक्शन", pEc: "EC सीमा", uDays: "दिन",
+      manualMode: "मैनुअल मोड — नीचे वाला डोज़िंग वाल्व इस्तेमाल करें",
+      pausedTpl: "रुका — EC {ec} > सीमा {g} mS/cm", pausedShort: "रुका — EC सीमा",
+      dosingTpl: "{zone} में डोज़िंग — {done} / {target} ली.",
+      idleTpl: "निष्क्रिय — सिंचाई के साथ हर {days} दिन में अपने-आप डोज़",
+      dosed: "डोज़ पूरा", pctDone: "% हुआ",
+      venturi: "वेंचुरी डिफ्यूज़र", injRateK: "इंजेक्शन दर", lineK: "लाइन दबाव",
+      manualValveK: "मैनुअल डोज़िंग वाल्व", whenAutoOff: "जब ऑटो बंद हो",
+      batchK: "जीवामृत बैच", batchV: "दिन 5 / 7", fermenting: "किण्वन जारी",
+      flushK: "फ़िल्टर बैक-फ्लश", clean: "साफ़", injecting: "इंजेक्ट हो रहा है", standby: "तैयार",
+      hHerd: "पशुधन", girCows: "गिर गायें", boerGoats: "बोअर बकरियाँ", girBirds: "गिरिराजा मुर्गियाँ",
+      eggsK: "आज जमा अंडे", kidK: "इस हफ़्ते ब्याने वाली", kidV: "2 बकरियाँ",
+      hCollar: "कॉलर अलर्ट", sCollar: "मद · जुगाली · स्वास्थ्य",
+      bHeat: "मद", bWatch: "निगरानी", bOk: "ठीक",
+      nGanga: "सुबह 04:20 पर मद पकड़ी गई — 16:00 से पहले गर्भाधान कराएँ (सेक्स्ड सीमेन बुक है)",
+      nKaveri: "जुगाली कल से 18% कम — चारा सेवन पर नज़र रखें",
+      nTunga: "305-दिन उपज सही राह पर · औसत 8.1 ली./दिन",
+      nBoer: "शनिवार स्टड सेवा बुक — होसकोटे फ़ार्म",
+      hMilk: "दूध — पिछले 7 दिन", sMilk: "A2 · ₹60/ली. फ़ार्म-गेट",
+      milkTitleTpl: "सप्ताह कुल <b>{wk} ली.</b> ≈ ₹{val} · आज अब तक <b>{t} ली.</b>",
+      hShed: "शेड का वातावरण", shedTempK: "तापमान", shedRhK: "आर्द्रता", fogK: "पंखा / फॉगर (30 °C पर ऑटो)",
+      hTasks: "आज के काम", sTasks: "कर्मचारी सूची", taskDoneNote: "पूरा, फोटो मिली",
+      tT1: "ज़ोन 1 टमाटर ड्रिपर के आसपास मल्च ढीली करें", tT2: "जीवामृत बैरल हिलाएँ · पूरा होने पर फोटो",
+      tT3: "शाम के छिड़काव के लिए नीमास्त्र भरें", tT4: "मार्च के बोअर बच्चों का वज़न लें",
+      hPower: "बिजली", gridK: "ग्रिड आपूर्ति", gridOn: "चालू", gridCut: "बिजली कटौती — सौर पर",
+      battK: "नियंत्रण प्रणाली बैटरी", battUnit: "% · सौर",
+      pumpMonK: "इस महीने पंप की बिजली", dieselK: "इस महीने डीज़ल",
+      hCams: "कैमरे", sCams: "लोकल NVR", lastK: "अंतिम:",
+      camGate: "गेट", camPump: "पंप घर", camShed: "गौशाला", camStore: "भंडार",
+      evGate: "वाहन 06:12", evPump: "व्यक्ति 05:48 (मंजू)", evShed: "हलचल 04:22", evStore: "रात में कुछ नहीं",
+      hLedger: "जुलाई लाभ-हानि", sLedger: "डिजिटल बहीखाता",
+      lCrops: "फ़सल और सब्ज़ियाँ", lOrchard: "बाग़", lDairy: "डेयरी (A2 दूध)",
+      lGoat: "बकरी और मुर्गी", lWages: "मज़दूरी और बिजली", lNet: "शुद्ध (इस महीने)",
+      navHome: "अवलोकन", navWater: "पानी", navStock: "पशुधन", navOps: "फ़ार्म काम",
+      footNote: "पूर्वावलोकन के लिए नमूना डेटा — गेटवे API यहाँ जुड़ता है। नेटवर्क न होने पर भी शेड्यूल फ़ार्म पर चलते रहते हैं।",
+      cropZ1: "टमाटर — फूल अवस्था", cropZ2: "बीन्स और मिर्च", cropZ3: "पत्तेदार सब्ज़ियाँ",
+      cropZ4: "नेपियर चारा", cropZ5: "बाग़ — आम", cropZ6: "बाग़ — चीकू",
+      aHeatTitle: "{name} ({tag}) — मद में है",
+      aHeatBody: "कॉलर ने 04:20 पर पकड़ा। ~16:00 तक गर्भाधान सबसे अच्छा। सेक्स्ड सीमेन आरक्षित है।",
+      aZoneTitle: "{zone} सीमा से नीचे ({m}% < {t}%)",
+      aZoneBody: "{crop}। अभी शुरू न करने पर 18:30 बजे अपने-आप सिंचाई होगी।",
+      aTankTitle: "पानी की टंकी कम ({p}%)", aTankBody: "जल्दी भरें — सिंचाई चलने पर बाक़ी जल्दी खत्म होगा।",
+      aPhTitle: "{station} — pH {ph} सीमा से बाहर",
+      aPhAlk: "क्षारीय हो रही है — अतिरिक्त जीवामृत + मल्च करें; गुरुवार की फर्टिगेशन के बाद जाँचें।",
+      aPhAcid: "अम्लीय हो रही है — इस क्षेत्र की फर्टिगेशन रोकें; घनजीवामृत पर विचार करें।",
+      aEcTitle: "फर्टिगेशन रुकी — EC सीमा पार",
+      aEcBody: "मिट्टी के लवण {g} mS/cm से ऊपर। EC घटते ही डोज़िंग अपने-आप शुरू होगी।",
+      aWindTitle: "तेज़ हवा ({w} km/h)",
+      aWindBody: "12 km/h से नीचे आने तक नीमास्त्र/ड्रोन छिड़काव रोकें — हवा में दवा बर्बाद होती है।",
+      aShedTitle: "शेड में गर्मी का तनाव ({t} °C)",
+      aShedBody: "पंखे/फॉगर अपने-आप चालू हो गए हैं। पानी की नाँद जाँचें।",
+      i1t: "गंगा का गर्भाधान आज ही कराएँ",
+      i1b: "कॉलर ने 04:20 पर मद की पुष्टि की। यह चक्र पकड़ने से ₹8,000–15,000 का लाभ — KLDB सेक्स्ड सीमेन आरक्षित है।",
+      i2t: "ज़ोन 3 में आज रात सिंचाई, फिर वीकेंड छोड़ें",
+      i2b: "पत्तेदार सब्ज़ियाँ सीमा से 5% नीचे; शनिवार को बारिश (70%)। अभी 25 मिनट पानी दें, वीकेंड बारिश पर छोड़ें — ~2,800 ली. की बचत।",
+      i3t: "टमाटर में अगेती झुलसा जोखिम: शुक्रवार तक कम → मध्यम",
+      i3b: "बारिश से पहले आर्द्रता बढ़ रही है। कल सुबह का नीमास्त्र निवारक है — मल्च और गेंदे की बाड़ पहले से है।",
+      i4t: "जीवामृत चक्र सही बैठता है",
+      i4b: "गुरुवार की ज़ोन 1–2 फर्टिगेशन बारिश से 2 दिन पहले — पोषक तत्व मिट्टी में बैठ जाते हैं।",
+      hPest: "कीट और खरपतवार निगरानी", sPest: "जाल · निरीक्षण · ड्रोन NDVI",
+      termiteK: "दीमक बेट स्टेशन", termiteHitsTpl: "{h} / {n} में हलचल — बाग़ का उत्तर-पूर्व",
+      riskLow: "कम", riskMod: "मध्यम",
+      trapYK: "पीले चिपचिपे जाल", trapYV: "{n} सफ़ेद मक्खी/दिन",
+      trapPK: "फेरोमोन जाल (फॉल आर्मीवर्म)", trapPV: "{n} पतंगे",
+      blockCrop: "फ़सल क्षेत्र", blockOrchard: "बाग़", blockFodder: "चारा भूखंड",
+      weedCover: "खरपतवार फैलाव", ndviNote: "ड्रोन NDVI · 21 जुलाई", cultivateChip: "निराई करें",
+      aTermiteTitle: "बाग़ में दीमक सक्रिय ({h}/{n} स्टेशन)",
+      aTermiteBody: "उत्तर-पूर्व बेट स्टेशनों पर नई हलचल। प्रभावित थालों में नीम खली घोल डालें, 5 दिन में फिर जाँचें।",
+      aWeedTitle: "खरपतवार दबाव अधिक — {block} ({c}%)",
+      aWeedBody: "25% से ऊपर। वीकेंड की बारिश से पहले कतारों के बीच निराई/मल्चिंग कराएँ।"
+    }
+  };
+
+  var state; // forward-declared for t()
+  function t(k) { return (L[state.lang] && L[state.lang][k]) || L.en[k] || k; }
+  function tpl(key, vars) {
+    var s = t(key);
+    Object.keys(vars).forEach(function (k) { s = s.split("{" + k + "}").join(vars[k]); });
+    return s;
+  }
+
   /* ---------- simulated data (replace with edge-gateway API) ---------- */
   var POINTS = 49; // 24h at 30-min intervals
-  var state = {
+  var storedLang = "en";
+  try { storedLang = localStorage.getItem("farm-lang") || "en"; } catch (e) {}
+  state = {
+    lang: L[storedLang] ? storedLang : "en",
     metric: "moisture",
     series: { moisture: [], temp: [], humidity: [], wind: [] },
     soil: [
-      { name: "Station A — crop block", ph: 6.8, ec: 0.44, stemp: 24.2 },
-      { name: "Station B — orchard", ph: 7.2, ec: 0.38, stemp: 23.6 }
+      { nameKey: "stationA", ph: 6.8, ec: 0.44, stemp: 24.2 },
+      { nameKey: "stationB", ph: 7.2, ec: 0.38, stemp: 23.6 }
     ],
     diffuser: { on: false, pressure: 1.2 },
     tank: 68,
     dismissed: {},
     zones: [
-      { id: "z1", name: "Zone 1", crop: "Tomato — flowering", trigger: 28, moisture: 33, valve: false },
-      { id: "z2", name: "Zone 2", crop: "Beans & chilli", trigger: 26, moisture: 38, valve: false },
-      { id: "z3", name: "Zone 3", crop: "Leafy greens", trigger: 30, moisture: 25, valve: false },
-      { id: "z4", name: "Zone 4", crop: "Napier fodder", trigger: 22, moisture: 41, valve: false },
-      { id: "z5", name: "Zone 5", crop: "Orchard — mango", trigger: 20, moisture: 34, valve: false },
-      { id: "z6", name: "Zone 6", crop: "Orchard — sapota", trigger: 20, moisture: 31, valve: false }
+      { id: "z1", num: 1, cropKey: "cropZ1", acres: 1.5, trigger: 28, moisture: 33, valve: false },
+      { id: "z2", num: 2, cropKey: "cropZ2", acres: 1.5, trigger: 26, moisture: 38, valve: false },
+      { id: "z3", num: 3, cropKey: "cropZ3", acres: 1.0, trigger: 30, moisture: 25, valve: false },
+      { id: "z4", num: 4, cropKey: "cropZ4", acres: 2.0, trigger: 22, moisture: 41, valve: false },
+      { id: "z5", num: 5, cropKey: "cropZ5", acres: 1.5, trigger: 20, moisture: 34, valve: false },
+      { id: "z6", num: 6, cropKey: "cropZ6", acres: 1.0, trigger: 20, moisture: 31, valve: false }
     ],
+    fert: {
+      auto: true, rate: 200, days: 15, inj: 40, ec: 0.9,
+      paused: false,
+      progress: { z1: 0, z2: 0, z3: 0, z4: 0, z5: 0, z6: 0 }
+    },
     pump: { kwh: 4.2, borewell: 42.6, flow: 0 },
     solar: { batt: 86, grid: true },
     shed: { temp: 29.2, rh: 72 },
-    milk: [61, 64, 62, 66, 63, 65, 58], // last value = today so far
+    milk: [61, 64, 62, 66, 63, 65, 58],
     eggs: 142,
     animals: [
-      { name: "Ganga", tag: "GIR-03", note: "Standing heat detected 04:20 — inseminate before 16:00 (sexed semen booked)", status: "heat" },
-      { name: "Kaveri", tag: "GIR-07", note: "Rumination down 18% since yesterday — watch feed intake", status: "watch" },
-      { name: "Tunga", tag: "GIR-01", note: "305-day yield on track · 8.1 L/day avg", status: "ok" },
-      { name: "Boer B-2", tag: "BUCK-2", note: "Stud service booked Sat — Hoskote farm", status: "ok" }
+      { name: "Ganga", tag: "GIR-03", noteKey: "nGanga", status: "heat" },
+      { name: "Kaveri", tag: "GIR-07", noteKey: "nKaveri", status: "watch" },
+      { name: "Tunga", tag: "GIR-01", noteKey: "nTunga", status: "ok" },
+      { name: "Boer B-2", tag: "BUCK-2", noteKey: "nBoer", status: "ok" }
     ],
     tasks: [
-      { id: "t1", who: "Manju", task: "Open mulch around Zone 1 tomato drippers", done: false },
-      { id: "t2", who: "Shivamma", task: "Stir jeevamrutha barrel · photo when done", done: true },
-      { id: "t3", who: "Manju", task: "Refill neemastra sprayer for evening window", done: false },
-      { id: "t4", who: "Ravi", task: "Weigh-band the March Boer kids", done: false }
+      { id: "t1", who: "Manju", key: "tT1", done: false },
+      { id: "t2", who: "Shivamma", key: "tT2", done: true },
+      { id: "t3", who: "Manju", key: "tT3", done: false },
+      { id: "t4", who: "Ravi", key: "tT4", done: false }
     ],
+    pest: {
+      termiteStations: 10, termiteHits: 3,
+      whitefly: 34, faw: 2,
+      weeds: [
+        { blockKey: "blockCrop", cov: 9 },
+        { blockKey: "blockOrchard", cov: 22 },
+        { blockKey: "blockFodder", cov: 31 }
+      ]
+    },
     cams: [
-      { name: "Gate", ev: "Vehicle 06:12", on: true },
-      { name: "Pump house", ev: "Person 05:48 (Manju)", on: true },
-      { name: "Cattle shed", ev: "Motion 04:22", on: true },
-      { name: "Store", ev: "No events tonight", on: true }
+      { nameKey: "camGate", evKey: "evGate", on: true },
+      { nameKey: "camPump", evKey: "evPump", on: true },
+      { nameKey: "camShed", evKey: "evShed", on: true },
+      { nameKey: "camStore", evKey: "evStore", on: true }
     ]
   };
 
   var METRICS = {
-    moisture: { label: "Soil moisture (field avg)", unit: "%", color: "--s1", min: 15, max: 65 },
-    temp:     { label: "Air temperature", unit: "°C", color: "--s2", min: 12, max: 40 },
-    humidity: { label: "Relative humidity", unit: "%", color: "--s3", min: 30, max: 95 },
-    wind:     { label: "Wind speed", unit: " km/h", color: "--s4", min: 0, max: 32 }
+    moisture: { labelKey: "lblMoisture", unit: "%", color: "--s1", min: 15, max: 65 },
+    temp:     { labelKey: "lblTemp", unit: "°C", color: "--s2", min: 12, max: 40 },
+    humidity: { labelKey: "lblHumidity", unit: "%", color: "--s3", min: 30, max: 95 },
+    wind:     { labelKey: "lblWind", unit: " km/h", color: "--s4", min: 0, max: 32 }
   };
 
   function seedSeries() {
     var now = Date.now();
     for (var i = 0; i < POINTS; i++) {
-      var t = now - (POINTS - 1 - i) * 30 * 60 * 1000;
-      var hour = new Date(t).getHours() + new Date(t).getMinutes() / 60;
+      var tm = now - (POINTS - 1 - i) * 30 * 60 * 1000;
+      var hour = new Date(tm).getHours() + new Date(tm).getMinutes() / 60;
       var sun = Math.sin(((hour - 6) / 24) * Math.PI * 2);
-      state.series.moisture.push({ t: t, v: clamp(40 - sun * 6 + noise(2.2), 10, 70) });
-      state.series.temp.push({ t: t, v: clamp(25 + sun * 6 + noise(1.2), 5, 45) });
-      state.series.humidity.push({ t: t, v: clamp(64 - sun * 14 + noise(3), 20, 98) });
-      state.series.wind.push({ t: t, v: clamp(8 + sun * 5 + noise(2.5), 0, 32) });
+      state.series.moisture.push({ t: tm, v: clamp(40 - sun * 6 + noise(2.2), 10, 70) });
+      state.series.temp.push({ t: tm, v: clamp(25 + sun * 6 + noise(1.2), 5, 45) });
+      state.series.humidity.push({ t: tm, v: clamp(64 - sun * 14 + noise(3), 20, 98) });
+      state.series.wind.push({ t: tm, v: clamp(8 + sun * 5 + noise(2.5), 0, 32) });
     }
   }
   function noise(a) { return (Math.random() - 0.5) * 2 * a; }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
   function last(arr) { return arr[arr.length - 1]; }
+  function zoneName(z) { return t("zoneWord") + " " + z.num; }
 
   function tick() {
-    var t = Date.now();
-    var hour = new Date(t).getHours() + new Date(t).getMinutes() / 60;
+    var tm = Date.now();
+    var hour = new Date(tm).getHours() + new Date(tm).getMinutes() / 60;
     var sun = Math.sin(((hour - 6) / 24) * Math.PI * 2);
     var irrigating = state.zones.some(function (z) { return z.valve; });
 
-    push("moisture", clamp(last(state.series.moisture).v + (irrigating ? 0.9 : -0.15) + noise(0.5), 10, 70), t);
-    push("temp", clamp(25 + sun * 6 + noise(0.8), 5, 45), t);
-    push("humidity", clamp(64 - sun * 14 + noise(1.5), 20, 98), t);
-    push("wind", clamp(last(state.series.wind).v + noise(1.4) + (8 + sun * 5 - last(state.series.wind).v) * 0.08, 0, 32), t);
+    push("moisture", clamp(last(state.series.moisture).v + (irrigating ? 0.9 : -0.15) + noise(0.5), 10, 70), tm);
+    push("temp", clamp(25 + sun * 6 + noise(0.8), 5, 45), tm);
+    push("humidity", clamp(64 - sun * 14 + noise(1.5), 20, 98), tm);
+    push("wind", clamp(last(state.series.wind).v + noise(1.4) + (8 + sun * 5 - last(state.series.wind).v) * 0.08, 0, 32), tm);
 
     state.soil.forEach(function (s) {
       s.ph = clamp(s.ph + noise(0.015) + (state.diffuser.on ? -0.01 : 0), 5.4, 8.2);
       s.ec = clamp(s.ec + noise(0.008) + (state.diffuser.on ? 0.01 : -0.002), 0.1, 1.5);
       s.stemp = clamp(s.stemp + noise(0.1), 15, 32);
     });
-    state.diffuser.pressure = clamp(1.2 + (irrigating ? 0.25 : 0) + noise(0.05), 0.8, 2.0);
 
     state.zones.forEach(function (z) {
       z.moisture = clamp(z.moisture + (z.valve ? 1.4 : -0.12) + noise(0.25), 5, 90);
@@ -650,27 +1028,64 @@
     } else {
       state.pump.flow = 0;
     }
+    state.diffuser.pressure = clamp(1.2 + (irrigating ? 0.25 : 0) + noise(0.05), 0.8, 2.0);
+
+    /* auto-dosing: inject while a zone irrigates, until its computed dose
+       (acres x L/acre) is delivered; EC guard pauses injection */
+    var fert = state.fert;
+    if (fert.auto) {
+      var active = state.zones.find(function (z) {
+        return z.valve && fert.progress[z.id] < z.acres * fert.rate;
+      });
+      var ecHigh = state.soil.some(function (s) { return s.ec > fert.ec; });
+      fert.paused = !!active && ecHigh;
+      if (active && !ecHigh) {
+        state.diffuser.on = true;
+        // demo speed: ~30x real time so progress is visible in preview
+        fert.progress[active.id] = Math.min(active.acres * fert.rate,
+          fert.progress[active.id] + (fert.inj / 3600) * 4 * 30);
+      } else {
+        state.diffuser.on = false;
+      }
+    } else {
+      fert.paused = false;
+    }
+
     state.shed.temp = clamp(state.shed.temp + noise(0.15) + (sun > 0.3 ? 0.05 : -0.04), 22, 36);
     state.shed.rh = clamp(state.shed.rh + noise(0.4), 40, 95);
     state.milk[state.milk.length - 1] = clamp(state.milk[state.milk.length - 1] + (Math.random() < 0.12 ? 0.4 : 0), 0, 80);
 
     render();
   }
-  function push(key, v, t) {
-    state.series[key].push({ t: t, v: v });
+  function push(key, v, tm) {
+    state.series[key].push({ t: tm, v: v });
     if (state.series[key].length > POINTS) state.series[key].shift();
   }
 
   /* ---------- helpers ---------- */
   function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
-  function fmtTime(t) {
-    var d = new Date(t);
+  function fmtTime(tm) {
+    var d = new Date(tm);
     return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
   }
   var warnIcon = function (color) {
     return '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 15 14H1L8 1.5Z" fill="' + color +
       '"/><rect x="7.3" y="6" width="1.4" height="4" rx="0.7" fill="var(--surface)"/><circle cx="8" cy="11.8" r="0.9" fill="var(--surface)"/></svg>';
   };
+
+  function applyLang() {
+    document.documentElement.lang = state.lang;
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      el.textContent = t(el.getAttribute("data-i18n"));
+    });
+    document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
+      el.innerHTML = t(el.getAttribute("data-i18n-html"));
+    });
+    document.getElementById("lang").value = state.lang;
+    renderForecast();
+    renderInsights();
+    render();
+  }
 
   /* ---------- overview ---------- */
   function renderKpis() {
@@ -681,13 +1096,13 @@
     document.getElementById("kpi-ph").textContent = avgPh.toFixed(1);
     var phEl = document.getElementById("kpi-ph-d");
     var phOk = avgPh >= 6.0 && avgPh <= 7.5;
-    phEl.textContent = phOk ? "in range 6.0–7.5" : "outside 6.0–7.5";
+    phEl.textContent = phOk ? t("phIn") : t("phOut");
     phEl.className = "delta " + (phOk ? "up" : "down");
     document.getElementById("kpi-milk").textContent = state.milk[state.milk.length - 1].toFixed(0);
     var y = state.milk[state.milk.length - 2];
     var md = state.milk[state.milk.length - 1] - y;
     var mdEl = document.getElementById("kpi-milk-d");
-    mdEl.textContent = (md >= 0 ? "▲ " : "▼ ") + Math.abs(md).toFixed(0) + " L vs yesterday";
+    mdEl.textContent = (md >= 0 ? "▲ " : "▼ ") + Math.abs(md).toFixed(0) + " " + t("vsY");
     mdEl.className = "delta " + (md >= 0 ? "up" : "down");
     document.getElementById("kpi-tank").textContent = Math.round(state.tank);
     var meter = document.getElementById("tank-meter");
@@ -701,7 +1116,7 @@
     var d = cur - ago;
     document.getElementById(valId).textContent = cur.toFixed(dp);
     var el = document.getElementById(dId);
-    el.textContent = (d >= 0 ? "▲ " : "▼ ") + Math.abs(d).toFixed(1) + " vs 3 h ago";
+    el.textContent = (d >= 0 ? "▲ " : "▼ ") + Math.abs(d).toFixed(1) + " " + t("vs3h");
     el.className = "delta " + (d >= 0 ? "up" : "down");
   }
 
@@ -752,7 +1167,7 @@
       '<circle cx="' + endX + '" cy="' + endY + '" r="4" fill="' + color + '" stroke="' + css("--surface") + '" stroke-width="2"/>';
 
     document.getElementById("chart-title").innerHTML =
-      m.label + " — now <b>" + last(data).v.toFixed(state.metric === "temp" ? 1 : 0) + m.unit + "</b>";
+      t(m.labelKey) + " — " + t("chartNow") + " <b>" + last(data).v.toFixed(state.metric === "temp" ? 1 : 0) + m.unit + "</b>";
   }
 
   function chartHover(evt) {
@@ -789,39 +1204,50 @@
     state.animals.forEach(function (a) {
       if (a.status === "heat") {
         items.push({ id: "heat-" + a.tag, level: "serious",
-          title: a.name + " (" + a.tag + ") — standing heat",
-          body: "Detected 04:20 by collar. Best AI window closes ~16:00. Sexed semen straw reserved." });
+          title: tpl("aHeatTitle", { name: a.name, tag: a.tag }),
+          body: t("aHeatBody") });
       }
     });
     state.zones.forEach(function (z) {
       if (z.moisture < z.trigger && !z.valve) {
         items.push({ id: "low-" + z.id, level: "warning",
-          title: z.name + " below trigger (" + Math.round(z.moisture) + "% < " + z.trigger + "%)",
-          body: z.crop + ". Scheduler will irrigate at 18:30 unless you start it now." });
+          title: tpl("aZoneTitle", { zone: zoneName(z), m: Math.round(z.moisture), t: z.trigger }),
+          body: tpl("aZoneBody", { crop: t(z.cropKey) }) });
       }
     });
     if (state.tank < 20) {
       items.push({ id: "tank", level: "critical",
-        title: "Water tank low (" + Math.round(state.tank) + "%)",
-        body: "Refill soon — active irrigation will drain the remainder quickly." });
+        title: tpl("aTankTitle", { p: Math.round(state.tank) }), body: t("aTankBody") });
     }
     state.soil.forEach(function (s, i) {
       if (s.ph < 6.0 || s.ph > 7.5) {
         items.push({ id: "ph-" + i, level: "warning",
-          title: s.name + " — pH " + s.ph.toFixed(1) + " out of range",
-          body: (s.ph > 7.5 ? "Trending alkaline — schedule an extra jeevamrutha + mulch round; recheck after Thursday's fertigation."
-                            : "Trending acidic — hold fertigation on this block and recheck; consider ghanjeevamrutha basal dose.") });
+          title: tpl("aPhTitle", { station: t(s.nameKey), ph: s.ph.toFixed(1) }),
+          body: t(s.ph > 7.5 ? "aPhAlk" : "aPhAcid") });
+      }
+    });
+    if (state.fert.paused) {
+      items.push({ id: "ecguard", level: "warning",
+        title: t("aEcTitle"), body: tpl("aEcBody", { g: state.fert.ec.toFixed(2) }) });
+    }
+    if (state.pest.termiteHits >= 3) {
+      items.push({ id: "termite", level: "warning",
+        title: tpl("aTermiteTitle", { h: state.pest.termiteHits, n: state.pest.termiteStations }),
+        body: t("aTermiteBody") });
+    }
+    state.pest.weeds.forEach(function (w, i) {
+      if (w.cov > 25) {
+        items.push({ id: "weed-" + i, level: "warning",
+          title: tpl("aWeedTitle", { block: t(w.blockKey), c: w.cov }), body: t("aWeedBody") });
       }
     });
     if (last(state.series.wind).v > 18) {
       items.push({ id: "wind", level: "warning",
-        title: "High wind (" + Math.round(last(state.series.wind).v) + " km/h)",
-        body: "Hold neemastra/drone spraying until wind drops below 12 km/h — drift wastes the batch." });
+        title: tpl("aWindTitle", { w: Math.round(last(state.series.wind).v) }), body: t("aWindBody") });
     }
     if (state.shed.temp >= 30) {
       items.push({ id: "shed", level: "warning",
-        title: "Shed heat stress (" + state.shed.temp.toFixed(1) + " °C)",
-        body: "Fans and foggers switched on automatically. Check water troughs." });
+        title: tpl("aShedTitle", { t: state.shed.temp.toFixed(1) }), body: t("aShedBody") });
     }
     var host = document.getElementById("alerts");
     host.innerHTML = items.filter(function (a) { return !state.dismissed[a.id]; }).map(function (a) {
@@ -834,12 +1260,13 @@
   }
 
   function renderForecast() {
+    var wd = t("wdShort").split(",");
     var days = [
-      { dow: "Wed", icon: "sun", hi: 30, lo: 20, rain: 0 },
-      { dow: "Thu", icon: "sun", hi: 31, lo: 21, rain: 10 },
-      { dow: "Fri", icon: "cloud", hi: 28, lo: 20, rain: 25 },
-      { dow: "Sat", icon: "rain", hi: 26, lo: 19, rain: 70 },
-      { dow: "Sun", icon: "rain", hi: 25, lo: 19, rain: 60 }
+      { d: 3, icon: "sun", hi: 30, lo: 20, rain: 0 },
+      { d: 4, icon: "sun", hi: 31, lo: 21, rain: 10 },
+      { d: 5, icon: "cloud", hi: 28, lo: 20, rain: 25 },
+      { d: 6, icon: "rain", hi: 26, lo: 19, rain: 70 },
+      { d: 0, icon: "rain", hi: 25, lo: 19, rain: 60 }
     ];
     var icons = {
       sun: '<circle cx="12" cy="12" r="5" fill="var(--s2)"/><g stroke="var(--s2)" stroke-width="1.6" stroke-linecap="round"><line x1="12" y1="2.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21.5" y2="12"/><line x1="5.3" y1="5.3" x2="7" y2="7"/><line x1="17" y1="17" x2="18.7" y2="18.7"/><line x1="18.7" y1="5.3" x2="17" y2="7"/><line x1="7" y1="17" x2="5.3" y2="18.7"/></g>',
@@ -847,7 +1274,7 @@
       rain: '<path d="M7 14a4.5 4.5 0 1 1 .8-8.9A5.5 5.5 0 0 1 18.4 7 3.75 3.75 0 0 1 17.5 14Z" fill="var(--muted)"/><g stroke="var(--s1)" stroke-width="1.6" stroke-linecap="round"><line x1="8.5" y1="16.5" x2="7.5" y2="20"/><line x1="12.5" y1="16.5" x2="11.5" y2="20"/><line x1="16.5" y1="16.5" x2="15.5" y2="20"/></g>'
     };
     document.getElementById("forecast").innerHTML = days.map(function (d) {
-      return '<div class="day"><span class="dow">' + d.dow + "</span>" +
+      return '<div class="day"><span class="dow">' + wd[d.d] + "</span>" +
         '<svg viewBox="0 0 24 24" aria-label="' + d.icon + '">' + icons[d.icon] + "</svg>" +
         '<span class="hi">' + d.hi + "°</span><span class=\"lo\">" + d.lo + "°</span>" +
         (d.rain ? '<span class="rain">' + d.rain + "%</span>" : '<span class="rain">&nbsp;</span>') +
@@ -857,24 +1284,44 @@
   }
 
   function renderSpray() {
-    var w = last(state.series.wind).v;
-    var windNote = w > 18 ? "wind too high right now (" + Math.round(w) + " km/h) — wait for the morning calm"
-                          : "wind now " + Math.round(w) + " km/h — OK below 12–15";
-    document.getElementById("spray").innerHTML =
-      "<b>Spray window:</b> neemastra on Zone 1–2 best <b>tomorrow 06:00–09:00</b>; " + windNote +
-      ". Avoid Sat–Sun (rain 60–70%).";
+    var w = Math.round(last(state.series.wind).v);
+    var windNote = w > 18 ? tpl("windHigh", { w: w }) : tpl("windOk", { w: w });
+    document.getElementById("spray").innerHTML = tpl("sprayTpl", { wind: windNote });
+  }
+
+  function renderPest() {
+    var p = state.pest;
+    var mod = p.termiteHits >= 3;
+    document.getElementById("pest").innerHTML =
+      '<div class="stat"><span class="k">' + t("termiteK") + '</span><span class="v">' +
+        tpl("termiteHitsTpl", { h: p.termiteHits, n: p.termiteStations }) +
+        ' <span class="chip' + (mod ? " warn" : "") + '">' + t(mod ? "riskMod" : "riskLow") + "</span></span></div>" +
+      '<div class="stat"><span class="k">' + t("trapYK") + '</span><span class="v">' +
+        tpl("trapYV", { n: p.whitefly }) + "</span></div>" +
+      '<div class="stat"><span class="k">' + t("trapPK") + '</span><span class="v">' +
+        tpl("trapPV", { n: p.faw }) + ' <span class="chip">' + t("riskLow") + "</span></span></div>";
+
+    document.getElementById("weeds").innerHTML = p.weeds.map(function (w) {
+      var high = w.cov > 25;
+      return '<div class="row zone" style="grid-template-areas:\'head head\' \'bar bar\' \'meta meta\'">' +
+        '<div class="zone-head"><strong>' + t(w.blockKey) + "</strong>" +
+          '<span class="crop">' + t("weedCover") + "</span>" +
+          (high ? '<span class="chip warn">' + t("cultivateChip") + "</span>" : "") +
+        "</div>" +
+        '<div class="zone-bar">' +
+          '<div class="meter' + (high ? " low" : "") + '"><i style="width:' + w.cov + '%"></i></div>' +
+          '<span class="pct">' + w.cov + "%</span>" +
+        "</div>" +
+        '<div class="zone-meta">' + t("ndviNote") + "</div>" +
+      "</div>";
+    }).join("");
   }
 
   function renderInsights() {
     var leaf = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 2.5C8 2.5 3.5 5.5 3.5 11c0 .8.1 1.5.3 2.2C5.5 9 9 6.5 12 5.5c-2.8 1.7-5.8 4.6-7 8 .9.3 1.9.5 3 .5 5.5 0 5.5-6.5 5.5-11.5Z" fill="var(--accent)"/></svg>';
-    var items = [
-      { t: "Inseminate Ganga today", b: "Collar confirmed standing heat at 04:20. Hitting this cycle instead of the next is worth ₹8,000–15,000 — the KLDB sexed straw is reserved." },
-      { t: "Irrigate Zone 3 tonight, then skip the weekend", b: "Leafy greens are 5% under trigger and rain arrives Saturday (70%). One 25-minute cycle now, then let the rain cover Sat–Sun — saves ~2,800 L of tank water." },
-      { t: "Early blight risk on tomato: LOW → MODERATE by Friday", b: "Humidity rising ahead of the rain band. The neemastra window tomorrow morning is preventive — mulch and marigold borders are already in place." },
-      { t: "Jeevamrutha cycle lands well", b: "Thursday's Zone 1–2 fertigation comes 2 days before rain — nutrients settle in before the soil saturates." }
-    ];
+    var items = [["i1t", "i1b"], ["i2t", "i2b"], ["i3t", "i3b"], ["i4t", "i4b"]];
     document.getElementById("insights").innerHTML = items.map(function (i) {
-      return '<div class="insight">' + leaf + "<div><b>" + i.t + "</b><span>" + i.b + "</span></div></div>";
+      return '<div class="insight">' + leaf + "<div><b>" + t(i[0]) + "</b><span>" + t(i[1]) + "</span></div></div>";
     }).join("");
   }
 
@@ -882,63 +1329,99 @@
   function renderWater() {
     var running = state.zones.some(function (z) { return z.valve; });
     document.getElementById("pump-state").innerHTML = running
-      ? '<span class="pill on"><i></i>Running</span>'
-      : '<span class="pill"><i></i>Idle</span>';
+      ? '<span class="pill on"><i></i>' + t("running") + "</span>"
+      : '<span class="pill"><i></i>' + t("idle") + "</span>";
     document.getElementById("pump-flow").textContent = Math.round(state.pump.flow);
     document.getElementById("borewell").textContent = state.pump.borewell.toFixed(1);
     document.getElementById("pump-kwh").textContent = state.pump.kwh.toFixed(1);
 
-    document.getElementById("soil").innerHTML = state.soil.map(function (s) {
-      var phOk = s.ph >= 6.0 && s.ph <= 7.5;
-      return '<div class="row"><div class="zone-head" style="margin-bottom:4px"><strong>' + s.name + "</strong>" +
-        (phOk ? "" : '<span class="chip warn">pH check</span>') + "</div>" +
-        '<div class="statlist">' +
-        '<div class="stat"><span class="k">Soil pH</span><span class="v">' + s.ph.toFixed(1) +
-          ' <small>' + (phOk ? "in range" : "out of range") + "</small></span></div>" +
-        '<div class="stat"><span class="k">EC (salts)</span><span class="v">' + s.ec.toFixed(2) + " <small>mS/cm</small></span></div>" +
-        '<div class="stat"><span class="k">Soil temp</span><span class="v">' + s.stemp.toFixed(1) + " <small>°C</small></span></div>" +
-        "</div></div>";
-    }).join("");
-
-    var diff = state.diffuser;
-    document.getElementById("diffuser-state").innerHTML = diff.on
-      ? '<span class="pill on"><i></i>Injecting</span>'
-      : '<span class="pill"><i></i>Standby</span>';
-    document.getElementById("diffuser-rate").textContent = diff.on ? Math.round(38 + Math.random() * 4) : 0;
-    document.getElementById("line-pressure").textContent = diff.pressure.toFixed(1);
-    document.getElementById("diffuser-switch").setAttribute("aria-checked", String(diff.on));
-
     document.getElementById("zones").innerHTML = state.zones.map(function (z) {
       var low = z.moisture < z.trigger;
       return '<div class="row zone">' +
-        '<div class="zone-head"><strong>' + z.name + "</strong>" +
-          '<span class="crop">' + z.crop + "</span>" +
-          (z.valve ? '<span class="chip">Irrigating</span>' : low ? '<span class="chip warn">Below trigger</span>' : "") +
+        '<div class="zone-head"><strong>' + zoneName(z) + "</strong>" +
+          '<span class="crop">' + t(z.cropKey) + "</span>" +
+          (z.valve ? '<span class="chip">' + t("irrigating") + "</span>"
+                   : low ? '<span class="chip warn">' + t("belowTrig") + "</span>" : "") +
         "</div>" +
         '<div class="zone-bar">' +
           '<div class="meter' + (low ? " low" : "") + '"><i style="width:' + Math.round(z.moisture) + '%"></i></div>' +
           '<span class="pct">' + Math.round(z.moisture) + "%</span>" +
         "</div>" +
-        '<div class="zone-meta">Trigger ' + z.trigger + "% · next scheduled 18:30</div>" +
+        '<div class="zone-meta">' + t("trigger") + " " + z.trigger + "% · " + t("nextSched") + " 18:30</div>" +
         '<button class="switch" role="switch" aria-checked="' + z.valve + '" aria-label="' +
-          z.name + ' valve" data-zone="' + z.id + '"></button>' +
+          zoneName(z) + '" data-zone="' + z.id + '"></button>' +
       "</div>";
+    }).join("");
+
+    document.getElementById("soil").innerHTML = state.soil.map(function (s) {
+      var phOk = s.ph >= 6.0 && s.ph <= 7.5;
+      return '<div class="row"><div class="zone-head" style="margin-bottom:4px"><strong>' + t(s.nameKey) + "</strong>" +
+        (phOk ? "" : '<span class="chip warn">' + t("phCheck") + "</span>") + "</div>" +
+        '<div class="statlist">' +
+        '<div class="stat"><span class="k">' + t("kPh") + '</span><span class="v">' + s.ph.toFixed(1) +
+          ' <small>' + (phOk ? t("inRange") : t("outRange")) + "</small></span></div>" +
+        '<div class="stat"><span class="k">' + t("ecK") + '</span><span class="v">' + s.ec.toFixed(2) + " <small>mS/cm</small></span></div>" +
+        '<div class="stat"><span class="k">' + t("stempK") + '</span><span class="v">' + s.stemp.toFixed(1) + " <small>°C</small></span></div>" +
+        "</div></div>";
+    }).join("");
+
+    var diff = state.diffuser, fert = state.fert;
+    document.getElementById("diffuser-state").innerHTML = diff.on
+      ? '<span class="pill on"><i></i>' + t("injecting") + "</span>"
+      : fert.paused
+      ? '<span class="pill alert-p"><i></i>' + t("pausedShort") + "</span>"
+      : '<span class="pill"><i></i>' + t("standby") + "</span>";
+    document.getElementById("diffuser-rate").textContent = diff.on ? fert.inj : 0;
+    document.getElementById("line-pressure").textContent = diff.pressure.toFixed(1);
+    document.getElementById("diffuser-switch").setAttribute("aria-checked", String(diff.on));
+    document.getElementById("fert-auto").setAttribute("aria-checked", String(fert.auto));
+    document.getElementById("manual-valve-row").style.opacity = fert.auto ? "0.45" : "1";
+
+    // status + progress
+    var active = state.zones.find(function (z) {
+      return z.valve && fert.progress[z.id] < z.acres * fert.rate;
+    });
+    var statusHost = document.getElementById("fert-status");
+    if (!fert.auto) {
+      statusHost.innerHTML = '<span class="pill"><i></i>' + t("manualMode") + "</span>";
+    } else if (fert.paused) {
+      var ecNow = Math.max(state.soil[0].ec, state.soil[1].ec);
+      statusHost.innerHTML = '<span class="pill alert-p"><i></i>' +
+        tpl("pausedTpl", { ec: ecNow.toFixed(2), g: fert.ec.toFixed(2) }) + "</span>";
+    } else if (active) {
+      var target = active.acres * fert.rate;
+      var done = fert.progress[active.id];
+      statusHost.innerHTML =
+        '<span class="pill on"><i></i>' +
+        tpl("dosingTpl", { zone: zoneName(active), done: Math.round(done), target: Math.round(target) }) + "</span>" +
+        '<div class="meter"><i style="width:' + Math.round((done / target) * 100) + '%"></i></div>';
+    } else {
+      statusHost.innerHTML = '<span class="pill"><i></i>' + tpl("idleTpl", { days: fert.days }) + "</span>";
+    }
+
+    // computed plan per zone
+    document.getElementById("fert-plan").innerHTML = state.zones.map(function (z) {
+      var target = z.acres * fert.rate;
+      var done = fert.progress[z.id];
+      var pct = Math.round((done / target) * 100);
+      var v = pct >= 100 ? '<span class="pill on"><i></i>' + t("dosed") + "</span>"
+            : pct > 0 ? Math.round(target) + " L <small>· " + pct + t("pctDone") + "</small>"
+            : Math.round(target) + " L <small>· ~" + (target / fert.inj).toFixed(1) + " h</small>";
+      return '<div class="stat"><span class="k">' + zoneName(z) + " <small>" + z.acres.toFixed(1) +
+             " ac</small></span><span class=\"v\">" + v + "</span></div>";
     }).join("");
   }
 
   /* ---------- livestock tab ---------- */
   function renderStock() {
     document.getElementById("eggs").textContent = state.eggs;
-    var badges = {
-      heat: '<span class="badge heat">HEAT</span>',
-      watch: '<span class="badge watch">WATCH</span>',
-      ok: '<span class="badge ok">OK</span>'
-    };
+    var badgeCls = { heat: "heat", watch: "watch", ok: "ok" };
+    var badgeKey = { heat: "bHeat", watch: "bWatch", ok: "bOk" };
     document.getElementById("animals").innerHTML = state.animals.map(function (a) {
       return '<div class="row animal">' +
         '<span class="avatar">' + a.tag.split("-").pop() + "</span>" +
-        '<span class="info"><b>' + a.name + " · " + a.tag + "</b><span>" + a.note + "</span></span>" +
-        badges[a.status] +
+        '<span class="info"><b>' + a.name + " · " + a.tag + "</b><span>" + t(a.noteKey) + "</span></span>" +
+        '<span class="badge ' + badgeCls[a.status] + '">' + t(badgeKey[a.status]) + "</span>" +
       "</div>";
     }).join("");
 
@@ -948,16 +1431,17 @@
     document.getElementById("shed-rh").textContent = Math.round(state.shed.rh);
     var hot = state.shed.temp >= 30;
     document.getElementById("fogger").innerHTML = hot
-      ? '<span class="pill on"><i></i>Running</span>'
-      : '<span class="pill"><i></i>Standby</span>';
+      ? '<span class="pill on"><i></i>' + t("running") + "</span>"
+      : '<span class="pill"><i></i>' + t("standby") + "</span>";
   }
 
   function renderMilkChart() {
     var data = state.milk;
+    var wd = t("wdShort").split(",");
     var labels7 = [];
     for (var d = data.length - 1; d >= 0; d--) {
       var dt = new Date(Date.now() - d * 86400000);
-      labels7.push(["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][dt.getDay()]);
+      labels7.push(wd[dt.getDay()]);
     }
     var MW = 360, MH = 150, P = { l: 30, r: 8, t: 10, b: 22 };
     var hi = 80, iw = MW - P.l - P.r, ih = MH - P.t - P.b;
@@ -977,7 +1461,7 @@
       var today = i === data.length - 1;
       out += '<path d="M' + bx + " " + (by + 4) + " q0 -4 4 -4 h" + (bwid - 8) +
              ' q4 0 4 4 v' + (bh - 4) + " h-" + bwid + ' Z" fill="' + color +
-             '" opacity="' + (today ? 1 : 0.55) + '" data-mi="' + i + '"/>' +
+             '" opacity="' + (today ? 1 : 0.55) + '"/>' +
              '<text x="' + (bx + bwid / 2) + '" y="' + (MH - 7) + '" text-anchor="middle" font-size="9" fill="' +
              css("--muted") + '"' + (today ? ' font-weight="700"' : "") + ">" + labels7[i] + "</text>";
       if (today) {
@@ -990,9 +1474,11 @@
     document.getElementById("milk-chart").innerHTML = out;
 
     var week = data.reduce(function (a, b) { return a + b; }, 0);
-    document.getElementById("milk-title").innerHTML =
-      "Week total <b>" + week.toFixed(0) + " L</b> ≈ ₹" + (week * 60).toLocaleString("en-IN") + " · today so far <b>" +
-      data[data.length - 1].toFixed(0) + " L</b>";
+    document.getElementById("milk-title").innerHTML = tpl("milkTitleTpl", {
+      wk: week.toFixed(0),
+      val: (week * 60).toLocaleString("en-IN"),
+      t: data[data.length - 1].toFixed(0)
+    });
   }
 
   function milkHover(evt) {
@@ -1016,21 +1502,22 @@
   /* ---------- ops tab ---------- */
   function renderOps() {
     var check = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 7.5 5.5 10.5 11.5 3.5"/></svg>';
-    document.getElementById("tasks").innerHTML = state.tasks.map(function (t) {
-      return '<div class="row task' + (t.done ? " done" : "") + '">' +
-        '<button class="check" data-task="' + t.id + '" role="checkbox" aria-checked="' + t.done +
-          '" aria-label="Mark done: ' + t.task + '">' + check + "</button>" +
-        '<span class="t">' + t.task + "<span>" + t.who + (t.done ? " · done, photo received" : "") + "</span></span>" +
+    document.getElementById("tasks").innerHTML = state.tasks.map(function (task) {
+      return '<div class="row task' + (task.done ? " done" : "") + '">' +
+        '<button class="check" data-task="' + task.id + '" role="checkbox" aria-checked="' + task.done +
+          '" aria-label="' + t(task.key) + '">' + check + "</button>" +
+        '<span class="t">' + t(task.key) + "<span>" + task.who + (task.done ? " · " + t("taskDoneNote") : "") + "</span></span>" +
       "</div>";
     }).join("");
 
     document.getElementById("grid-state").innerHTML = state.solar.grid
-      ? '<span class="pill on"><i></i>On</span>'
-      : '<span class="pill alert-p"><i></i>Power cut — on solar</span>';
+      ? '<span class="pill on"><i></i>' + t("gridOn") + "</span>"
+      : '<span class="pill alert-p"><i></i>' + t("gridCut") + "</span>";
     document.getElementById("batt").textContent = Math.round(state.solar.batt);
 
     document.getElementById("cams").innerHTML = state.cams.map(function (c) {
-      return '<div class="cam' + (c.on ? "" : " off") + '"><b><i></i>' + c.name + "</b><span>Last: " + c.ev + "</span></div>";
+      return '<div class="cam' + (c.on ? "" : " off") + '"><b><i></i>' + t(c.nameKey) + "</b><span>" +
+             t("lastK") + " " + t(c.evKey) + "</span></div>";
     }).join("");
   }
 
@@ -1041,6 +1528,7 @@
     renderChart();
     renderAlerts();
     renderSpray();
+    renderPest();
     renderWater();
     renderStock();
     renderOps();
@@ -1071,7 +1559,11 @@
     }
     var sw = e.target.closest(".switch");
     if (sw) {
-      if (sw.id === "diffuser-switch") {
+      if (sw.id === "fert-auto") {
+        state.fert.auto = !state.fert.auto;
+        if (state.fert.auto) state.diffuser.on = false;
+      } else if (sw.id === "diffuser-switch") {
+        if (state.fert.auto) return; // manual valve only when auto-dosing is off
         state.diffuser.on = !state.diffuser.on;
       } else {
         var zone = state.zones.find(function (z) { return z.id === sw.dataset.zone; });
@@ -1083,7 +1575,7 @@
     }
     var chk = e.target.closest(".task .check");
     if (chk) {
-      var task = state.tasks.find(function (t) { return t.id === chk.dataset.task; });
+      var task = state.tasks.find(function (x) { return x.id === chk.dataset.task; });
       task.done = !task.done;
       renderOps();
       return;
@@ -1093,6 +1585,50 @@
       state.dismissed[dis.dataset.dismiss] = true;
       renderAlerts();
     }
+  });
+
+  document.addEventListener("input", function (e) {
+    var inp = e.target.closest(".fert-param");
+    if (!inp) return;
+    var v = parseFloat(inp.value);
+    if (isNaN(v)) return;
+    var lims = { rate: [50, 500], days: [5, 30], inj: [10, 80], ec: [0.3, 1.5] };
+    var l = lims[inp.dataset.key];
+    state.fert[inp.dataset.key] = clamp(v, l[0], l[1]);
+    renderWater();
+  });
+
+  /* ---------- day / night mode (manual override for field visibility) ---------- */
+  var SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21.5" y2="12"/><line x1="5.3" y1="5.3" x2="7" y2="7"/><line x1="17" y1="17" x2="18.7" y2="18.7"/><line x1="18.7" y1="5.3" x2="17" y2="7"/><line x1="7" y1="17" x2="5.3" y2="18.7"/></svg>';
+  var MOON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/></svg>';
+  function effectiveTheme() {
+    var dt = document.documentElement.getAttribute("data-theme");
+    if (dt) return dt;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  function updateThemeBtn() {
+    // show the mode you'd switch TO
+    document.getElementById("theme-btn").innerHTML = effectiveTheme() === "dark" ? SUN : MOON;
+  }
+  document.getElementById("theme-btn").addEventListener("click", function () {
+    var next = effectiveTheme() === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("farm-theme", next); } catch (err) {}
+    updateThemeBtn();
+    // MutationObserver on data-theme re-renders the charts
+  });
+  try {
+    var storedTheme = localStorage.getItem("farm-theme");
+    if (storedTheme === "dark" || storedTheme === "light") {
+      document.documentElement.setAttribute("data-theme", storedTheme);
+    }
+  } catch (err) {}
+  updateThemeBtn();
+
+  document.getElementById("lang").addEventListener("change", function (e) {
+    state.lang = e.target.value;
+    try { localStorage.setItem("farm-lang", state.lang); } catch (err) {}
+    applyLang();
   });
 
   var chartEl = document.getElementById("chart");
@@ -1110,9 +1646,7 @@
   new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
   seedSeries();
-  render();
-  renderForecast();
-  renderInsights();
+  applyLang(); // also runs render + forecast + insights
   setInterval(tick, 4000);
 })();
 </script>

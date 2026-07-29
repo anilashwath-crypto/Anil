@@ -16,15 +16,27 @@ phone home screen.
 fallback, solar battery); live KPIs (field soil moisture, air temp, wind, soil
 pH, today's milk, water tank); 24-hour history chart (moisture / temp /
 humidity / wind) with touch crosshair; 5-day forecast with a neemastra spray
-window that reacts to live wind; AI insight cards.
+window that reacts to live wind; a pest & weed watch card (termite bait
+stations, sticky/pheromone trap counts, per-block weed cover from drone NDVI)
+with automatic alerts; and AI insight cards.
+
+**Language & theme** — a header selector switches the whole UI between
+English, ಕನ್ನಡ, and हिंदी (the blueprint calls for Kannada UI for staff
+adoption), and a day/night toggle forces light or dark mode regardless of the
+phone setting — useful when the light theme washes out in field sunlight.
+Both choices persist across visits.
 
 **Water** — pump & borewell card (GSM starter state, flow, water level, energy,
 dry-run protection); six irrigation zones matching the blueprint's valve plan
 (tomato, beans & chilli, leafy greens, napier, mango, sapota) with per-zone
 moisture triggers and valve toggles; soil-health card per IoT field station
-(pH, EC, soil temperature); fertigation card with the venturi diffuser
-(injection state, rate, line pressure, dosing-valve toggle) and the
-15-day jeevamrutha cycle.
+(pH, EC, soil temperature); and a parameter-driven fertigation card. The
+venturi diffuser doses automatically: set the dose rate (L/acre), cycle
+interval (days), injection rate (L/h) and an EC guard (mS/cm), and it
+computes each zone's dose from its acreage (e.g. 1.5 ac × 200 L/acre =
+300 L ≈ 7.5 h at 40 L/h), injects while that zone irrigates with live
+progress, and pauses itself if soil EC exceeds the guard. Switching
+auto-dosing off enables the manual dosing valve instead.
 
 **Livestock** — herd summary (Gir / Boer / Giriraja), collar alerts (standing
 heat, rumination drop), 7-day milk bar chart with ₹ value at farm-gate A2
