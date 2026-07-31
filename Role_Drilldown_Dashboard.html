@@ -1,0 +1,1686 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERP — Role Drill-Down Console</title>
+<style>
+  :root {
+    --bg: #F0EEE9;
+    --surface: #FAFAF8;
+    --surface-2: #FFFFFF;
+    --border: #D8D4CE;
+    --text: #1E2228;
+    --text-muted: #6B7A88;
+    --accent: #E07B30;
+    --accent-bg: #FDF2EA;
+    --steel: #4A82A0;
+    --steel-bg: #EAF2F7;
+    --good: #3A8E57;
+    --good-bg: #EAF5EF;
+    --warn: #C27B1A;
+    --warn-bg: #FBF3E3;
+    --crit: #C0392B;
+    --crit-bg: #FCEAE9;
+    --sidebar-bg: #1A1F27;
+    --sidebar-text: #9AA5B4;
+    --sidebar-active: #E07B30;
+    --mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Courier New', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16191E; --surface: #1E2228; --surface-2: #252B33; --border: #2E3540;
+      --text: #CDD5DF; --text-muted: #7A8799;
+      --accent: #E07B30; --accent-bg: #2C1F0E;
+      --steel: #5B90AA; --steel-bg: #0E1F2C;
+      --good: #4CAF50; --good-bg: #0D2012;
+      --warn: #F5A623; --warn-bg: #231800;
+      --crit: #E53935; --crit-bg: #250808;
+      --sidebar-bg: #0F1318; --sidebar-text: #7A8799; --sidebar-active: #E07B30;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16191E; --surface: #1E2228; --surface-2: #252B33; --border: #2E3540;
+    --text: #CDD5DF; --text-muted: #7A8799;
+    --accent: #E07B30; --accent-bg: #2C1F0E;
+    --steel: #5B90AA; --steel-bg: #0E1F2C;
+    --good: #4CAF50; --good-bg: #0D2012;
+    --warn: #F5A623; --warn-bg: #231800;
+    --crit: #E53935; --crit-bg: #250808;
+    --sidebar-bg: #0F1318; --sidebar-text: #7A8799; --sidebar-active: #E07B30;
+  }
+  :root[data-theme="light"] {
+    --bg: #F0EEE9; --surface: #FAFAF8; --surface-2: #FFFFFF; --border: #D8D4CE;
+    --text: #1E2228; --text-muted: #6B7A88;
+    --accent: #E07B30; --accent-bg: #FDF2EA;
+    --steel: #4A82A0; --steel-bg: #EAF2F7;
+    --good: #3A8E57; --good-bg: #EAF5EF;
+    --warn: #C27B1A; --warn-bg: #FBF3E3;
+    --crit: #C0392B; --crit-bg: #FCEAE9;
+    --sidebar-bg: #1A1F27; --sidebar-text: #9AA5B4; --sidebar-active: #E07B30;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; min-height: 100vh; font-size: 14px; line-height: 1.5;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 224px; flex-shrink: 0; background: var(--sidebar-bg);
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .sidebar-logo { padding: 20px 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .sidebar-logo .wordmark {
+    font-family: var(--mono); font-size: 13px; font-weight: bold;
+    letter-spacing: 0.12em; color: #FFF; text-transform: uppercase;
+  }
+  .sidebar-logo .sub { font-size: 10px; letter-spacing: 0.1em; color: var(--sidebar-text); text-transform: uppercase; margin-top: 2px; }
+
+  .role-switch { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .role-switch label { display: block; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.28); margin-bottom: 6px; }
+  .role-switch select {
+    width: 100%; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 4px; padding: 7px 8px; font-size: 12px; font-family: var(--mono); outline: none; cursor: pointer;
+  }
+  .role-switch select:focus { border-color: var(--sidebar-active); }
+  .role-switch option { background: #1A1F27; color: #fff; }
+  .role-switch .who { margin-top: 8px; font-size: 10px; color: var(--sidebar-text); font-family: var(--mono); line-height: 1.5; }
+
+  .sidebar-section { padding: 14px 18px 4px; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(255,255,255,0.2); }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 18px; cursor: pointer;
+    border-left: 2px solid transparent; transition: all 0.15s; color: var(--sidebar-text); font-size: 13px;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: #fff; }
+  .nav-item.active { border-left-color: var(--sidebar-active); color: #fff; background: rgba(224,123,48,0.1); }
+  .nav-item .icon { width: 16px; text-align: center; font-style: normal; opacity: 0.7; flex-shrink: 0; }
+  .nav-item .nav-count { margin-left: auto; font-family: var(--mono); font-size: 10px; opacity: 0.45; }
+  .nav-empty { padding: 8px 18px; font-size: 11px; color: rgba(255,255,255,0.25); font-style: italic; }
+  .sidebar-footer {
+    margin-top: auto; padding: 14px 18px; border-top: 1px solid rgba(255,255,255,0.07);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .db-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--sidebar-text); font-family: var(--mono); }
+  .db-dot { width: 7px; height: 7px; border-radius: 50%; background: #4CAF50; box-shadow: 0 0 6px #4CAF50; }
+
+  /* ── Main ── */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topbar {
+    padding: 12px 28px; background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; min-width: 0; flex-wrap: wrap; flex: 1; }
+  .crumb { color: var(--text-muted); cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: all 0.12s; white-space: nowrap; }
+  .crumb:hover { color: var(--accent); background: var(--accent-bg); }
+  .crumb.current { color: var(--text); font-weight: 600; cursor: default; }
+  .crumb.current:hover { background: none; }
+  .crumb-sep { color: var(--text-muted); opacity: 0.4; font-size: 11px; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .back-btn {
+    background: none; border: 1px solid var(--border); color: var(--text-muted);
+    padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.15s; white-space: nowrap;
+  }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .theme-toggle {
+    background: none; border: 1px solid var(--border); color: var(--text-muted);
+    padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.15s;
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .sync-badge {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+    background: var(--good-bg); color: var(--good); padding: 3px 8px; border-radius: 3px; text-transform: uppercase;
+  }
+
+  /* ── Module search ── */
+  .mod-search { position: relative; flex: 0 1 280px; min-width: 160px; }
+  .mod-search input {
+    width: 100%; font-family: var(--mono); font-size: 12px; padding: 7px 10px 7px 28px;
+    border: 1px solid var(--border); border-radius: 16px; background: var(--surface-2);
+    color: var(--text); outline: none; transition: border-color 0.13s;
+  }
+  .mod-search input:focus { border-color: var(--accent); }
+  .mod-search::before { content: '⌕'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; pointer-events: none; }
+  .mod-search-results {
+    position: absolute; top: calc(100% + 6px); right: 0; min-width: 330px; max-width: 90vw; max-height: 60vh; overflow-y: auto;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18); z-index: 50; display: none;
+  }
+  .mod-search-results.open { display: block; }
+  .mod-hit { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .mod-hit:last-child { border-bottom: none; }
+  .mod-hit:hover, .mod-hit.sel { background: var(--accent-bg); }
+  .mod-hit .h-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mod-hit .h-grp { font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+  .mod-none { padding: 10px 12px; font-size: 12px; color: var(--text-muted); }
+
+  .content { padding: 22px 28px; display: flex; flex-direction: column; gap: 18px; }
+  .view { display: none; flex-direction: column; gap: 18px; }
+  .view.active { display: flex; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .view.active { animation: none; } }
+
+  /* ── Role hero ── */
+  .hero { background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 20px 22px; display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+  .hero-main { flex: 1; min-width: 260px; }
+  .hero-band { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; gap: 7px; }
+  .hero-name { font-size: 22px; font-weight: 700; margin: 6px 0 4px; letter-spacing: -0.01em; }
+  .hero-key { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+  .hero-remit { margin-top: 10px; font-size: 13px; color: var(--text-muted); max-width: 62ch; line-height: 1.6; }
+  .hero-stats { display: flex; gap: 26px; flex-wrap: wrap; }
+  .hero-stat { min-width: 62px; }
+  .hero-stat .n { font-family: var(--mono); font-size: 24px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+  .hero-stat .l { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-top: 6px; }
+
+  /* ── Pinned action tiles ── */
+  .pin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+  .pin-card {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 15px 17px; position: relative; overflow: hidden; cursor: pointer; transition: all 0.15s;
+  }
+  .pin-card:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 3px 12px rgba(0,0,0,0.08); }
+  .pin-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--pin-accent, var(--accent)); }
+  .pin-top { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); display: flex; justify-content: space-between; gap: 8px; }
+  .pin-drill { color: var(--accent); opacity: 0; transition: opacity 0.15s; }
+  .pin-card:hover .pin-drill { opacity: 1; }
+  .pin-title { font-size: 15px; font-weight: 600; margin: 9px 0 5px; }
+  .pin-hint { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
+  .pin-foot { margin-top: 11px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+  /* ── Cards ── */
+  .card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .card-header { padding: 13px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+  .card-body { padding: 18px; }
+  .card-note { font-size: 10px; font-family: var(--mono); color: var(--text-muted); letter-spacing: 0.05em; }
+
+  /* ── Group grid ── */
+  .grp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; padding: 18px; }
+  .grp-card { border: 1px solid var(--border); border-radius: 5px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; background: var(--surface); }
+  .grp-card:hover { border-color: var(--accent); background: var(--accent-bg); }
+  .grp-card.locked { opacity: 0.5; cursor: not-allowed; }
+  .grp-card.locked:hover { border-color: var(--border); background: var(--surface); }
+  .grp-head { display: flex; align-items: center; gap: 9px; }
+  .grp-icon { font-style: normal; font-size: 15px; opacity: 0.75; }
+  .grp-name { font-size: 14px; font-weight: 600; }
+  .grp-meta { margin-top: 9px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .grp-mods { margin-top: 9px; font-size: 11px; color: var(--text-muted); line-height: 1.55; }
+
+  /* ── Permission chips ── */
+  .chip {
+    font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 3px; font-weight: 700; font-family: var(--mono); white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .chip-all    { background: var(--crit-bg); color: var(--crit); }
+  .chip-edit   { background: var(--accent-bg); color: var(--accent); }
+  .chip-create { background: var(--warn-bg); color: var(--warn); }
+  .chip-view   { background: var(--steel-bg); color: var(--steel); }
+  .chip-approve{ background: var(--good-bg); color: var(--good); }
+  .chip-none   { background: var(--bg); color: var(--text-muted); border-color: var(--border); }
+  .chip-scope  { background: var(--bg); color: var(--text-muted); border-color: var(--border); text-transform: none; letter-spacing: 0.04em; }
+
+  .sev {
+    font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px;
+    font-weight: 700; font-family: var(--mono); white-space: nowrap;
+    flex-shrink: 0; min-width: 96px; text-align: center; align-self: flex-start; margin-top: 2px;
+  }
+  .mod-row .sev, .grp-meta .sev { min-width: 0; margin-top: 0; }
+  .sev-bug  { background: var(--crit-bg); color: var(--crit); }
+  .sev-risk { background: var(--crit-bg); color: var(--crit); }
+  .sev-gap  { background: var(--warn-bg); color: var(--warn); }
+  .sev-over { background: var(--warn-bg); color: var(--warn); }
+  .sev-open { background: var(--steel-bg); color: var(--steel); }
+
+  /* ── Module list rows ── */
+  .mod-row {
+    display: flex; align-items: center; gap: 12px; padding: 11px 18px;
+    border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s;
+  }
+  .mod-row:last-child { border-bottom: none; }
+  .mod-row:hover { background: var(--accent-bg); }
+  .mod-row.locked { cursor: default; opacity: 0.55; }
+  .mod-row.locked:hover { background: none; }
+  .mod-row .m-name { flex: 1; min-width: 0; }
+  .mod-row .m-title { font-size: 13.5px; font-weight: 500; }
+  .mod-row .m-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .mod-row .m-key { font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+  .mod-row .m-chips { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0; }
+
+  /* ── Action checklist ── */
+  .act-list { display: flex; flex-direction: column; gap: 2px; padding: 14px 18px; }
+  .act { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; font-size: 13px; }
+  .act .tick { font-family: var(--mono); width: 16px; flex-shrink: 0; font-weight: 700; }
+  .act.yes .tick { color: var(--good); }
+  .act.no  { color: var(--text-muted); }
+  .act.no .tick { color: var(--crit); opacity: 0.6; }
+  .act .a-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+  .flag-list { display: flex; flex-direction: column; }
+  .flag {
+    display: flex; gap: 12px; padding: 13px 18px; border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.1s; align-items: flex-start;
+  }
+  .flag:last-child { border-bottom: none; }
+  .flag:hover { background: var(--accent-bg); }
+  .flag-body { flex: 1; min-width: 0; }
+  .flag-title { font-size: 13.5px; font-weight: 600; }
+  .flag-detail { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.55; }
+  .flag-fix { font-size: 12px; margin-top: 6px; color: var(--good); }
+  .flag-fix::before { content: '→ '; }
+  .flag-where { font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-top: 6px; }
+
+  /* ── Tables / matrix ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+  th {
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);
+    padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left;
+    font-weight: 600; white-space: nowrap; background: var(--surface); position: sticky; top: 0; z-index: 2;
+  }
+  td { padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  .matrix th.rot { writing-mode: vertical-rl; transform: rotate(180deg); height: 168px; vertical-align: bottom; padding: 8px 4px; text-align: left; }
+  .matrix td.mcell { text-align: center; padding: 4px; cursor: pointer; }
+  .matrix td.mcell:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .matrix td.rowhead { position: sticky; left: 0; background: var(--surface-2); z-index: 1; font-weight: 500; cursor: pointer; }
+  .matrix td.rowhead:hover { color: var(--accent); }
+  .matrix th.corner { position: sticky; left: 0; z-index: 3; }
+  .lvl { display: inline-block; width: 22px; height: 16px; line-height: 16px; border-radius: 3px; font-family: var(--mono); font-size: 9px; font-weight: 700; }
+  .lvl-4 { background: var(--crit-bg); color: var(--crit); }
+  .lvl-3 { background: var(--accent-bg); color: var(--accent); }
+  .lvl-2 { background: var(--warn-bg); color: var(--warn); }
+  .lvl-1 { background: var(--steel-bg); color: var(--steel); }
+  .lvl-0 { background: transparent; color: var(--border); }
+  .lvl-a { box-shadow: inset 0 -2px 0 var(--good); }
+
+  /* ── Filter pills ── */
+  .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+  .filter-pill {
+    font-size: 11px; font-family: var(--mono); padding: 4px 12px; border-radius: 14px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted);
+    cursor: pointer; transition: all 0.13s;
+  }
+  .filter-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .legend-bar { display: flex; gap: 14px; flex-wrap: wrap; padding: 11px 18px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); align-items: center; }
+  .legend-bar .li { display: flex; align-items: center; gap: 6px; }
+
+  .empty { padding: 34px 18px; text-align: center; color: var(--text-muted); font-size: 13px; }
+  .note {
+    padding: 12px 16px; border-radius: 5px; background: var(--warn-bg); color: var(--warn);
+    font-size: 12px; line-height: 1.6; border: 1px solid rgba(0,0,0,0.05);
+  }
+  .note b { color: inherit; }
+  .note.info { background: var(--steel-bg); color: var(--steel); }
+
+  .peer-list { display: flex; flex-wrap: wrap; gap: 7px; padding: 14px 18px; }
+  .peer {
+    display: flex; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 14px;
+    padding: 4px 11px; font-size: 11.5px; cursor: pointer; transition: all 0.13s; background: var(--surface);
+  }
+  .peer:hover { border-color: var(--accent); color: var(--accent); }
+  .peer.self { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+
+  .mobile-nav, .mobile-role { display: none; }
+
+  @media (max-width: 900px) {
+    body { display: block; }
+    .sidebar { display: none; }
+    .mobile-nav {
+      display: flex; gap: 4px; overflow-x: auto; padding: 10px 14px;
+      background: var(--sidebar-bg); position: sticky; top: 0; z-index: 40;
+    }
+    .mobile-nav .nav-item { border-left: none; border-bottom: 2px solid transparent; padding: 6px 11px; white-space: nowrap; font-size: 12px; border-radius: 4px; }
+    .mobile-nav .nav-item.active { border-bottom-color: var(--sidebar-active); }
+    .mobile-role { display: block; padding: 10px 14px 12px; background: var(--sidebar-bg); }
+    .mobile-role select {
+      width: 100%; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px; padding: 8px; font-size: 13px; font-family: var(--mono);
+    }
+    .mobile-role option { background: #1A1F27; }
+    .topbar { padding: 10px 14px; flex-wrap: wrap; }
+    .content { padding: 16px 14px; }
+    .hero { padding: 16px; }
+    .hero-stats { gap: 18px; }
+    .mod-search { flex-basis: 100%; order: 3; }
+    .mod-search-results { left: 0; right: auto; min-width: 100%; }
+  }
+
+  @media print {
+    body { display: block; background: #fff; }
+    .sidebar, .mobile-nav, .mobile-role, .topbar-right, .no-print, .filter-bar { display: none !important; }
+    .view { display: none !important; }
+    .view.active { display: block !important; }
+    .card, .hero, .pin-card { break-inside: avoid; box-shadow: none; }
+  }
+</style>
+
+<div class="sidebar no-print">
+  <div class="sidebar-logo">
+    <div class="wordmark">ERP Console</div>
+    <div class="sub">Role drill-down</div>
+    <div class="sub" style="margin-top:3px;font-weight:700;color:var(--sidebar-active)">v0.1 · prototype</div>
+  </div>
+  <div class="role-switch">
+    <label for="roleSelect">Signed in as</label>
+    <select id="roleSelect"></select>
+    <div class="who" id="roleWho"></div>
+  </div>
+  <div id="sidebarNav"></div>
+  <div class="sidebar-footer">
+    <div class="db-status"><div class="db-dot"></div><span id="fitBadge">—</span></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="mobile-role no-print">
+    <select id="roleSelectMobile"></select>
+  </div>
+  <div class="mobile-nav no-print" id="mobileNav"></div>
+
+  <div class="topbar">
+    <button id="globalBackBtn" class="back-btn no-print" onclick="back()" style="display:none" title="Back (Alt+Left)">← Back</button>
+    <div class="breadcrumb" id="breadcrumb"></div>
+    <div class="mod-search no-print">
+      <input id="modSearch" placeholder="Jump to a module…" autocomplete="off" aria-label="Search modules">
+      <div class="mod-search-results" id="modSearchResults"></div>
+    </div>
+    <div class="topbar-right no-print">
+      <div class="sync-badge" id="srcBadge" title="Where this matrix came from">matrix · audit 30-Jul-2026</div>
+      <button class="theme-toggle" onclick="window.print()">⎙ Print</button>
+      <button class="theme-toggle" onclick="toggleTheme()">◑ Theme</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══ VIEW: Role home ═══ -->
+    <div class="view active" id="view-home">
+      <div class="hero">
+        <div class="hero-main">
+          <div class="hero-band" id="homeBand"></div>
+          <div class="hero-name" id="homeName"></div>
+          <div class="hero-key" id="homeKey"></div>
+          <div class="hero-remit" id="homeRemit"></div>
+        </div>
+        <div class="hero-stats" id="homeStats"></div>
+      </div>
+
+      <div class="card" id="pinCard">
+        <div class="card-header">
+          <span class="card-title">Your daily loop — pinned</span>
+          <span class="card-note">one click, no menu hunting</span>
+        </div>
+        <div class="pin-grid" id="pinGrid"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Your workspace</span>
+          <span class="card-note">click a group to drill in</span>
+        </div>
+        <div class="grp-grid" id="homeGroups"></div>
+      </div>
+
+      <div class="card" id="homeFlagsCard">
+        <div class="card-header">
+          <span class="card-title">Watch-outs on this role</span>
+          <span class="card-note" id="homeFlagCount"></span>
+        </div>
+        <div class="flag-list" id="homeFlags"></div>
+      </div>
+
+      <div class="card" id="homeLockedCard">
+        <div class="card-header">
+          <span class="card-title">Not yours — request access</span>
+          <span class="card-note">so you stop looking for it</span>
+        </div>
+        <div class="grp-grid" id="homeLocked"></div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: Group ═══ -->
+    <div class="view" id="view-group">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title" id="grpTitle"></span>
+          <span class="card-note" id="grpNote"></span>
+        </div>
+        <div id="grpMods"></div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: Module ═══ -->
+    <div class="view" id="view-module">
+      <div class="hero">
+        <div class="hero-main">
+          <div class="hero-band" id="modBand"></div>
+          <div class="hero-name" id="modName"></div>
+          <div class="hero-key" id="modKey"></div>
+          <div class="hero-remit" id="modDesc"></div>
+        </div>
+        <div class="hero-stats" id="modChips" style="align-self:center"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">What you can do here</span>
+          <span class="card-note" id="modLevelNote"></span>
+        </div>
+        <div class="act-list" id="modActions"></div>
+      </div>
+
+      <div class="card" id="modFlagCard">
+        <div class="card-header"><span class="card-title">Flags on this module</span></div>
+        <div class="flag-list" id="modFlags"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Who else touches this</span>
+          <span class="card-note">click a role to view its console</span>
+        </div>
+        <div class="peer-list" id="modPeers"></div>
+      </div>
+
+      <div class="card" id="modNextCard">
+        <div class="card-header">
+          <span class="card-title">Where you usually go next</span>
+          <span class="card-note">same group, still yours</span>
+        </div>
+        <div id="modNext"></div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: Matrix ═══ -->
+    <div class="view" id="view-matrix">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Access matrix — all roles</span>
+          <span class="card-note" id="matrixNote"></span>
+        </div>
+        <div class="filter-bar no-print" id="matrixFilters"></div>
+        <div class="table-wrap" id="matrixWrap"></div>
+        <div class="legend-bar">
+          <div class="li"><span class="lvl lvl-4">A</span> all (incl. delete)</div>
+          <div class="li"><span class="lvl lvl-3">E</span> view + create + edit</div>
+          <div class="li"><span class="lvl lvl-2">C</span> view + create</div>
+          <div class="li"><span class="lvl lvl-1">V</span> view only</div>
+          <div class="li"><span class="lvl lvl-1 lvl-a">V</span> underline = approve right</div>
+          <div class="li"><span class="lvl lvl-0">·</span> no access</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: Audit ═══ -->
+    <div class="view" id="view-audit">
+      <div class="note" id="auditIntro"></div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Open issues</span>
+          <span class="card-note" id="auditCount"></span>
+        </div>
+        <div class="filter-bar no-print" id="auditFilters"></div>
+        <div class="flag-list" id="auditList"></div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: Roles directory ═══ -->
+    <div class="view" id="view-roles">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">All roles</span>
+          <span class="card-note">click to open that role's console</span>
+        </div>
+        <div class="table-wrap">
+          <table id="rolesTable"></table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+//  DATA — transcribed from the 30-Jul-2026 permissions audit of
+//  shared/permissions.ts. This block is the ONLY thing that needs to change
+//  when the real permission file changes: regenerate ROLES[].perms from
+//  shared/permissions.ts and everything below re-renders.
+//
+//  Levels:  0 none · 1 view · 2 view+create · 3 view+create+edit · 4 all(+delete)
+//  Suffix 'a' on a level string adds an APPROVE right, e.g. '1a' = view + approve.
+//  'ALL' in the source implies approve as well, so level 4 always carries it.
+// ══════════════════════════════════════════════════════════════════════════
+
+const GROUPS = [
+  { key:'sales',    label:'Sales & CRM',        icon:'◫' },
+  { key:'dispatch', label:'Dispatch & Billing', icon:'⛟' },
+  { key:'ppc',      label:'Planning & PPC',     icon:'⚒' },
+  { key:'mes',      label:'Shop Floor (MES)',   icon:'▥' },
+  { key:'eng',      label:'Engineering',        icon:'✎' },
+  { key:'quality',  label:'Quality & Labs',     icon:'⌾' },
+  { key:'stores',   label:'Stores & Stock',     icon:'▣' },
+  { key:'purchase', label:'Purchase & Vendors', icon:'⇄' },
+  { key:'finance',  label:'Finance',            icon:'₹' },
+  { key:'hr',       label:'People & HR',        icon:'☖' },
+  { key:'cmms',     label:'Maintenance (CMMS)', icon:'⚙' },
+  { key:'ehs',      label:'EHS',                icon:'⛑' },
+  { key:'admin',    label:'Admin & Reports',    icon:'◈' },
+];
+
+const MODULES = [
+  // Sales & CRM
+  { key:'PARTIES',        g:'sales',    label:'Parties',              desc:'Customer & vendor master records' },
+  { key:'ENQUIRIES',      g:'sales',    label:'Enquiries',            desc:'Incoming RFQs from customers' },
+  { key:'QUOTATIONS',     g:'sales',    label:'Quotations',           desc:'Priced offers against enquiries' },
+  { key:'SALES_ORDERS',   g:'sales',    label:'Sales Orders',         desc:'Confirmed customer orders' },
+  { key:'PO_BOOKING',     g:'sales',    label:'PO Booking',           desc:'Booking customer POs into the order book' },
+  { key:'CRM',            g:'sales',    label:'CRM',                  desc:'Leads, follow-ups, customer activity' },
+  { key:'COMPLAINTS',     g:'sales',    label:'Customer Complaints',  desc:'Field complaints and 8D responses' },
+  // Dispatch & Billing
+  { key:'DISPATCHES',     g:'dispatch', label:'Dispatches',           desc:'Despatch notes and outward gate passes' },
+  { key:'INVOICES',       g:'dispatch', label:'Invoices',             desc:'Tax invoices raised against dispatches' },
+  { key:'CREDIT_NOTES',   g:'dispatch', label:'Credit Notes',         desc:'Rate/quantity/return adjustments' },
+  { key:'E_WAY_BILLS',    g:'dispatch', label:'E-Way Bills',          desc:'Statutory transport documents' },
+  // Planning & PPC
+  { key:'PPC_WIP',        g:'ppc',      label:'PPC WIP',              desc:'Work in progress across stages' },
+  { key:'WORK_ORDERS',    g:'ppc',      label:'Work Orders',          desc:'Released manufacturing orders' },
+  { key:'JOB_CARDS',      g:'ppc',      label:'Job Cards',            desc:'Per-JC routing and stage history' },
+  { key:'APS',            g:'ppc',      label:'APS (Scheduling)',     desc:'Advanced planning & scheduling' },
+  { key:'MRP',            g:'ppc',      label:'MRP',                  desc:'Material requirement planning runs' },
+  { key:'EXECUTION_BOARD',g:'ppc',      label:'Execution Board',      desc:'Live shop-floor execution status' },
+  { key:'DAILY_PROGRESS', g:'ppc',      label:'Daily Progress',       desc:'Day-wise output against plan' },
+  // MES
+  { key:'MES_ROUTING',    g:'mes',      label:'MES Routing',          desc:'Operation routing definitions' },
+  { key:'MES_CUTTING',    g:'mes',      label:'Cutting Queue',        desc:'Bar cutting department queue' },
+  { key:'MES_FORGING',    g:'mes',      label:'Forging Queue',        desc:'Hammer/press department queue' },
+  { key:'MES_HEAT_TREAT', g:'mes',      label:'Heat Treatment Queue', desc:'Furnace cycles and charge queue' },
+  { key:'MES_MACHINING',  g:'mes',      label:'Machining Queue',      desc:'Machining department queue' },
+  { key:'MES_FINISHING',  g:'mes',      label:'Finishing Queue',      desc:'Shot blast, paint, final dressing' },
+  // Engineering
+  { key:'PRODUCTS',       g:'eng',      label:'Products',             desc:'Part master, drawings, revisions' },
+  { key:'PROCESS_WORKSPACE',g:'eng',    label:'Process Workspace',    desc:'Process sheets and method design' },
+  { key:'TOOLING',        g:'eng',      label:'Tooling',              desc:'Dies, punches, fixtures register' },
+  { key:'DIE_REPAIRS',    g:'eng',      label:'Die Repairs',          desc:'Die repair jobs and life tracking' },
+  { key:'GRADES',         g:'eng',      label:'Material Grades',      desc:'Steel grade chemistry specs' },
+  // Quality & Labs
+  { key:'INSPECTIONS',    g:'quality',  label:'Inspections',          desc:'In-process and final inspection records' },
+  { key:'NCR',            g:'quality',  label:'NCR',                  desc:'Non-conformance reports and dispositions' },
+  { key:'TEST_CERTIFICATES',g:'quality',label:'Test Certificates',    desc:'Mill TCs and in-house test reports' },
+  { key:'CALIBRATION',    g:'quality',  label:'Calibration',          desc:'Instrument calibration schedule' },
+  { key:'HEAT_NUMBERS',   g:'quality',  label:'Heat Numbers',         desc:'Heat/lot traceability records' },
+  // Stores & Stock
+  { key:'STOCK',          g:'stores',   label:'Stock',                desc:'RM, WIP and finished stock balances' },
+  { key:'GRN',            g:'stores',   label:'GRN',                  desc:'Goods receipt against POs' },
+  { key:'WAREHOUSES',     g:'stores',   label:'Warehouses',           desc:'Locations, bins, stock transfers' },
+  { key:'CONSUMABLES',    g:'stores',   label:'Consumables',          desc:'Consumable issue and reorder' },
+  // Purchase & Vendors
+  { key:'PURCHASE_ORDERS',g:'purchase', label:'Purchase Orders',      desc:'Buying orders on suppliers' },
+  { key:'PURCHASE_REQUISITIONS',g:'purchase',label:'Purchase Requisitions',desc:'Internal requests to buy' },
+  { key:'RFQ',            g:'purchase', label:'RFQ',                  desc:'Supplier quote requests & comparison' },
+  { key:'SUPPLIER_INVOICES',g:'purchase',label:'Supplier Invoices',   desc:'Inward bills for 3-way match' },
+  { key:'JOB_WORK',       g:'purchase', label:'Job Work',             desc:'Outward job work challans' },
+  { key:'SUBCONTRACTORS', g:'purchase', label:'Subcontractors',       desc:'Subcontractor register & jobs' },
+  { key:'RATE_CONTRACTS', g:'purchase', label:'Rate Contracts',       desc:'Agreed supplier rate contracts' },
+  { key:'AVL',            g:'purchase', label:'AVL',                  desc:'Approved vendor list' },
+  // Finance
+  { key:'ACCOUNTS',       g:'finance',  label:'Accounts',             desc:'Chart of accounts and ledgers' },
+  { key:'JOURNALS',       g:'finance',  label:'Journals',             desc:'Journal vouchers and postings' },
+  { key:'PAYABLES',       g:'finance',  label:'Payables',             desc:'Supplier outstanding' },
+  { key:'RECEIVABLES',    g:'finance',  label:'Receivables',          desc:'Customer outstanding and ageing' },
+  { key:'PAYMENTS',       g:'finance',  label:'Payments',             desc:'Payments made and received' },
+  { key:'GST',            g:'finance',  label:'GST',                  desc:'GST returns and reconciliation' },
+  { key:'FIXED_ASSETS',   g:'finance',  label:'Fixed Assets',         desc:'Asset register and depreciation' },
+  { key:'COSTING',        g:'finance',  label:'Costing',              desc:'Job costing and margin analysis' },
+  // People & HR
+  { key:'ATTENDANCE',     g:'hr',       label:'Attendance',           desc:'Shift attendance and muster' },
+  { key:'LEAVE_MANAGEMENT',g:'hr',      label:'Leave Management',     desc:'Leave applications and approvals' },
+  { key:'PAYROLL',        g:'hr',       label:'Payroll',              desc:'Wage computation and payslips' },
+  // Maintenance (CMMS)
+  { key:'EQUIPMENT',      g:'cmms',     label:'Equipment',            desc:'Machine register and asset tree' },
+  { key:'MAINTENANCE_ORDERS',g:'cmms',  label:'Maintenance Orders',   desc:'Breakdown and preventive work orders' },
+  { key:'SPARE_PARTS',    g:'cmms',     label:'Spare Parts',          desc:'Spares stock and consumption' },
+  { key:'PERMITS',        g:'cmms',     label:'Work Permits',         desc:'Hot work, height, confined space permits' },
+  { key:'LUBRICATION',    g:'cmms',     label:'Lubrication',          desc:'Lubrication schedule and logs' },
+  { key:'AMC',            g:'cmms',     label:'AMC',                  desc:'Annual maintenance contracts' },
+  { key:'WARRANTY',       g:'cmms',     label:'Warranty',             desc:'Equipment warranty tracking' },
+  { key:'DIE_MOUNTING',   g:'cmms',     label:'Die Mounting',         desc:'Die changeover and mounting log' },
+  { key:'SHUTDOWN',       g:'cmms',     label:'Shutdown',             desc:'Planned shutdown scope & execution' },
+  { key:'CONDITION_MONITORING',g:'cmms',label:'Condition Monitoring', desc:'Vibration, thermography, oil analysis' },
+  // EHS
+  { key:'EHS',            g:'ehs',      label:'EHS',                  desc:'Environment, health & safety register' },
+  { key:'SAFETY_INCIDENTS',g:'ehs',     label:'Safety Incidents',     desc:'Incident and near-miss reporting' },
+  // Admin
+  { key:'REPORTS',        g:'admin',    label:'Reports',              desc:'Cross-module reports and analytics' },
+  { key:'USER_MANAGEMENT',g:'admin',    label:'User Management',      desc:'Users, roles and permission grants' },
+];
+
+const MOD_BY_KEY = Object.fromEntries(MODULES.map(m => [m.key, m]));
+const ALL_KEYS = MODULES.map(m => m.key);
+
+// Helper builders for the perms tables below
+function only(spec) { return spec; }
+function allExcept(level, exceptions) {
+  const o = {};
+  ALL_KEYS.forEach(k => { o[k] = level; });
+  Object.assign(o, exceptions);
+  return o;
+}
+function lvlAll() { return allExcept('4', {}); }
+
+const ROLES = [
+  {
+    key:'ADMIN', label:'Administrator', band:'exec',
+    remit:'Full bypass of every permission check. The only role that can manage users and roles.',
+    perms: lvlAll(),
+    pins:[
+      { m:'USER_MANAGEMENT', t:'Users & roles',      h:'Grant, revoke and audit access — no other role can.' },
+      { m:'REPORTS',         t:'Reports',            h:'Everything, across every module.' },
+      { m:'PPC_WIP',         t:'WIP',                h:'Live position across all stages.' },
+      { m:'RECEIVABLES',     t:'Receivables',        h:'Money outstanding, oldest first.' },
+    ],
+  },
+  {
+    key:'DIRECTOR', label:'Director', band:'exec',
+    remit:'View-only across all operations, with approval authority on enquiries, quotations, purchase orders and fixed assets. Full control of CRM and Reports.',
+    perms: allExcept('1', {
+      ENQUIRIES:'1a', QUOTATIONS:'1a', PURCHASE_ORDERS:'1a', FIXED_ASSETS:'1a',
+      CRM:'4', REPORTS:'4',
+      PPC_WIP:'3', DISPATCHES:'3',
+      USER_MANAGEMENT:'0',
+    }),
+    pins:[
+      { m:'QUOTATIONS',     t:'Quotes to approve',  h:'Sitting with you before they go out.' },
+      { m:'PURCHASE_ORDERS',t:'POs to approve',     h:'Buying commitments awaiting sign-off.' },
+      { m:'REPORTS',        t:'Reports',            h:'Sales, OTD, WIP, costing — full control.' },
+      { m:'CRM',            t:'CRM',                h:'Customer activity and pipeline.' },
+      { m:'ENQUIRIES',      t:'Enquiries',          h:'New demand entering the book.' },
+    ],
+  },
+  {
+    key:'MARKETING', label:'Marketing', band:'commercial',
+    remit:'Owns the customer-facing cycle end to end: parties, enquiries, quotations, PO booking, dispatch paperwork and CRM. View-only on the sales orders those enquiries become.',
+    perms: only({
+      PARTIES:'4', ENQUIRIES:'4', QUOTATIONS:'3', SALES_ORDERS:'1', PO_BOOKING:'4', CRM:'4', COMPLAINTS:'1',
+      DISPATCHES:'4', INVOICES:'3', CREDIT_NOTES:'4', E_WAY_BILLS:'4',
+    }),
+    pins:[
+      { m:'ENQUIRIES',  t:'Open enquiries',   h:'What came in and still needs a quote.' },
+      { m:'QUOTATIONS', t:'Quotations',       h:'Create and revise — approval sits with Director.' },
+      { m:'PO_BOOKING', t:'Book a PO',        h:'Turn a won quote into an order.' },
+      { m:'DISPATCHES', t:'Dispatches',       h:'What shipped and what is due.' },
+      { m:'CRM',        t:'CRM',              h:'Follow-ups and customer activity.' },
+    ],
+  },
+  {
+    key:'DESIGN', label:'Design', band:'engineering',
+    remit:'Owns product master data and the process workspace. Edits tooling, creates and edits MES routings, sees enquiries for feasibility input.',
+    perms: only({
+      ENQUIRIES:'1',
+      PRODUCTS:'4', PROCESS_WORKSPACE:'4', TOOLING:'3',
+      MES_ROUTING:'3',
+    }),
+    pins:[
+      { m:'PRODUCTS',          t:'Product master',   h:'Drawings, revisions, part definition.' },
+      { m:'PROCESS_WORKSPACE', t:'Process design',   h:'Method sheets and process planning.' },
+      { m:'MES_ROUTING',       t:'Routing',          h:'Operation sequence for new parts.' },
+      { m:'TOOLING',           t:'Tooling',          h:'Die and fixture design records.' },
+    ],
+  },
+  {
+    key:'TOOL_ROOM', label:'Tool Room', band:'engineering',
+    remit:'Full control of the tooling register and die repairs. Reads product drawings and the equipment register.',
+    perms: only({ TOOLING:'4', DIE_REPAIRS:'4', PRODUCTS:'1', EQUIPMENT:'1' }),
+    pins:[
+      { m:'DIE_REPAIRS', t:'Die repairs',    h:'Dies down, dies due, life remaining.' },
+      { m:'TOOLING',     t:'Tooling register',h:'Availability against the forging plan.' },
+      { m:'PRODUCTS',    t:'Drawings',       h:'Reference geometry for the die.' },
+    ],
+  },
+  {
+    key:'METALLURGY', label:'Metallurgy', band:'engineering',
+    remit:'Owns material grades. Edits products, heat numbers, inspections and test certificates for metallurgical calls.',
+    perms: only({ GRADES:'4', PRODUCTS:'3', HEAT_NUMBERS:'3', INSPECTIONS:'3', TEST_CERTIFICATES:'3' }),
+    pins:[
+      { m:'GRADES',           t:'Grades',        h:'Chemistry specs and grade equivalents.' },
+      { m:'HEAT_NUMBERS',     t:'Heat numbers',  h:'Lot traceability and chemistry per heat.' },
+      { m:'TEST_CERTIFICATES',t:'Test certs',    h:'Mill TCs against incoming material.' },
+      { m:'INSPECTIONS',      t:'Inspections',   h:'Metallurgical inspection records.' },
+    ],
+  },
+  {
+    key:'METROLOGY', label:'Metrology', band:'engineering',
+    remit:'Owns the calibration programme. Records and edits dimensional inspections.',
+    perms: only({ CALIBRATION:'4', INSPECTIONS:'3' }),
+    pins:[
+      { m:'CALIBRATION', t:'Calibration due', h:'Instruments due or overdue this month.' },
+      { m:'INSPECTIONS', t:'Inspections',     h:'Dimensional results you record.' },
+    ],
+  },
+  {
+    key:'MECHANICAL_LAB', label:'Mechanical Lab', band:'engineering',
+    remit:'Records and edits mechanical test results and the certificates that carry them.',
+    perms: only({ INSPECTIONS:'3', TEST_CERTIFICATES:'3' }),
+    pins:[
+      { m:'INSPECTIONS',      t:'Test queue',  h:'Samples waiting on mechanical results.' },
+      { m:'TEST_CERTIFICATES',t:'Certificates',h:'Issue and revise in-house TCs.' },
+    ],
+  },
+  {
+    key:'PRODUCTION_MANAGER', label:'Production Manager', band:'production',
+    remit:'Full control of PPC, work orders, job cards and every MES department queue. Reads stock and enquiries; can raise purchase requisitions.',
+    perms: only({
+      ENQUIRIES:'1',
+      PPC_WIP:'4', WORK_ORDERS:'4', JOB_CARDS:'4', APS:'4', MRP:'4', EXECUTION_BOARD:'4', DAILY_PROGRESS:'4',
+      MES_ROUTING:'4', MES_CUTTING:'4', MES_FORGING:'4', MES_HEAT_TREAT:'4', MES_MACHINING:'4', MES_FINISHING:'4',
+      STOCK:'1', PURCHASE_REQUISITIONS:'2',
+    }),
+    pins:[
+      { m:'EXECUTION_BOARD', t:'Execution board',  h:'What is running right now, by machine.' },
+      { m:'PPC_WIP',         t:'WIP',              h:'Tonnage and value stuck at each stage.' },
+      { m:'DAILY_PROGRESS',  t:'Daily progress',   h:'Yesterday against plan.' },
+      { m:'WORK_ORDERS',     t:'Work orders',      h:'Release, hold, close.' },
+      { m:'MES_FORGING',     t:'Forging queue',    h:'The bottleneck queue, usually.' },
+    ],
+  },
+  {
+    key:'PLANNER', label:'Planner', band:'production',
+    remit:'Full control of PPC modules; reads sales orders, work orders, job cards, APS, MRP and reports; edits product master data.',
+    note:'Defined twice in shared/permissions.ts (lines 423 and 628) — the second definition silently wins. What you see here is the effective (second) set.',
+    perms: only({
+      SALES_ORDERS:'1',
+      PPC_WIP:'4', EXECUTION_BOARD:'4', DAILY_PROGRESS:'4',
+      WORK_ORDERS:'1', JOB_CARDS:'1', APS:'1', MRP:'1',
+      PRODUCTS:'3', REPORTS:'1',
+    }),
+    permsShadow: {
+      label:'First definition (line 423) — silently overwritten',
+      perms: only({
+        SALES_ORDERS:'1',
+        PPC_WIP:'4', EXECUTION_BOARD:'4', DAILY_PROGRESS:'4',
+        DISPATCHES:'1', E_WAY_BILLS:'1', REPORTS:'1',
+      }),
+    },
+    pins:[
+      { m:'PPC_WIP',        t:'WIP',            h:'Plan against what is actually moving.' },
+      { m:'APS',            t:'Scheduling',     h:'Read-only in the effective definition.' },
+      { m:'MRP',            t:'MRP',            h:'Material coverage for the plan.' },
+      { m:'DAILY_PROGRESS', t:'Daily progress', h:'Plan attainment day by day.' },
+      { m:'SALES_ORDERS',   t:'Order book',     h:'What you are planning against.' },
+    ],
+  },
+  {
+    key:'SUPERVISOR', label:'Supervisor', band:'production',
+    remit:'Runs the shift: edits PPC and every MES queue, reads work orders and job cards, manages attendance and approves leave.',
+    perms: only({
+      PPC_WIP:'3', WORK_ORDERS:'1', JOB_CARDS:'1', EXECUTION_BOARD:'3', DAILY_PROGRESS:'3',
+      MES_CUTTING:'3', MES_FORGING:'3', MES_HEAT_TREAT:'3', MES_MACHINING:'3', MES_FINISHING:'3',
+      ATTENDANCE:'4', LEAVE_MANAGEMENT:'1a',
+      SAFETY_INCIDENTS:'2',
+    }),
+    pins:[
+      { m:'EXECUTION_BOARD',  t:'Shift board',    h:'Your lines, this shift.' },
+      { m:'ATTENDANCE',       t:'Attendance',     h:'Mark the muster before the shift starts.' },
+      { m:'LEAVE_MANAGEMENT', t:'Leave requests', h:'Pending approvals from your team.' },
+      { m:'DAILY_PROGRESS',   t:'Daily progress', h:'Log the shift output.' },
+    ],
+  },
+  {
+    key:'OPERATOR', label:'Operator', band:'production',
+    remit:'Sees and updates only their own MES department queue, and can log a safety incident.',
+    scopeNote:'MES access is scoped to the operator’s own department queue only.',
+    perms: only({
+      MES_CUTTING:'2', MES_FORGING:'2', MES_HEAT_TREAT:'2', MES_MACHINING:'2', MES_FINISHING:'2',
+      SAFETY_INCIDENTS:'2',
+    }),
+    scopedModules:['MES_CUTTING','MES_FORGING','MES_HEAT_TREAT','MES_MACHINING','MES_FINISHING'],
+    pins:[
+      { m:'MES_FORGING',      t:'My queue',       h:'Jobs assigned to your department.' },
+      { m:'SAFETY_INCIDENTS', t:'Report incident',h:'Near-miss or injury — log it now.' },
+    ],
+  },
+  {
+    key:'WAREHOUSE_MANAGER', label:'Warehouse Manager', band:'support',
+    remit:'Owns stock, goods receipt, heat numbers, warehouses and consumables. Reads purchase orders and sales orders.',
+    perms: only({
+      STOCK:'4', GRN:'4', HEAT_NUMBERS:'4', WAREHOUSES:'4', CONSUMABLES:'4',
+      PURCHASE_ORDERS:'1', SALES_ORDERS:'1',
+    }),
+    pins:[
+      { m:'GRN',              t:'Receive goods',  h:'Inward against open POs.' },
+      { m:'STOCK',            t:'Stock',          h:'RM balance by grade and section.' },
+      { m:'HEAT_NUMBERS',     t:'Heat numbers',   h:'Tag lots on receipt for traceability.' },
+      { m:'PURCHASE_ORDERS',  t:'Open POs',       h:'What is due in — read only.' },
+      { m:'CONSUMABLES',      t:'Consumables',    h:'Issue and reorder levels.' },
+    ],
+  },
+  {
+    key:'PURCHASE_MANAGER', label:'Purchase Manager', band:'support',
+    remit:'Owns the entire buying cycle: requisitions, RFQs, purchase orders, supplier invoices, job work, subcontractors, rate contracts and the AVL.',
+    perms: only({
+      PARTIES:'3',
+      PURCHASE_ORDERS:'4', PURCHASE_REQUISITIONS:'4', RFQ:'4', SUPPLIER_INVOICES:'4',
+      JOB_WORK:'4', SUBCONTRACTORS:'4', RATE_CONTRACTS:'4', AVL:'4',
+    }),
+    pins:[
+      { m:'PURCHASE_REQUISITIONS', t:'Open requisitions', h:'What the plant wants bought.' },
+      { m:'RFQ',                   t:'RFQs',              h:'Quotes out, comparisons pending.' },
+      { m:'PURCHASE_ORDERS',       t:'Purchase orders',   h:'Raise, amend — and approve (see flag).' },
+      { m:'SUPPLIER_INVOICES',     t:'Supplier invoices', h:'Three-way match against GRN.' },
+      { m:'JOB_WORK',              t:'Job work',          h:'Outward challans and returns.' },
+    ],
+  },
+  {
+    key:'QUALITY_MANAGER', label:'Quality Manager', band:'support',
+    remit:'Owns inspections, NCRs, test certificates, customer complaints and calibration. Edits products and the process workspace.',
+    perms: only({
+      COMPLAINTS:'4',
+      INSPECTIONS:'4', NCR:'4', TEST_CERTIFICATES:'4', CALIBRATION:'4',
+      PRODUCTS:'3', PROCESS_WORKSPACE:'3',
+    }),
+    pins:[
+      { m:'NCR',              t:'Open NCRs',      h:'Non-conformances awaiting disposition.' },
+      { m:'INSPECTIONS',      t:'Inspections',    h:'Stage clearances and holds.' },
+      { m:'COMPLAINTS',       t:'Complaints',     h:'Customer complaints and 8D status.' },
+      { m:'TEST_CERTIFICATES',t:'Test certs',     h:'Issue and countersign.' },
+      { m:'CALIBRATION',      t:'Calibration',    h:'Instruments due this month.' },
+    ],
+  },
+  {
+    key:'INSPECTOR', label:'Inspector', band:'support',
+    remit:'Records inspections and raises NCRs. Reads test certificates.',
+    perms: only({ INSPECTIONS:'3', NCR:'3', TEST_CERTIFICATES:'1' }),
+    pins:[
+      { m:'INSPECTIONS', t:'Inspection queue', h:'Lots waiting for clearance.' },
+      { m:'NCR',         t:'Raise an NCR',     h:'Log the non-conformance and route it.' },
+    ],
+  },
+  {
+    key:'FINANCE_MANAGER', label:'Finance Manager', band:'support',
+    remit:'Owns the full finance stack — accounts, journals, payables, receivables, payments, GST, fixed assets and costing — plus invoices, credit notes and the whole HR/payroll stack.',
+    perms: only({
+      INVOICES:'4', CREDIT_NOTES:'4',
+      ACCOUNTS:'4', JOURNALS:'4', PAYABLES:'4', RECEIVABLES:'4', PAYMENTS:'4', GST:'4', FIXED_ASSETS:'4', COSTING:'4',
+      ATTENDANCE:'4', LEAVE_MANAGEMENT:'4', PAYROLL:'4',
+    }),
+    pins:[
+      { m:'RECEIVABLES', t:'Receivables',  h:'Ageing — oldest and largest first.' },
+      { m:'PAYABLES',    t:'Payables',     h:'Due this week.' },
+      { m:'INVOICES',    t:'Invoices',     h:'Raised, pending, cancelled.' },
+      { m:'GST',         t:'GST',          h:'Return status and reconciliation gaps.' },
+      { m:'PAYROLL',     t:'Payroll',      h:'Monthly wage run.' },
+      { m:'COSTING',     t:'Costing',      h:'Job margins against quoted rates.' },
+    ],
+  },
+  {
+    key:'MAINTENANCE_MANAGER', label:'Maintenance Manager', band:'support',
+    remit:'Owns the full CMMS: equipment, maintenance orders, spares, calibration, permits, lubrication, AMC, warranty, die mounting, shutdown and condition monitoring.',
+    perms: only({
+      CALIBRATION:'4',
+      EQUIPMENT:'4', MAINTENANCE_ORDERS:'4', SPARE_PARTS:'4', PERMITS:'4', LUBRICATION:'4',
+      AMC:'4', WARRANTY:'4', DIE_MOUNTING:'4', SHUTDOWN:'4', CONDITION_MONITORING:'4',
+    }),
+    pins:[
+      { m:'MAINTENANCE_ORDERS', t:'Open MOs',      h:'Breakdowns and preventive jobs due.' },
+      { m:'EQUIPMENT',          t:'Equipment',     h:'Machine status and history.' },
+      { m:'SPARE_PARTS',        t:'Spares',        h:'Critical spares below reorder.' },
+      { m:'PERMITS',            t:'Work permits',  h:'Active permits on the floor.' },
+      { m:'CONDITION_MONITORING',t:'Condition',    h:'Vibration and thermal alerts.' },
+    ],
+  },
+  {
+    key:'VIEWER', label:'Viewer', band:'limited',
+    remit:'Read-only observer across production, stock, quality and EHS. No financial data, no reports, no analytics.',
+    perms: only({
+      SALES_ORDERS:'1', PRODUCTS:'1', WORK_ORDERS:'1', JOB_CARDS:'1', EXECUTION_BOARD:'1',
+      DAILY_PROGRESS:'1', STOCK:'1', INSPECTIONS:'1', NCR:'1', EQUIPMENT:'1', EHS:'1',
+    }),
+    pins:[
+      { m:'EXECUTION_BOARD', t:'Execution board', h:'Live status, read only.' },
+      { m:'DAILY_PROGRESS',  t:'Daily progress',  h:'Output against plan.' },
+      { m:'STOCK',           t:'Stock',           h:'Balances, no transactions.' },
+    ],
+  },
+  {
+    key:'PORTAL_CUSTOMER', label:'Customer (Portal)', band:'portal',
+    remit:'Customer-facing portal user. Sees only their own orders, dispatches, invoices and certificates, and can raise a complaint.',
+    scopeNote:'Every module is scoped to the signed-in customer’s own records.',
+    perms: only({
+      SALES_ORDERS:'1', DISPATCHES:'1', INVOICES:'1', TEST_CERTIFICATES:'1', COMPLAINTS:'2',
+    }),
+    scopedModules:['SALES_ORDERS','DISPATCHES','INVOICES','TEST_CERTIFICATES','COMPLAINTS'],
+    pins:[
+      { m:'SALES_ORDERS', t:'My orders',    h:'Status of everything you have on us.' },
+      { m:'DISPATCHES',   t:'Dispatches',   h:'What has shipped, with documents.' },
+      { m:'INVOICES',     t:'Invoices',     h:'Billing against your dispatches.' },
+      { m:'COMPLAINTS',   t:'Raise a complaint', h:'Log an issue against a supply.' },
+    ],
+  },
+];
+
+const BANDS = {
+  exec:       { label:'Executive',            color:'var(--crit)' },
+  commercial: { label:'Commercial',           color:'var(--warn)' },
+  engineering:{ label:'Engineering',          color:'var(--steel)' },
+  production: { label:'Production',           color:'var(--accent)' },
+  support:    { label:'Support & Functional', color:'var(--good)' },
+  limited:    { label:'Limited',              color:'var(--text-muted)' },
+  portal:     { label:'Portal',               color:'var(--text-muted)' },
+};
+
+const ROLE_BY_KEY = Object.fromEntries(ROLES.map(r => [r.key, r]));
+
+// ── Audit findings from the 30-Jul-2026 review ──────────────────────────────
+const FINDINGS = [
+  {
+    id:'planner-dup', sev:'bug', sevLabel:'Bug',
+    title:'PLANNER is defined twice — the second definition silently wins',
+    roles:['PLANNER'], modules:['WORK_ORDERS','JOB_CARDS','APS','MRP','PRODUCTS','DISPATCHES','E_WAY_BILLS'],
+    detail:'shared/permissions.ts defines PLANNER at line 423 and again at line 628. In JavaScript the later object-literal key overwrites the earlier one, so only the second set is ever enforced. The second adds WORK_ORDERS, JOB_CARDS, APS, MRP and VIEW_CREATE_EDIT on PRODUCTS, but drops DISPATCHES and E_WAY_BILLS. Nothing warns at build time.',
+    fix:'Decide the intended combined set, delete the duplicate key, and add a lint rule (or a runtime assertion over Object.keys) so a repeated role key fails the build.',
+    where:'shared/permissions.ts:423 and :628',
+  },
+  {
+    id:'pm-self-approve', sev:'risk', sevLabel:'Control risk',
+    title:'Purchase Manager can approve their own purchase orders',
+    roles:['PURCHASE_MANAGER'], modules:['PURCHASE_ORDERS'],
+    detail:'PURCHASE_MANAGER holds ALL on PURCHASE_ORDERS, and ALL carries APPROVE. The same person raises the PO and signs it off, so no second pair of eyes sits on outward spend.',
+    fix:'Drop PURCHASE_ORDERS to VIEW_CREATE_EDIT for PURCHASE_MANAGER and leave APPROVE with DIRECTOR (who already has it) or FINANCE_MANAGER.',
+    where:'PURCHASE_MANAGER · Purchase Orders',
+  },
+  {
+    id:'design-no-wo', sev:'gap', sevLabel:'Access gap',
+    title:'Design cannot see Work Orders or Job Cards',
+    roles:['DESIGN'], modules:['WORK_ORDERS','JOB_CARDS'],
+    detail:'Design owns the product and the routing but has no visibility of the orders built from them. When a part runs badly, the designer cannot see the job card history or the stage where it failed without asking Production.',
+    fix:'Grant DESIGN VIEW on WORK_ORDERS and JOB_CARDS. Read-only is enough to close the loop.',
+    where:'DESIGN · Planning & PPC',
+  },
+  {
+    id:'qm-no-stock', sev:'gap', sevLabel:'Access gap',
+    title:'Quality Manager has no Stock access',
+    roles:['QUALITY_MANAGER'], modules:['STOCK'],
+    detail:'QC holds and releases directly change what is available to issue, but the Quality Manager cannot see stock at all — so the effect of a hold is invisible to the person placing it.',
+    fix:'Grant QUALITY_MANAGER at least VIEW on STOCK; VIEW_CREATE_EDIT if quality holds are recorded as stock status changes.',
+    where:'QUALITY_MANAGER · Stores & Stock',
+  },
+  {
+    id:'mkt-invoices', sev:'over', sevLabel:'Over-access',
+    title:'Marketing can create and edit Invoices',
+    roles:['MARKETING'], modules:['INVOICES'],
+    detail:'Invoice creation is a finance function. A sales role holding VIEW_CREATE_EDIT on INVOICES allows billing to be raised or altered outside finance control, with unbilled or misbilled dispatches as the failure mode.',
+    fix:'Reduce MARKETING to VIEW on INVOICES. Billing stays with FINANCE_MANAGER, who already holds ALL.',
+    where:'MARKETING · Invoices',
+  },
+  {
+    id:'dir-crm-delete', sev:'over', sevLabel:'Over-access',
+    title:'Director holds DELETE on CRM modules',
+    roles:['DIRECTOR'], modules:['CRM'],
+    detail:'The Director is view-and-approve everywhere else, but holds ALL — including delete — on CRM and Reports. Deleting customer activity history from an executive account is both unnecessary and hard to audit.',
+    fix:'Reduce DIRECTOR to VIEW_CREATE_EDIT on CRM (or VIEW plus APPROVE), keeping delete with ADMIN.',
+    where:'DIRECTOR · CRM',
+  },
+  {
+    id:'wh-no-pr', sev:'gap', sevLabel:'Gap',
+    title:'Warehouse Manager cannot see Purchase Requisitions',
+    roles:['WAREHOUSE_MANAGER'], modules:['PURCHASE_REQUISITIONS'],
+    detail:'Stores receives the goods but cannot see what was requested or why. Reconciling a short or wrong receipt means going back to Purchase every time.',
+    fix:'Grant WAREHOUSE_MANAGER VIEW on PURCHASE_REQUISITIONS.',
+    where:'WAREHOUSE_MANAGER · Purchase & Vendors',
+  },
+  {
+    id:'insp-tc', sev:'gap', sevLabel:'Gap',
+    title:'Inspector cannot attach or reference Test Certificates on an NCR',
+    roles:['INSPECTOR'], modules:['TEST_CERTIFICATES','NCR'],
+    detail:'Inspectors raise NCRs but hold only VIEW on TEST_CERTIFICATES, so the certificate that evidences the non-conformance cannot be attached or cited from the NCR itself.',
+    fix:'Grant INSPECTOR VIEW_CREATE_EDIT on TEST_CERTIFICATES, or add an explicit attach-only right if the model supports it.',
+    where:'INSPECTOR · Test Certificates',
+  },
+  {
+    id:'sup-leave', sev:'open', sevLabel:'Unclear intent',
+    title:'Supervisor can approve leave',
+    roles:['SUPERVISOR'], modules:['LEAVE_MANAGEMENT'],
+    detail:'SUPERVISOR carries APPROVE on LEAVE_MANAGEMENT while FINANCE_MANAGER holds ALL on the same module. Either the supervisor is the first-level approver by design, or this is an unintended grant — the code does not say which.',
+    fix:'Confirm the intended approval chain. If supervisors are first-level approvers, document it; otherwise remove APPROVE and route leave through HR/Finance.',
+    where:'SUPERVISOR · Leave Management',
+  },
+  {
+    id:'planner-products', sev:'over', sevLabel:'Risky',
+    title:'Planner can edit Products',
+    roles:['PLANNER'], modules:['PRODUCTS'],
+    detail:'The effective (second) PLANNER definition grants VIEW_CREATE_EDIT on PRODUCTS. Product master data is Design and Quality territory; a planner editing it can silently change what gets built.',
+    fix:'Reduce PLANNER to VIEW on PRODUCTS. Master data changes stay with DESIGN.',
+    where:'PLANNER · Products',
+  },
+  {
+    id:'admin-spof', sev:'risk', sevLabel:'Control risk',
+    title:'Only ADMIN can manage users — a single point of failure',
+    roles:['ADMIN'], modules:['USER_MANAGEMENT'],
+    detail:'No role other than ADMIN holds any access to USER_MANAGEMENT. If the single admin account is unavailable, nobody can grant, revoke or reset access — including during an incident.',
+    fix:'Give DIRECTOR at least VIEW on USER_MANAGEMENT for audit, and provision a second break-glass admin account with its use logged.',
+    where:'USER_MANAGEMENT · all roles',
+  },
+];
+
+// ══════════════════════════════════════════════════════════════════════════
+//  DERIVED HELPERS
+// ══════════════════════════════════════════════════════════════════════════
+
+function permOf(role, modKey) {
+  const raw = (role.perms && role.perms[modKey]) || '0';
+  const lvl = parseInt(raw[0], 10) || 0;
+  const approve = raw.includes('a') || lvl === 4;
+  return { lvl, approve, raw };
+}
+
+const LEVEL_NAME = { 0:'No access', 1:'View only', 2:'View + create', 3:'View + create + edit', 4:'Full control' };
+const LEVEL_CODE = { 0:'·', 1:'V', 2:'C', 3:'E', 4:'A' };
+
+function chipsFor(p) {
+  const out = [];
+  if (p.lvl === 0) { out.push(['chip-none', 'no access']); return out; }
+  if (p.lvl === 4) out.push(['chip-all', 'all · delete']);
+  else if (p.lvl === 3) out.push(['chip-edit', 'edit']);
+  else if (p.lvl === 2) out.push(['chip-create', 'create']);
+  else out.push(['chip-view', 'view']);
+  if (p.approve && p.lvl !== 4) out.push(['chip-approve', 'approve']);
+  if (p.lvl === 4) out.push(['chip-approve', 'approve']);
+  return out;
+}
+function chipHTML(p) {
+  return chipsFor(p).map(([c, t]) => `<span class="chip ${c}">${t}</span>`).join('');
+}
+
+function groupsForRole(role) {
+  return GROUPS.map(g => {
+    const mods = MODULES.filter(m => m.g === g.key);
+    const granted = mods.filter(m => permOf(role, m.key).lvl > 0);
+    const owned = granted.filter(m => permOf(role, m.key).lvl === 4).length;
+    const editable = granted.filter(m => permOf(role, m.key).lvl >= 2).length;
+    return { ...g, mods, granted, owned, editable, total: mods.length };
+  });
+}
+
+function roleStats(role) {
+  let owned = 0, edit = 0, view = 0, approve = 0;
+  ALL_KEYS.forEach(k => {
+    const p = permOf(role, k);
+    if (p.lvl === 4) owned++;
+    else if (p.lvl >= 2) edit++;
+    else if (p.lvl === 1) view++;
+    if (p.approve) approve++;
+  });
+  return { owned, edit, view, approve, total: owned + edit + view };
+}
+
+function findingsForRole(rk) { return FINDINGS.filter(f => f.roles.includes(rk)); }
+function findingsForModule(mk, rk) {
+  return FINDINGS.filter(f => f.modules.includes(mk) && (!rk || f.roles.includes(rk)));
+}
+function rolesWithAccess(mk) {
+  return ROLES.filter(r => permOf(r, mk).lvl > 0);
+}
+function isScoped(role, mk) {
+  return !!(role.scopedModules && role.scopedModules.includes(mk));
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  STATE + NAVIGATION  (same drill-down stack idiom as the ERP dashboard)
+// ══════════════════════════════════════════════════════════════════════════
+
+const LS_ROLE = 'ommi.roleConsole.role';
+const LS_THEME = 'ommi.roleConsole.theme';
+
+let currentRole = ROLE_BY_KEY[localStorage.getItem(LS_ROLE)] || ROLE_BY_KEY.PRODUCTION_MANAGER;
+let navStack = [{ view:'home', title:'Home' }];
+let matrixFilter = 'all';
+let auditFilter = 'all';
+
+const VIEW_TITLES = {
+  home:'Home', group:'Group', module:'Module', matrix:'Access matrix', audit:'Permission audit', roles:'All roles',
+};
+
+function render() {
+  const top = navStack[navStack.length - 1];
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + top.view).classList.add('active');
+
+  const navKey = top.view === 'group' ? 'grp:' + top.param
+    : top.view === 'module' ? 'grp:' + (MOD_BY_KEY[top.param] || {}).g
+    : top.view;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.nav === navKey);
+  });
+
+  const backBtn = document.getElementById('globalBackBtn');
+  const prevTitle = navStack.length > 1 ? navStack[navStack.length - 2].title : '';
+  backBtn.style.display = navStack.length > 1 ? '' : 'none';
+  backBtn.title = prevTitle ? `Back to ${prevTitle} (Alt+Left)` : 'Back (Alt+Left)';
+
+  const bc = document.getElementById('breadcrumb');
+  bc.innerHTML = '';
+  navStack.forEach((entry, i) => {
+    if (i > 0) {
+      const sep = document.createElement('span');
+      sep.className = 'crumb-sep'; sep.textContent = '›';
+      bc.appendChild(sep);
+    }
+    const c = document.createElement('span');
+    c.className = 'crumb' + (i === navStack.length - 1 ? ' current' : '');
+    c.textContent = entry.title;
+    if (i < navStack.length - 1) c.onclick = () => { navStack = navStack.slice(0, i + 1); render(); };
+    bc.appendChild(c);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'auto' : 'auto' });
+}
+
+function go(view, param, title) {
+  // 'group' is a root too: reached from the sidebar, from Home, or from search,
+  // it always hangs directly off Home rather than stacking under whatever was open.
+  const roots = ['home', 'matrix', 'audit', 'roles', 'group'];
+  if (view === 'home') {
+    navStack = [{ view:'home', title:'Home' }];
+  } else if (roots.includes(view)) {
+    navStack = [{ view:'home', title:'Home' }, { view, param, title: title || VIEW_TITLES[view] }];
+  } else {
+    navStack.push({ view, param, title: title || VIEW_TITLES[view] });
+  }
+  if (view === 'home')   renderHome();
+  if (view === 'group')  renderGroup(param);
+  if (view === 'module') renderModule(param);
+  if (view === 'matrix') renderMatrix();
+  if (view === 'audit')  renderAudit();
+  if (view === 'roles')  renderRoles();
+  render();
+}
+
+function back() { if (navStack.length > 1) { navStack.pop(); render(); } }
+
+document.addEventListener('keydown', e => {
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (e.altKey && e.key === 'ArrowLeft' && tag !== 'INPUT' && tag !== 'TEXTAREA') { e.preventDefault(); back(); }
+  if (e.key === 'Escape') { closeSearch(); }
+  if (e.key === '/' && tag !== 'INPUT' && tag !== 'TEXTAREA') { e.preventDefault(); document.getElementById('modSearch').focus(); }
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+//  ROLE SWITCHING + SIDEBAR
+// ══════════════════════════════════════════════════════════════════════════
+
+function buildRoleSelects() {
+  const opts = ROLES.map(r => `<option value="${r.key}">${r.label}</option>`).join('');
+  ['roleSelect', 'roleSelectMobile'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = opts;
+    el.value = currentRole.key;
+    el.onchange = () => setRole(el.value);
+  });
+}
+
+function setRole(key) {
+  currentRole = ROLE_BY_KEY[key] || currentRole;
+  localStorage.setItem(LS_ROLE, currentRole.key);
+  document.getElementById('roleSelect').value = currentRole.key;
+  document.getElementById('roleSelectMobile').value = currentRole.key;
+  buildSidebar();
+  go('home');
+}
+
+function buildSidebar() {
+  const gs = groupsForRole(currentRole).filter(g => g.granted.length > 0);
+  const stats = roleStats(currentRole);
+
+  document.getElementById('roleWho').innerHTML =
+    `${BANDS[currentRole.band].label} · ${stats.total} of ${ALL_KEYS.length} modules`;
+  document.getElementById('fitBadge').textContent = `${gs.length} sections`;
+
+  let html = '<div class="sidebar-section">Your workspace</div>';
+  html += `<div class="nav-item" data-nav="home"><span class="icon">◉</span> Home</div>`;
+  if (!gs.length) {
+    html += '<div class="nav-empty">No modules granted</div>';
+  } else {
+    gs.forEach(g => {
+      html += `<div class="nav-item" data-nav="grp:${g.key}" data-grp="${g.key}">
+        <span class="icon">${g.icon}</span> ${g.label}
+        <span class="nav-count">${g.granted.length}</span></div>`;
+    });
+  }
+  html += '<div class="sidebar-section">Access</div>';
+  html += `<div class="nav-item" data-nav="matrix"><span class="icon">▦</span> Access matrix</div>`;
+  html += `<div class="nav-item" data-nav="audit"><span class="icon">⚑</span> Permission audit <span class="nav-count">${FINDINGS.length}</span></div>`;
+  html += `<div class="nav-item" data-nav="roles"><span class="icon">☰</span> All roles</div>`;
+  document.getElementById('sidebarNav').innerHTML = html;
+
+  // Mobile nav mirrors the same set
+  let mhtml = `<div class="nav-item" data-nav="home">Home</div>`;
+  gs.forEach(g => { mhtml += `<div class="nav-item" data-nav="grp:${g.key}" data-grp="${g.key}">${g.label}</div>`; });
+  mhtml += `<div class="nav-item" data-nav="matrix">Matrix</div><div class="nav-item" data-nav="audit">Audit</div><div class="nav-item" data-nav="roles">Roles</div>`;
+  document.getElementById('mobileNav').innerHTML = mhtml;
+
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.onclick = () => {
+      const nav = el.dataset.nav;
+      if (nav.startsWith('grp:')) go('group', el.dataset.grp, groupLabel(el.dataset.grp));
+      else go(nav);
+    };
+  });
+}
+
+function groupLabel(gk) { return (GROUPS.find(g => g.key === gk) || {}).label || gk; }
+
+// ══════════════════════════════════════════════════════════════════════════
+//  VIEW: ROLE HOME
+// ══════════════════════════════════════════════════════════════════════════
+
+function renderHome() {
+  const r = currentRole;
+  const band = BANDS[r.band];
+  const stats = roleStats(r);
+
+  document.getElementById('homeBand').innerHTML =
+    `<span style="width:8px;height:8px;border-radius:2px;background:${band.color};display:inline-block"></span> ${band.label}`;
+  document.getElementById('homeName').textContent = r.label;
+  document.getElementById('homeKey').textContent = r.key;
+
+  let remit = r.remit;
+  if (r.scopeNote) remit += ` <span class="chip chip-scope">${r.scopeNote}</span>`;
+  document.getElementById('homeRemit').innerHTML = remit;
+
+  document.getElementById('homeStats').innerHTML = [
+    ['owned', stats.owned, 'full control'],
+    ['edit', stats.edit, 'can change'],
+    ['view', stats.view, 'view only'],
+    ['approve', stats.approve, 'approve rights'],
+  ].map(([k, n, l]) => `<div class="hero-stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+
+  // Pinned tiles
+  const pins = (r.pins || []).filter(p => permOf(r, p.m).lvl > 0);
+  const pinCard = document.getElementById('pinCard');
+  if (!pins.length) {
+    pinCard.style.display = 'none';
+  } else {
+    pinCard.style.display = '';
+    const accents = ['var(--accent)', 'var(--steel)', 'var(--good)', '#9B59B6', 'var(--warn)', 'var(--crit)'];
+    document.getElementById('pinGrid').innerHTML = pins.map((p, i) => {
+      const mod = MOD_BY_KEY[p.m];
+      const perm = permOf(r, p.m);
+      const scoped = isScoped(r, p.m) ? '<span class="chip chip-scope">own records</span>' : '';
+      return `<div class="pin-card" style="--pin-accent:${accents[i % accents.length]}" onclick="go('module','${p.m}','${escAttr(mod.label)}')">
+        <div class="pin-top"><span>${groupLabel(mod.g)}</span><span class="pin-drill">→ open</span></div>
+        <div class="pin-title">${p.t}</div>
+        <div class="pin-hint">${p.h}</div>
+        <div class="pin-foot">${chipHTML(perm)}${scoped}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Groups
+  const gs = groupsForRole(r);
+  const granted = gs.filter(g => g.granted.length > 0);
+  const locked = gs.filter(g => g.granted.length === 0);
+
+  document.getElementById('homeGroups').innerHTML = granted.length ? granted.map(g => {
+    const names = g.granted.slice(0, 5).map(m => m.label).join(' · ');
+    const more = g.granted.length > 5 ? ` +${g.granted.length - 5} more` : '';
+    return `<div class="grp-card" onclick="go('group','${g.key}','${escAttr(g.label)}')">
+      <div class="grp-head"><i class="grp-icon">${g.icon}</i><span class="grp-name">${g.label}</span></div>
+      <div class="grp-meta">
+        ${g.owned ? `<span class="chip chip-all">${g.owned} owned</span>` : ''}
+        ${g.editable - g.owned > 0 ? `<span class="chip chip-edit">${g.editable - g.owned} editable</span>` : ''}
+        ${g.granted.length - g.editable > 0 ? `<span class="chip chip-view">${g.granted.length - g.editable} view</span>` : ''}
+      </div>
+      <div class="grp-mods">${names}${more}</div>
+    </div>`;
+  }).join('') : '<div class="empty">This role has no module access at all.</div>';
+
+  const lockedCard = document.getElementById('homeLockedCard');
+  if (!locked.length) { lockedCard.style.display = 'none'; }
+  else {
+    lockedCard.style.display = '';
+    document.getElementById('homeLocked').innerHTML = locked.map(g => `
+      <div class="grp-card locked" title="No access — ask an administrator">
+        <div class="grp-head"><i class="grp-icon">${g.icon}</i><span class="grp-name">${g.label}</span></div>
+        <div class="grp-meta"><span class="chip chip-none">${g.total} modules · locked</span></div>
+      </div>`).join('');
+  }
+
+  // Role-level flags
+  const flags = findingsForRole(r.key);
+  const flagCard = document.getElementById('homeFlagsCard');
+  if (!flags.length && !r.note) { flagCard.style.display = 'none'; }
+  else {
+    flagCard.style.display = '';
+    document.getElementById('homeFlagCount').textContent = flags.length ? `${flags.length} open` : '';
+    let html = '';
+    if (r.note) {
+      html += `<div class="flag" style="cursor:default"><span class="sev sev-bug">Note</span>
+        <div class="flag-body"><div class="flag-title">Definition conflict</div>
+        <div class="flag-detail">${r.note}</div></div></div>`;
+    }
+    html += flags.map(f => flagHTML(f)).join('');
+    document.getElementById('homeFlags').innerHTML = html;
+  }
+}
+
+function flagHTML(f) {
+  return `<div class="flag" onclick="go('audit'); setTimeout(()=>scrollToFinding('${f.id}'),60)">
+    <span class="sev sev-${f.sev}">${f.sevLabel}</span>
+    <div class="flag-body">
+      <div class="flag-title">${f.title}</div>
+      <div class="flag-detail">${f.detail}</div>
+      <div class="flag-fix">${f.fix}</div>
+      <div class="flag-where">${f.where}</div>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  VIEW: GROUP
+// ══════════════════════════════════════════════════════════════════════════
+
+function renderGroup(gk) {
+  const g = GROUPS.find(x => x.key === gk);
+  const r = currentRole;
+  const mods = MODULES.filter(m => m.g === gk);
+  const granted = mods.filter(m => permOf(r, m.key).lvl > 0);
+
+  document.getElementById('grpTitle').textContent = `${g.icon}  ${g.label}`;
+  document.getElementById('grpNote').textContent =
+    `${granted.length} of ${mods.length} modules available to ${r.label}`;
+
+  const rows = mods.map(m => {
+    const p = permOf(r, m.key);
+    const scoped = isScoped(r, m.key) ? '<span class="chip chip-scope">own records</span>' : '';
+    const fl = findingsForModule(m.key, r.key);
+    const flagChip = fl.length ? `<span class="sev sev-${fl[0].sev}">${fl.length} flag${fl.length > 1 ? 's' : ''}</span>` : '';
+    if (p.lvl === 0) {
+      return `<div class="mod-row locked">
+        <div class="m-name"><div class="m-title">${m.label}</div><div class="m-desc">${m.desc}</div></div>
+        <div class="m-chips"><span class="chip chip-none">no access</span>${flagChip}</div>
+      </div>`;
+    }
+    return `<div class="mod-row" onclick="go('module','${m.key}','${escAttr(m.label)}')">
+      <div class="m-name"><div class="m-title">${m.label}</div><div class="m-desc">${m.desc}</div></div>
+      <div class="m-chips">${flagChip}${scoped}${chipHTML(p)}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('grpMods').innerHTML = rows || '<div class="empty">No modules in this group.</div>';
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  VIEW: MODULE
+// ══════════════════════════════════════════════════════════════════════════
+
+const ACTION_DEFS = [
+  { key:'view',    min:1, label:'Open and read records',   desc:'List, filter, drill into any record in this module.' },
+  { key:'create',  min:2, label:'Create new records',      desc:'Add new entries that did not exist before.' },
+  { key:'edit',    min:3, label:'Edit existing records',   desc:'Change values on records already in the system.' },
+  { key:'delete',  min:4, label:'Delete records',          desc:'Remove records permanently. Only full-control roles.' },
+];
+
+function renderModule(mk) {
+  const m = MOD_BY_KEY[mk];
+  const r = currentRole;
+  const p = permOf(r, mk);
+
+  document.getElementById('modBand').innerHTML =
+    `<span>${(GROUPS.find(g => g.key === m.g) || {}).icon || ''}</span> ${groupLabel(m.g)}`;
+  document.getElementById('modName').textContent = m.label;
+  document.getElementById('modKey').textContent = m.key;
+  let desc = m.desc;
+  if (isScoped(r, mk)) desc += ` — scoped to your own records only.`;
+  document.getElementById('modDesc').textContent = desc;
+  document.getElementById('modChips').innerHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap">${chipHTML(p)}</div>`;
+  document.getElementById('modLevelNote').textContent = `${r.label} · ${LEVEL_NAME[p.lvl]}`;
+
+  let acts = ACTION_DEFS.map(a => {
+    const yes = p.lvl >= a.min;
+    return `<div class="act ${yes ? 'yes' : 'no'}">
+      <span class="tick">${yes ? '✓' : '✕'}</span>
+      <div><div>${a.label}</div><div class="a-desc">${a.desc}</div></div>
+    </div>`;
+  }).join('');
+  const approveYes = p.approve;
+  acts += `<div class="act ${approveYes ? 'yes' : 'no'}">
+    <span class="tick">${approveYes ? '✓' : '✕'}</span>
+    <div><div>Approve / sign off</div><div class="a-desc">${approveYes
+      ? (p.lvl === 4 ? 'Carried implicitly by full control — see the audit if that is not intended.' : 'Explicit approval right on this module.')
+      : 'Approval is held by another role.'}</div></div>
+  </div>`;
+  document.getElementById('modActions').innerHTML = acts;
+
+  // Flags on this module (any role)
+  const fl = findingsForModule(mk);
+  const fCard = document.getElementById('modFlagCard');
+  if (!fl.length) { fCard.style.display = 'none'; }
+  else {
+    fCard.style.display = '';
+    document.getElementById('modFlags').innerHTML = fl.map(f => flagHTML(f)).join('');
+  }
+
+  // Peers
+  const peers = rolesWithAccess(mk);
+  document.getElementById('modPeers').innerHTML = peers.length ? peers.map(pr => {
+    const pp = permOf(pr, mk);
+    const self = pr.key === r.key ? ' self' : '';
+    return `<div class="peer${self}" onclick="setRole('${pr.key}')">
+      <span>${pr.label}</span><span class="lvl lvl-${pp.lvl}${pp.approve ? ' lvl-a' : ''}">${LEVEL_CODE[pp.lvl]}</span>
+    </div>`;
+  }).join('') : '<div class="empty" style="padding:6px 0">No role has access to this module.</div>';
+
+  // Next-step modules within the same group that this role can also reach
+  const next = MODULES.filter(x => x.g === m.g && x.key !== mk && permOf(r, x.key).lvl > 0);
+  const nCard = document.getElementById('modNextCard');
+  if (!next.length) { nCard.style.display = 'none'; }
+  else {
+    nCard.style.display = '';
+    document.getElementById('modNext').innerHTML = next.map(x => {
+      const xp = permOf(r, x.key);
+      return `<div class="mod-row" onclick="go('module','${x.key}','${escAttr(x.label)}')">
+        <div class="m-name"><div class="m-title">${x.label}</div><div class="m-desc">${x.desc}</div></div>
+        <div class="m-chips">${chipHTML(xp)}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  VIEW: MATRIX
+// ══════════════════════════════════════════════════════════════════════════
+
+function renderMatrix() {
+  const filters = [['all', 'All groups']].concat(GROUPS.map(g => [g.key, g.label]));
+  document.getElementById('matrixFilters').innerHTML = filters.map(([k, l]) =>
+    `<span class="filter-pill ${matrixFilter === k ? 'on' : ''}" onclick="setMatrixFilter('${k}')">${l}</span>`).join('');
+
+  const mods = matrixFilter === 'all' ? MODULES : MODULES.filter(m => m.g === matrixFilter);
+  document.getElementById('matrixNote').textContent = `${ROLES.length} roles × ${mods.length} modules`;
+
+  let html = '<table class="matrix"><thead><tr><th class="corner">Role</th>';
+  mods.forEach(m => { html += `<th class="rot" title="${escAttr(m.desc)}">${m.label}</th>`; });
+  html += '</tr></thead><tbody>';
+  ROLES.forEach(r => {
+    const selfMark = r.key === currentRole.key ? ' style="color:var(--accent);font-weight:700"' : '';
+    html += `<tr><td class="rowhead"${selfMark} onclick="setRole('${r.key}')" title="Switch to this role">${r.label}</td>`;
+    mods.forEach(m => {
+      const p = permOf(r, m.key);
+      html += `<td class="mcell" onclick="openCell('${r.key}','${m.key}')" title="${escAttr(r.label + ' · ' + m.label + ' · ' + LEVEL_NAME[p.lvl] + (p.approve ? ' + approve' : ''))}">
+        <span class="lvl lvl-${p.lvl}${p.approve ? ' lvl-a' : ''}">${LEVEL_CODE[p.lvl]}</span></td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('matrixWrap').innerHTML = html;
+}
+
+function setMatrixFilter(k) { matrixFilter = k; renderMatrix(); }
+
+function openCell(rk, mk) {
+  if (rk !== currentRole.key) {
+    currentRole = ROLE_BY_KEY[rk];
+    localStorage.setItem(LS_ROLE, rk);
+    document.getElementById('roleSelect').value = rk;
+    document.getElementById('roleSelectMobile').value = rk;
+    buildSidebar();
+  }
+  go('module', mk, MOD_BY_KEY[mk].label);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  VIEW: AUDIT
+// ══════════════════════════════════════════════════════════════════════════
+
+function renderAudit() {
+  document.getElementById('auditIntro').innerHTML =
+    `<b>These findings come from the 30-Jul-2026 review of <code>shared/permissions.ts</code>.</b> ` +
+    `The matrix in this console is transcribed from that review, not read live from the code — ` +
+    `regenerate the <code>ROLES</code> block from the source file to keep the two in step.`;
+
+  const sevs = [['all', 'All'], ['bug', 'Bug'], ['risk', 'Control risk'], ['over', 'Over-access'], ['gap', 'Access gap'], ['open', 'Unclear']];
+  document.getElementById('auditFilters').innerHTML = sevs.map(([k, l]) =>
+    `<span class="filter-pill ${auditFilter === k ? 'on' : ''}" onclick="setAuditFilter('${k}')">${l}</span>`).join('');
+
+  const order = { bug:0, risk:1, over:2, gap:3, open:4 };
+  const list = FINDINGS
+    .filter(f => auditFilter === 'all' || f.sev === auditFilter)
+    .slice()
+    .sort((a, b) => order[a.sev] - order[b.sev]);
+
+  document.getElementById('auditCount').textContent = `${list.length} shown · ${FINDINGS.length} total`;
+  document.getElementById('auditList').innerHTML = list.length ? list.map(f => `
+    <div class="flag" id="find-${f.id}" onclick="openCell('${f.roles[0]}','${f.modules[0]}')">
+      <span class="sev sev-${f.sev}">${f.sevLabel}</span>
+      <div class="flag-body">
+        <div class="flag-title">${f.title}</div>
+        <div class="flag-detail">${f.detail}</div>
+        <div class="flag-fix">${f.fix}</div>
+        <div class="flag-where">${f.where} · click to open ${ROLE_BY_KEY[f.roles[0]].label} → ${MOD_BY_KEY[f.modules[0]].label}</div>
+      </div>
+    </div>`).join('') : '<div class="empty">Nothing at this severity.</div>';
+}
+
+function setAuditFilter(k) { auditFilter = k; renderAudit(); }
+
+function scrollToFinding(id) {
+  const el = document.getElementById('find-' + id);
+  if (!el) return;
+  el.scrollIntoView({ block:'center', behavior:'smooth' });
+  el.style.background = 'var(--accent-bg)';
+  setTimeout(() => { el.style.background = ''; }, 1600);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  VIEW: ROLES DIRECTORY
+// ══════════════════════════════════════════════════════════════════════════
+
+function renderRoles() {
+  let html = '<thead><tr><th>Role</th><th>Band</th><th>Owned</th><th>Editable</th><th>View</th><th>Approve</th><th>Flags</th><th>Remit</th></tr></thead><tbody>';
+  ROLES.forEach(r => {
+    const s = roleStats(r);
+    const f = findingsForRole(r.key);
+    const self = r.key === currentRole.key ? ' style="color:var(--accent);font-weight:600"' : '';
+    html += `<tr onclick="setRole('${r.key}')" style="cursor:pointer">
+      <td${self}>${r.label}</td>
+      <td><span class="chip chip-scope">${BANDS[r.band].label}</span></td>
+      <td class="mono">${s.owned || '—'}</td>
+      <td class="mono">${s.edit || '—'}</td>
+      <td class="mono">${s.view || '—'}</td>
+      <td class="mono">${s.approve || '—'}</td>
+      <td>${f.length ? `<span class="sev sev-${f[0].sev}">${f.length}</span>` : '—'}</td>
+      <td style="white-space:normal;max-width:420px;color:var(--text-muted);font-size:11.5px">${r.remit}</td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('rolesTable').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  MODULE SEARCH
+// ══════════════════════════════════════════════════════════════════════════
+
+const searchInput = document.getElementById('modSearch');
+const searchResults = document.getElementById('modSearchResults');
+let searchSel = -1, searchHits = [];
+
+function runSearch() {
+  const q = searchInput.value.trim().toLowerCase();
+  if (!q) { closeSearch(); return; }
+  const r = currentRole;
+  searchHits = MODULES
+    .filter(m => m.label.toLowerCase().includes(q) || m.key.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q))
+    .sort((a, b) => (permOf(r, b.key).lvl > 0) - (permOf(r, a.key).lvl > 0))
+    .slice(0, 12);
+  if (!searchHits.length) {
+    searchResults.innerHTML = '<div class="mod-none">No module matches that.</div>';
+  } else {
+    searchResults.innerHTML = searchHits.map((m, i) => {
+      const p = permOf(r, m.key);
+      return `<div class="mod-hit ${i === searchSel ? 'sel' : ''}" onclick="pickHit(${i})">
+        <span class="lvl lvl-${p.lvl}${p.approve ? ' lvl-a' : ''}">${LEVEL_CODE[p.lvl]}</span>
+        <span class="h-name">${m.label}</span>
+        <span class="h-grp">${groupLabel(m.g)}</span>
+      </div>`;
+    }).join('');
+  }
+  searchResults.classList.add('open');
+}
+
+function pickHit(i) {
+  const m = searchHits[i];
+  if (!m) return;
+  closeSearch();
+  searchInput.value = '';
+  if (permOf(currentRole, m.key).lvl > 0) go('module', m.key, m.label);
+  else go('group', m.g, groupLabel(m.g));
+}
+
+function closeSearch() { searchResults.classList.remove('open'); searchSel = -1; }
+
+searchInput.addEventListener('input', () => { searchSel = -1; runSearch(); });
+searchInput.addEventListener('keydown', e => {
+  if (!searchHits.length) return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); searchSel = Math.min(searchSel + 1, searchHits.length - 1); runSearch(); }
+  if (e.key === 'ArrowUp')   { e.preventDefault(); searchSel = Math.max(searchSel - 1, 0); runSearch(); }
+  if (e.key === 'Enter')     { e.preventDefault(); pickHit(searchSel < 0 ? 0 : searchSel); }
+});
+document.addEventListener('click', e => { if (!e.target.closest('.mod-search')) closeSearch(); });
+
+// ══════════════════════════════════════════════════════════════════════════
+//  THEME + UTIL
+// ══════════════════════════════════════════════════════════════════════════
+
+function isDark() {
+  const t = document.documentElement.getAttribute('data-theme');
+  if (t) return t === 'dark';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function toggleTheme() {
+  const next = isDark() ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem(LS_THEME, next);
+}
+(function initTheme() {
+  const saved = localStorage.getItem(LS_THEME);
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+})();
+
+function escAttr(s) { return String(s).replace(/'/g, '&#39;').replace(/"/g, '&quot;'); }
+
+// ══════════════════════════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════════════════════════
+
+buildRoleSelects();
+buildSidebar();
+renderHome();
+render();
+</script>
+</html>
