@@ -84,9 +84,26 @@ python3 -m http.server 8000
 # then visit http://localhost:8000 on your phone (same Wi-Fi network)
 ```
 
-To publish it at a permanent URL, enable **GitHub Pages** for this repository
-(Settings → Pages → deploy from the branch) and open the page on your phone,
-then "Add to Home Screen" for an app-like experience.
+### Publishing it
+
+The dashboard is a single static file, so **GitHub Pages** serves it as-is —
+no build step, no workflow. One-time setup, in this repository:
+
+**Settings → Pages → Build and deployment → Source: _Deploy from a branch_ →
+Branch: `claude/farm-monitoring-dashboard-iorey1` / `/ (root)` → Save.**
+
+A minute or so later the dashboard is live for anyone with the link at
+
+> **https://anilashwath-crypto.github.io/Anil/**
+
+Every later push to that branch redeploys automatically. On a phone, open the
+URL and "Add to Home Screen" for an app-like experience. The `.nojekyll` file
+at the repo root tells Pages to serve the file untouched rather than running it
+through Jekyll.
+
+Note that the page is public once Pages is on — it carries no credentials and
+talks to nothing, since the feed is simulated, but keep that in mind when the
+real gateway URL goes in.
 
 ## Connecting the real farm
 
