@@ -305,6 +305,41 @@
   .badge.heat { background: color-mix(in srgb, var(--serious) 22%, var(--surface)); color: var(--ink); }
   .badge.watch { background: color-mix(in srgb, var(--warning) 25%, var(--surface)); color: var(--ink); }
   .badge.ok { background: var(--surface-2); color: var(--good-text); }
+  .badge.sim { background: color-mix(in srgb, var(--warning) 30%, var(--surface)); color: var(--ink); letter-spacing: 0.04em; }
+
+  /* Soil NPK probe — banded meters */
+  .npk-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 14px; }
+  .npk-m .npk-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .npk-m .npk-lab { font-size: 12px; color: var(--ink-2); }
+  .npk-m .npk-val { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; margin-top: 2px; }
+  .npk-m .npk-val small { font-size: 11px; font-weight: 500; color: var(--muted); margin-left: 4px; }
+  .npk-track {
+    position: relative; height: 6px; border-radius: 99px; overflow: hidden;
+    display: flex; background: var(--surface-2); margin-top: 8px;
+  }
+  .npk-track i { height: 100%; display: block; }
+  .npk-track .z-low { background: color-mix(in srgb, var(--s1) 45%, var(--surface-2)); }
+  .npk-track .z-good { background: color-mix(in srgb, var(--good) 45%, var(--surface-2)); }
+  .npk-track .z-high { background: color-mix(in srgb, var(--warning) 55%, var(--surface-2)); }
+  .npk-needle {
+    position: absolute; top: -3px; width: 2px; height: 12px; border-radius: 1px;
+    background: var(--ink); box-shadow: 0 0 0 2px var(--surface);
+    transform: translateX(-1px); transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .npk-scale { display: flex; justify-content: space-between; margin-top: 5px; font-size: 9.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .npk-band { margin-top: 4px; font-size: 10.5px; color: var(--muted); }
+  .chip.low { color: var(--ink); background: color-mix(in srgb, var(--s1) 22%, var(--surface-2)); }
+  .chip.high { color: var(--ink); background: color-mix(in srgb, var(--warning) 30%, var(--surface-2)); }
+  .npk-verdict { margin-top: 12px; font-size: 12.5px; line-height: 1.55; color: var(--ink-2); }
+  .npk-verdict.ok { color: var(--good-text); }
+  .npk-caveat {
+    margin-top: 10px; padding: 9px 11px; border-left: 2px solid var(--warning);
+    background: var(--surface-2); border-radius: 0 8px 8px 0;
+    font-size: 11.5px; line-height: 1.6; color: var(--ink-2);
+  }
+  .npk-caveat b { color: var(--ink); }
+  .npk-link { margin-top: 9px; font-size: 11px; color: var(--muted); word-break: break-word; font-variant-numeric: tabular-nums; }
+  @media (prefers-reduced-motion: reduce) { .npk-needle { transition: none; } }
   .herd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 4px; }
   .herd .h {
     background: var(--surface-2); border-radius: 12px; padding: 10px;
@@ -496,6 +531,18 @@
     </div>
 
     <div class="card">
+      <h2><span data-i18n="hNpk">Soil nutrients</span> <small data-i18n="sNpk">RS-485 NPK probe · Modbus RTU</small></h2>
+      <div class="seg npk-seg" id="npk-seg" role="group" aria-label="NPK probe station">
+        <button type="button" data-station="0" aria-pressed="true" data-i18n="stationA">Station A — crop block</button>
+        <button type="button" data-station="1" aria-pressed="false" data-i18n="stationB">Station B — orchard</button>
+      </div>
+      <div class="npk-grid" id="npk-meters"></div>
+      <div class="npk-verdict" id="npk-verdict"></div>
+      <div class="npk-caveat" id="npk-caveat"></div>
+      <div class="npk-link" id="npk-link"></div>
+    </div>
+
+    <div class="card">
       <h2><span data-i18n="hFert">Fertigation</span> <small data-i18n="sFert">jeevamrutha · venturi diffuser</small></h2>
       <div class="statlist">
         <div class="stat"><span class="k"><span data-i18n="autoK">Auto-dosing</span> <small data-i18n="autoSub">computes dose from zone area</small></span>
@@ -644,6 +691,25 @@
       hSoil: "Soil health", sSoil: "IoT field stations",
       stationA: "Station A — crop block", stationB: "Station B — orchard",
       ecK: "EC (salts)", stempK: "Soil temp", inRange: "in range", outRange: "out of range",
+      hNpk: "Soil nutrients", sNpk: "RS-485 NPK probe · Modbus RTU",
+      npkN: "Nitrogen", npkP: "Phosphorus", npkK: "Potassium", npkEc: "Conductivity",
+      gLow: "low", gGood: "optimal", gHigh: "high",
+      npkOptTpl: "optimal {lo}–{hi} {unit}",
+      npkAllOk: "All four channels read inside their bands at {station}.",
+      npkIssueTpl: "At {station}: {list}.",
+      advNLow: "nitrogen low, older leaves may yellow",
+      advNHigh: "nitrogen high, leafy growth at the cost of flowering",
+      advPLow: "phosphorus low, can stunt roots and flowering",
+      advPHigh: "phosphorus high, usually harmless but can lock out iron and zinc",
+      advKLow: "potassium low, watch for browning leaf edges",
+      advKHigh: "potassium high, may compete with magnesium uptake",
+      advEcLow: "conductivity low, lightly fertilised or freshly flushed soil",
+      advEcHigh: "conductivity high, salt build-up — flush with clean water",
+      npkCaveat: "<b>N, P and K are not measured chemically.</b> This probe class reads bulk conductivity and derives all three from it through a fixed factory curve — moving one probe between two soils shifted every channel by the same factor (×0.43). Trust conductivity and soil temperature; read N, P and K as trend-only, and get a lab test (Olsen-P, ammonium-acetate K) before a fertiliser decision.",
+      npkLinkTpl: "{port} · {baud} 8N1 · addr {addr} · fn {fn} · base 0x{base} ×{qty} · poll {poll}s",
+      simBadge: "SIMULATED",
+      aSaltTitle: "Salt build-up at {station} — {ec} µS/cm",
+      aSaltBody: "Conductivity is above {hi} µS/cm. Flush the block with clean water and hold the next jeevamrutha dose.",
       hFert: "Fertigation", sFert: "jeevamrutha · venturi diffuser",
       autoK: "Auto-dosing", autoSub: "computes dose from zone area",
       pRate: "Dose rate", pCycle: "Cycle", pInj: "Injection", pEc: "EC guard", uDays: "days",
@@ -738,6 +804,25 @@
       hSoil: "ಮಣ್ಣಿನ ಆರೋಗ್ಯ", sSoil: "IoT ಕ್ಷೇತ್ರ ಕೇಂದ್ರಗಳು",
       stationA: "ಕೇಂದ್ರ A — ಬೆಳೆ ಜಮೀನು", stationB: "ಕೇಂದ್ರ B — ತೋಟ",
       ecK: "EC (ಲವಣಾಂಶ)", stempK: "ಮಣ್ಣಿನ ಉಷ್ಣತೆ", inRange: "ಸರಿ ಇದೆ", outRange: "ಮಿತಿ ಮೀರಿದೆ",
+      hNpk: "ಮಣ್ಣಿನ ಪೋಷಕಾಂಶ", sNpk: "RS-485 NPK ಪ್ರೋಬ್ · Modbus RTU",
+      npkN: "ಸಾರಜನಕ", npkP: "ರಂಜಕ", npkK: "ಪೊಟ್ಯಾಸಿಯಂ", npkEc: "ವಿದ್ಯುತ್ ವಾಹಕತೆ",
+      gLow: "ಕಡಿಮೆ", gGood: "ಸೂಕ್ತ", gHigh: "ಹೆಚ್ಚು",
+      npkOptTpl: "ಸೂಕ್ತ {lo}–{hi} {unit}",
+      npkAllOk: "{station} ನಲ್ಲಿ ನಾಲ್ಕೂ ಮಾಪನಗಳು ಮಿತಿಯೊಳಗಿವೆ.",
+      npkIssueTpl: "{station}: {list}.",
+      advNLow: "ಸಾರಜನಕ ಕಡಿಮೆ, ಹಳೆಯ ಎಲೆಗಳು ಹಳದಿಯಾಗಬಹುದು",
+      advNHigh: "ಸಾರಜನಕ ಹೆಚ್ಚು, ಹೂವಿನ ಬದಲು ಎಲೆಗಳೇ ಬೆಳೆಯುತ್ತವೆ",
+      advPLow: "ರಂಜಕ ಕಡಿಮೆ, ಬೇರು ಮತ್ತು ಹೂಬಿಡುವಿಕೆ ಕುಂಠಿತವಾಗಬಹುದು",
+      advPHigh: "ರಂಜಕ ಹೆಚ್ಚು, ಸಾಮಾನ್ಯವಾಗಿ ಹಾನಿಯಿಲ್ಲ ಆದರೆ ಕಬ್ಬಿಣ ಮತ್ತು ಸತುವಿನ ಹೀರುವಿಕೆ ತಡೆಯಬಹುದು",
+      advKLow: "ಪೊಟ್ಯಾಸಿಯಂ ಕಡಿಮೆ, ಎಲೆಗಳ ಅಂಚು ಕಂದು ಬಣ್ಣಕ್ಕೆ ತಿರುಗಬಹುದು",
+      advKHigh: "ಪೊಟ್ಯಾಸಿಯಂ ಹೆಚ್ಚು, ಮೆಗ್ನೀಸಿಯಂ ಹೀರುವಿಕೆಗೆ ಅಡ್ಡಿಯಾಗಬಹುದು",
+      advEcLow: "ವಾಹಕತೆ ಕಡಿಮೆ, ಮಣ್ಣಿಗೆ ಕಡಿಮೆ ಗೊಬ್ಬರ ಅಥವಾ ಹೊಸದಾಗಿ ತೊಳೆದಿದೆ",
+      advEcHigh: "ವಾಹಕತೆ ಹೆಚ್ಚು, ಲವಣ ಸಂಗ್ರಹ — ಶುದ್ಧ ನೀರಿನಿಂದ ತೊಳೆಯಿರಿ",
+      npkCaveat: "<b>N, P, K ಅನ್ನು ರಾಸಾಯನಿಕವಾಗಿ ಅಳೆಯುವುದಿಲ್ಲ.</b> ಈ ಪ್ರೋಬ್ ಒಟ್ಟು ವಿದ್ಯುತ್ ವಾಹಕತೆಯನ್ನು ಅಳೆದು, ಸ್ಥಿರ ಕಾರ್ಖಾನೆ ಸೂತ್ರದಿಂದ ಮೂರೂ ಮೌಲ್ಯಗಳನ್ನು ಲೆಕ್ಕ ಹಾಕುತ್ತದೆ — ಒಂದೇ ಪ್ರೋಬ್ ಅನ್ನು ಎರಡು ಬೇರೆ ಮಣ್ಣಿನಲ್ಲಿ ಇಟ್ಟಾಗ ಎಲ್ಲಾ ಮಾಪನಗಳೂ ಒಂದೇ ಪ್ರಮಾಣದಲ್ಲಿ (×0.43) ಬದಲಾದವು. ವಾಹಕತೆ ಮತ್ತು ಮಣ್ಣಿನ ಉಷ್ಣತೆಯನ್ನು ನಂಬಿ; N, P, K ಅನ್ನು ಪ್ರವೃತ್ತಿಗಾಗಿ ಮಾತ್ರ ನೋಡಿ, ಗೊಬ್ಬರದ ನಿರ್ಧಾರಕ್ಕೆ ಪ್ರಯೋಗಾಲಯ ಪರೀಕ್ಷೆ ಮಾಡಿಸಿ.",
+      npkLinkTpl: "{port} · {baud} 8N1 · addr {addr} · fn {fn} · base 0x{base} ×{qty} · poll {poll}s",
+      simBadge: "ಅನುಕರಣೆ",
+      aSaltTitle: "{station} ನಲ್ಲಿ ಲವಣ ಸಂಗ್ರಹ — {ec} µS/cm",
+      aSaltBody: "ವಾಹಕತೆ {hi} µS/cm ಮೀರಿದೆ. ಶುದ್ಧ ನೀರಿನಿಂದ ತೊಳೆಯಿರಿ ಮತ್ತು ಮುಂದಿನ ಜೀವಾಮೃತ ಡೋಸ್ ತಡೆಹಿಡಿಯಿರಿ.",
       hFert: "ಫರ್ಟಿಗೇಶನ್", sFert: "ಜೀವಾಮೃತ · ವೆಂಚುರಿ ಡಿಫ್ಯೂಸರ್",
       autoK: "ಸ್ವಯಂ ಡೋಸಿಂಗ್", autoSub: "ವಲಯದ ವಿಸ್ತೀರ್ಣದಿಂದ ಡೋಸ್ ಲೆಕ್ಕ",
       pRate: "ಡೋಸ್ ದರ", pCycle: "ಆವರ್ತ", pInj: "ಇಂಜೆಕ್ಷನ್", pEc: "EC ಮಿತಿ", uDays: "ದಿನ",
@@ -832,6 +917,25 @@
       hSoil: "मिट्टी का स्वास्थ्य", sSoil: "IoT फ़ील्ड स्टेशन",
       stationA: "स्टेशन A — फ़सल क्षेत्र", stationB: "स्टेशन B — बाग़",
       ecK: "EC (लवण)", stempK: "मिट्टी का तापमान", inRange: "ठीक है", outRange: "सीमा से बाहर",
+      hNpk: "मिट्टी के पोषक तत्व", sNpk: "RS-485 NPK प्रोब · Modbus RTU",
+      npkN: "नाइट्रोजन", npkP: "फॉस्फोरस", npkK: "पोटैशियम", npkEc: "विद्युत चालकता",
+      gLow: "कम", gGood: "उपयुक्त", gHigh: "अधिक",
+      npkOptTpl: "उपयुक्त {lo}–{hi} {unit}",
+      npkAllOk: "{station} पर चारों रीडिंग अपनी सीमा के भीतर हैं।",
+      npkIssueTpl: "{station}: {list}।",
+      advNLow: "नाइट्रोजन कम, पुरानी पत्तियाँ पीली पड़ सकती हैं",
+      advNHigh: "नाइट्रोजन अधिक, फूल की जगह पत्तियाँ बढ़ेंगी",
+      advPLow: "फॉस्फोरस कम, जड़ें और फूल आना रुक सकता है",
+      advPHigh: "फॉस्फोरस अधिक, आमतौर पर हानिरहित पर लोहा और जस्ता रुक सकते हैं",
+      advKLow: "पोटैशियम कम, पत्तों के किनारे भूरे हो सकते हैं",
+      advKHigh: "पोटैशियम अधिक, मैग्नीशियम के अवशोषण में बाधा",
+      advEcLow: "चालकता कम, मिट्टी में कम खाद या हाल ही में धुली है",
+      advEcHigh: "चालकता अधिक, नमक जमाव — साफ पानी से धोएँ",
+      npkCaveat: "<b>N, P और K रासायनिक रूप से नहीं मापे जाते।</b> यह प्रोब कुल विद्युत चालकता मापता है और एक निश्चित फ़ैक्टरी वक्र से तीनों मान निकालता है — एक ही प्रोब को दो अलग मिट्टियों में रखने पर हर रीडिंग एक ही अनुपात (×0.43) में बदली। चालकता और मिट्टी के तापमान पर भरोसा करें; N, P, K को केवल रुझान के लिए देखें, और खाद का निर्णय लेने से पहले प्रयोगशाला जाँच कराएँ।",
+      npkLinkTpl: "{port} · {baud} 8N1 · addr {addr} · fn {fn} · base 0x{base} ×{qty} · poll {poll}s",
+      simBadge: "सिमुलेटेड",
+      aSaltTitle: "{station} पर नमक जमाव — {ec} µS/cm",
+      aSaltBody: "चालकता {hi} µS/cm से ऊपर है। ब्लॉक को साफ पानी से धोएँ और अगली जीवामृत खुराक रोकें।",
       hFert: "फर्टिगेशन", sFert: "जीवामृत · वेंचुरी डिफ्यूज़र",
       autoK: "ऑटो-डोज़िंग", autoSub: "ज़ोन क्षेत्रफल से खुराक की गणना",
       pRate: "खुराक दर", pCycle: "चक्र", pInj: "इंजेक्शन", pEc: "EC सीमा", uDays: "दिन",
@@ -927,6 +1031,10 @@
       { nameKey: "stationA", ph: 6.8, ec: 0.44, stemp: 24.2 },
       { nameKey: "stationB", ph: 7.2, ec: 0.38, stemp: 23.6 }
     ],
+    /* RS-485 soil NPK probe (Firstrate FST100-2006E1111 class) on each field
+       station's LoRa node; the gateway speaks Modbus RTU to it and relays. */
+    npk: { station: 0, demo: true,
+      link: { port: "lora://node-3/rs485", baud: 9600, addr: 1, fn: 3, base: "0000", qty: 10, poll: 2 } },
     diffuser: { on: false, pressure: 1.2 },
     tank: 68,
     dismissed: {},
@@ -976,6 +1084,37 @@
       { nameKey: "camStore", evKey: "evStore", on: true }
     ]
   };
+
+  /* Interpretation bands for the NPK probe, in the sensor's own units.
+     General horticultural guidance — optimal ranges vary a lot by crop
+     (leafy greens want more N, fruiting blocks more K), so tune per zone. */
+  var NPK_BANDS = {
+    n:  { labelKey: "npkN",  unit: "mg/kg", scale: 150,  low: 25,  high: 75,   dp: 0 },
+    p:  { labelKey: "npkP",  unit: "mg/kg", scale: 150,  low: 25,  high: 60,   dp: 0 },
+    k:  { labelKey: "npkK",  unit: "mg/kg", scale: 400,  low: 120, high: 280,  dp: 0 },
+    ec: { labelKey: "npkEc", unit: "µS/cm", scale: 2500, low: 200, high: 1200, dp: 0 }
+  };
+  /* This probe class does not measure N, P and K chemically: it reads bulk
+     conductivity and derives all three through a fixed factory curve. Two
+     readings from one probe in different soil moved every channel by the same
+     factor (x0.429-0.442, spread 0.014), which is what these ratios encode.
+     Simulating them as independent signals would flatter the hardware. */
+  var NPK_RATIO = { n: 49.0 / 678, p: 67.0 / 678, k: 165.0 / 678 };
+  var NPK_ADVICE = {
+    n:  { low: "advNLow",  high: "advNHigh" },
+    p:  { low: "advPLow",  high: "advPHigh" },
+    k:  { low: "advKLow",  high: "advKHigh" },
+    ec: { low: "advEcLow", high: "advEcHigh" }
+  };
+
+  function npkRead(station) {
+    var ecu = station.ec * 1000; // state stores mS/cm; the probe reports µS/cm
+    return { n: ecu * NPK_RATIO.n, p: ecu * NPK_RATIO.p, k: ecu * NPK_RATIO.k, ec: ecu };
+  }
+  function npkGrade(key, v) {
+    var b = NPK_BANDS[key];
+    return v < b.low ? "low" : v > b.high ? "high" : "good";
+  }
 
   var METRICS = {
     moisture: { labelKey: "lblMoisture", unit: "%", color: "--s1", min: 15, max: 65 },
@@ -1230,6 +1369,16 @@
       items.push({ id: "ecguard", level: "warning",
         title: t("aEcTitle"), body: tpl("aEcBody", { g: state.fert.ec.toFixed(2) }) });
     }
+    /* Conductivity is the one channel this probe class actually measures, so
+       it is the only one allowed to raise an alert on its own. */
+    state.soil.forEach(function (st, i) {
+      var ecu = npkRead(st).ec;
+      if (ecu > NPK_BANDS.ec.high) {
+        items.push({ id: "salt-" + i, level: "warning",
+          title: tpl("aSaltTitle", { station: t(st.nameKey), ec: ecu.toFixed(0) }),
+          body: tpl("aSaltBody", { hi: NPK_BANDS.ec.high }) });
+      }
+    });
     if (state.pest.termiteHits >= 3) {
       items.push({ id: "termite", level: "warning",
         title: tpl("aTermiteTitle", { h: state.pest.termiteHits, n: state.pest.termiteStations }),
@@ -1257,6 +1406,53 @@
         '<button class="alert-dismiss" data-dismiss="' + a.id + '" aria-label="Dismiss alert">×</button>' +
       "</div>";
     }).join("");
+  }
+
+  function renderNpk() {
+    var station = state.soil[state.npk.station];
+    var vals = npkRead(station);
+    var keys = ["n", "p", "k", "ec"];
+
+    document.getElementById("npk-meters").innerHTML = keys.map(function (key) {
+      var b = NPK_BANDS[key], v = vals[key], g = npkGrade(key, v);
+      var lowPct = (b.low / b.scale) * 100;
+      var goodPct = ((b.high - b.low) / b.scale) * 100;
+      var chipCls = g === "good" ? "" : " " + g;
+      return '<div class="npk-m">' +
+        '<div class="npk-head"><span class="npk-lab">' + t(b.labelKey) + "</span>" +
+          '<span class="chip' + chipCls + '">' + t(g === "low" ? "gLow" : g === "high" ? "gHigh" : "gGood") + "</span></div>" +
+        '<div class="npk-val">' + v.toFixed(b.dp) + "<small>" + b.unit + "</small></div>" +
+        '<div class="npk-track">' +
+          '<i class="z-low" style="width:' + lowPct.toFixed(1) + '%"></i>' +
+          '<i class="z-good" style="width:' + goodPct.toFixed(1) + '%"></i>' +
+          '<i class="z-high" style="width:' + (100 - lowPct - goodPct).toFixed(1) + '%"></i>' +
+          '<span class="npk-needle" style="left:' + clamp((v / b.scale) * 100, 0, 100).toFixed(1) + '%"></span>' +
+        "</div>" +
+        '<div class="npk-scale"><span>0</span><span>' + b.low + "</span><span>" + b.high + "</span><span>" + b.scale + "</span></div>" +
+        '<div class="npk-band">' + tpl("npkOptTpl", { lo: b.low, hi: b.high, unit: b.unit }) + "</div>" +
+      "</div>";
+    }).join("");
+
+    // the assessment names only what is actually out of range
+    var issues = keys.filter(function (key) { return npkGrade(key, vals[key]) !== "good"; })
+      .map(function (key) { return t(NPK_ADVICE[key][npkGrade(key, vals[key])]); });
+    var verdict = document.getElementById("npk-verdict");
+    verdict.classList.toggle("ok", issues.length === 0);
+    verdict.textContent = issues.length
+      ? tpl("npkIssueTpl", { station: t(station.nameKey), list: issues.join("; ") })
+      : tpl("npkAllOk", { station: t(station.nameKey) });
+
+    document.getElementById("npk-caveat").innerHTML = t("npkCaveat");
+
+    var lk = state.npk.link;
+    document.getElementById("npk-link").innerHTML =
+      (state.npk.demo ? '<span class="badge sim">' + t("simBadge") + "</span> " : "") +
+      tpl("npkLinkTpl", { port: lk.port, baud: lk.baud, addr: lk.addr, fn: lk.fn,
+        base: lk.base, qty: lk.qty, poll: lk.poll });
+
+    document.querySelectorAll("#npk-seg button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(Number(b.dataset.station) === state.npk.station));
+    });
   }
 
   function renderForecast() {
@@ -1530,6 +1726,7 @@
     renderSpray();
     renderPest();
     renderWater();
+    renderNpk();
     renderStock();
     renderOps();
   }
@@ -1549,12 +1746,18 @@
     }
     var seg = e.target.closest(".seg button");
     if (seg) {
-      state.metric = seg.dataset.metric;
-      document.querySelectorAll(".seg button").forEach(function (b) {
+      // scope the pressed state to this group — the page has more than one
+      seg.parentElement.querySelectorAll("button").forEach(function (b) {
         b.setAttribute("aria-pressed", String(b === seg));
       });
-      chartLeave();
-      renderChart();
+      if (seg.dataset.station) {
+        state.npk.station = Number(seg.dataset.station);
+        renderNpk();
+      } else {
+        state.metric = seg.dataset.metric;
+        chartLeave();
+        renderChart();
+      }
       return;
     }
     var sw = e.target.closest(".switch");

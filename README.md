@@ -30,7 +30,10 @@ Both choices persist across visits.
 dry-run protection); six irrigation zones matching the blueprint's valve plan
 (tomato, beans & chilli, leafy greens, napier, mango, sapota) with per-zone
 moisture triggers and valve toggles; soil-health card per IoT field station
-(pH, EC, soil temperature); and a parameter-driven fertigation card. The
+(pH, EC, soil temperature); a **soil-nutrient card** reading the RS-485 NPK
+probe on each station's LoRa node (banded meters for nitrogen, phosphorus,
+potassium and conductivity, with a plain-language assessment that names only
+what is out of range); and a parameter-driven fertigation card. The
 venturi diffuser doses automatically: set the dose rate (L/acre), cycle
 interval (days), injection rate (L/h) and an EC guard (mS/cm), and it
 computes each zone's dose from its acreage (e.g. 1.5 ac × 200 L/acre =
@@ -48,8 +51,29 @@ shed, store) with last events, and a month-to-date P&L per enterprise from
 the digital ledger.
 
 Alert logic runs continuously: zone below its moisture trigger, tank below
-20%, soil pH outside 6.0–7.5, wind too high to spray, shed heat stress, and
-collar heat detection.
+20%, soil pH outside 6.0–7.5, salt build-up (conductivity above 1200 µS/cm),
+wind too high to spray, shed heat stress, and collar heat detection.
+
+### About the NPK reading
+
+Low-cost RS-485 NPK probes **do not measure N, P and K chemically.** They
+measure bulk electrical conductivity and derive all three numbers from that one
+signal through a fixed factory curve. Moving a single probe between two soils
+shifts every channel by the same factor — ×0.429, ×0.433, ×0.442 for N, P, K
+against ×0.439 for EC, a spread of 1.4% across four supposedly independent
+nutrients. The dashboard simulates them the same way, from one EC signal, rather
+than as four independent series that would flatter the hardware.
+
+So: conductivity and soil temperature are directly measured and trustworthy;
+N, P and K are indicative, useful for tracking change over time in one block,
+and are deliberately not allowed to raise alerts on their own. Before a
+fertiliser decision, get a lab test with Olsen-P and ammonium-acetate K. The
+card says all of this on screen, and carries a `SIMULATED` badge whenever it is
+not reading a real probe, so demo data can never be mistaken for a measurement.
+
+Interpretation bands live in `NPK_BANDS` in `index.html` — they default to
+general horticultural guidance and should be tuned per crop, since leafy greens
+want more nitrogen and fruiting blocks more potassium.
 
 ## Running it
 
@@ -74,6 +98,15 @@ gateway/vendor API returning the same shapes —
 - time series per metric: `[{ t: <epoch ms>, v: <number> }, …]`
 - zones: `[{ id, name, crop, trigger, moisture, valve }, …]`
 - soil stations: `[{ name, ph, ec, stemp }, …]`
+- NPK probe: `{ n, p, k, ec }` in mg/kg and µS/cm — the gateway polls the probe
+  over Modbus RTU (9600 8N1, slave address 1, function `0x03`, base `0x0000`,
+  **quantity 10**) and relays the frame over LoRa. Two traps worth carrying into
+  the gateway firmware: values are IEEE-754 32-bit floats spread across register
+  *pairs*, not the 16-bit scaled integers most soil sensors use, so an **odd
+  register quantity silently reads back as zero** — indistinguishable from a
+  probe in dry sand; and a Modbus **exception frame is proof of life**, not
+  silence, so never discard one as a failed read. Set `state.npk.demo = false`
+  once the feed is real; the `SIMULATED` badge clears itself.
 - pump/tank/shed/solar: plain numbers as in the `state` object
 
 Valve, diffuser, and task toggles already route through single code paths in
