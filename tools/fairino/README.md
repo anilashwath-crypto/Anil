@@ -21,6 +21,14 @@ Desktop (macOS/Windows), where bridge subnets are not routable from the host.
 Tunable via environment variables: `NET_NAME`, `SUBNET`, `GATEWAY`, `ROBOT_IP`,
 `CONTAINER`, `PUBLISH_PORTS`, `WORKDIR`.
 
+## Architecture
+
+The controller is built for x86-64. The script compares the image's architecture
+against the host and, on a mismatch (e.g. Apple Silicon), passes `--platform` and
+warns that emulation is slow and may destabilise the real-time motion loop. If the
+binaries cannot execute at all it fails with the exact fix for that platform rather
+than reporting a false success.
+
 ## Caveats
 
 - The port list (`80 8080 8083 8084 20003`) is a best guess; 8083 (status

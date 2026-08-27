@@ -116,6 +116,28 @@ IMAGE=$(echo "$LOAD_OUT" | sed -n 's/^Loaded image: //p'      | head -1)
 [ -n "$IMAGE" ] || die "could not determine the loaded image name from docker load output"
 c_ok "Image: $IMAGE"
 
+# ------------------------------------------------ 2b. architecture reconciliation
+# The controller is built for a specific CPU architecture (x86-64 in practice).
+# On an Apple Silicon Mac the host is arm64, so the image must run under emulation
+# and needs an explicit --platform or Docker refuses / picks the wrong variant.
+IMG_ARCH=$(docker image inspect "$IMAGE" --format '{{.Architecture}}' 2>/dev/null || echo "")
+HOST_ARCH=$(docker info --format '{{.Architecture}}' 2>/dev/null || uname -m)
+case "$HOST_ARCH" in x86_64) HOST_ARCH=amd64 ;; aarch64) HOST_ARCH=arm64 ;; esac
+
+PLATFORM_ARGS=()
+if [ -n "$IMG_ARCH" ] && [ "$IMG_ARCH" != "$HOST_ARCH" ]; then
+  c_warn "Architecture mismatch: image is '$IMG_ARCH', this machine is '$HOST_ARCH'."
+  c_warn "Running under emulation — expect it to be slow, and the controller's"
+  c_warn "real-time motion loop may be unstable. A native x86-64 host is preferable."
+  PLATFORM_ARGS=(--platform "linux/$IMG_ARCH")
+  if [ "$HOST_ARCH" = "arm64" ] && [ "$IMG_ARCH" = "amd64" ]; then
+    c_info "On Apple Silicon: enable Docker Desktop → Settings → General →"
+    c_info "'Use Rosetta for x86/amd64 emulation' for a large speedup."
+  fi
+else
+  c_ok "Architecture: $IMG_ARCH (native)"
+fi
+
 # ------------------------------------------------------------ 3. bridge network
 if docker network inspect "$NET_NAME" >/dev/null 2>&1; then
   c_ok "Network '$NET_NAME' already exists"
@@ -134,22 +156,67 @@ PORT_ARGS=()
 for p in $PUBLISH_PORTS; do PORT_ARGS+=(-p "127.0.0.1:$p:$p"); done
 
 c_info "Starting container '$CONTAINER' at $ROBOT_IP …"
-docker run -d \
+if ! RUN_ERR=$(docker run -d \
   --name "$CONTAINER" \
   --network "$NET_NAME" \
   --ip "$ROBOT_IP" \
   --privileged \
   --restart unless-stopped \
+  "${PLATFORM_ARGS[@]}" \
   "${PORT_ARGS[@]}" \
-  "$IMAGE" >/dev/null
-
-sleep 3
-if [ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER" 2>/dev/null)" != "true" ]; then
-  c_err "Container exited immediately. Logs:"
-  docker logs "$CONTAINER" 2>&1 | tail -40 | sed 's/^/    /'
-  die "The image likely needs an explicit command or extra flags — check the bundled doc."
+  "$IMAGE" 2>&1); then
+  c_err "docker run failed:"
+  echo "$RUN_ERR" | sed 's/^/    /'
+  echo
+  # Translate the two failures people actually hit into something actionable.
+  case "$RUN_ERR" in
+    *"port is already allocated"*|*"address already in use"*)
+      die "A port in PUBLISH_PORTS is taken — often a previous SimMachine container,
+       or something else on port 80. Check with:  docker ps
+       Then either stop the other container, or re-run with a different set, e.g.
+         PUBLISH_PORTS='8080 8083 20003' $0 '$SRC'" ;;
+    *"exec format error"*|*"no matching manifest"*|*"cannot be used on this platform"*)
+      die "This machine cannot execute the image's architecture ($IMG_ARCH).
+       On Apple Silicon, enable Docker Desktop → Settings → General →
+       'Use Rosetta for x86/amd64 emulation', or run SimMachine on an x86-64 host." ;;
+    *"Address already in use"*|*"cannot assign requested address"*)
+      die "IP $ROBOT_IP is unavailable on network '$NET_NAME'.
+       Re-run with a different address, e.g.  ROBOT_IP=192.168.58.3 $0 '$SRC'" ;;
+    *) die "See the error above; the bundled Fairino doc may list extra required flags." ;;
+  esac
 fi
-c_ok "Container running"
+
+# Settle before judging. `--restart unless-stopped` means a crash-looping container
+# can report Running=true when sampled between restarts, so check the status string
+# and the restart count, not just the boolean.
+c_info "Waiting for the controller to settle …"
+sleep 8
+STATE=$(docker inspect -f '{{.State.Status}}'  "$CONTAINER" 2>/dev/null || echo unknown)
+RESTARTS=$(docker inspect -f '{{.RestartCount}}' "$CONTAINER" 2>/dev/null || echo 0)
+LOGS=$(docker logs "$CONTAINER" 2>&1 | tail -40)
+
+if [ "$STATE" != "running" ] || [ "${RESTARTS:-0}" -gt 0 ]; then
+  c_err "Container is not healthy (state=$STATE, restarts=$RESTARTS). Logs:"
+  echo "$LOGS" | sed 's/^/    /'
+  echo
+  case "$LOGS" in
+    *"exec format error"*)
+      die "The image's binaries cannot run on this CPU: image is '$IMG_ARCH', host is '$HOST_ARCH'.
+       Emulation is not available or not working here.
+       On Apple Silicon: Docker Desktop → Settings → General →
+         enable 'Use Rosetta for x86/amd64 emulation', then re-run.
+       On Linux: install qemu-user-static binfmt handlers, e.g.
+         docker run --privileged --rm tonistiigi/binfmt --install all
+       Otherwise run SimMachine on a native x86-64 machine." ;;
+    *"permission denied"*|*"Operation not permitted"*)
+      die "The controller was blocked by the sandbox. It already runs --privileged;
+       the bundled Fairino doc may require extra capabilities or a host mount." ;;
+    *)
+      die "The controller is crash-looping. Check the logs above against the
+       bundled Fairino doc — the image may need an explicit command or extra flags." ;;
+  esac
+fi
+c_ok "Container running (state=$STATE, restarts=$RESTARTS)"
 
 # ------------------------------------------------------------------ 5. tell me
 echo
