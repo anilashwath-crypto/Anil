@@ -14,7 +14,7 @@ from OCP.BRep import BRep_Tool
 SW,SH,MARGIN,GAP,RES,STOCK = 2440.0,1220.0,10.0,6.0,2.0,5.0
 GW,GH = int(SW/RES), int(SH/RES); M=int(MARGIN/RES); Gc=int(math.ceil(GAP/RES))
 EXCLUDE_10MM=11; BENT={1,13,14,15,16}
-EIGHT_MM={2,3,4}   # 8 mm structural plates - left at 8 mm, not standardised down
+EIGHT_MM=set()   # 8 mm structural plates now standardised to 5 mm on request
 solids=load_solids(); names=json.load(open('bodies.json'))
 sel=[i for i in range(len(solids)) if i!=EXCLUDE_10MM and i not in BENT and i not in EIGHT_MM]
 
@@ -80,11 +80,22 @@ def rasterise(poly,res=RES):
         for t in range(L+1):
             m[min(h-1,int((y1+(y2-y1)*t/L)/res)), min(w-1,int((x1+(x2-x1)*t/L)/res))]=True
     return m
+_DISK=None
 def dilate(mask,c):
-    o=mask.copy()
-    for _ in range(c):
-        n=o.copy(); n[1:,:]|=o[:-1,:]; n[:-1,:]|=o[1:,:]; n[:,1:]|=o[:,:-1]; n[:,:-1]|=o[:,1:]; o=n
-    return o
+    """Euclidean-disk dilation by c cells. A diamond (repeated 4-neighbour) dilation only
+    guarantees c*RES along the axes and c*RES/sqrt(2) diagonally, which under-spaces parts."""
+    global _DISK
+    if _DISK is None or _DISK[0]!=c:
+        offs=[(dx,dy) for dx in range(-c,c+1) for dy in range(-c,c+1) if dx*dx+dy*dy <= c*c]
+        _DISK=(c,offs)
+    out=mask.copy(); H,W=mask.shape
+    for dx,dy in _DISK[1]:
+        if dx==0 and dy==0: continue
+        ys0,ys1 = max(0,dy), min(H,H+dy)
+        xs0,xs1 = max(0,dx), min(W,W+dx)
+        out[ys0:ys1, xs0:xs1] |= mask[ys0-dy:ys1-dy, xs0-dx:xs1-dx]
+    return out
+
 def free_pos(occ,part):
     ph,pw=part.shape; H,W=occ.shape
     if ph>H or pw>W: return None
@@ -134,7 +145,7 @@ t0=time.time(); best=None; rnd=random.Random(11); tried=0
 cands=[sorted(sel,key=lambda i:-variants[i][0][1].sum()),
        sorted(sel,key=lambda i:-max(variants[i][0][1].shape)),
        sorted(sel,key=lambda i:-variants[i][0][1].shape[1])]
-while time.time()-t0 < 420:
+while time.time()-t0 < 600:
     o=cands.pop(0) if cands else rnd.sample(sel,len(sel))
     n,ext,pl=run(o); tried+=1
     if best is None or (n,ext)<best[0]:

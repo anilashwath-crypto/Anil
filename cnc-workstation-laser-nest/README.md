@@ -17,14 +17,13 @@ that sit at an angle in the assembly (four of them read 16.57 mm but are really 
 |---|---|---|---|
 | **5.0 mm** | Body11, Body5, Body6, Body8, Body9, Body10, Body16 | flat plate | ✅ all 7 |
 | **4.0 mm** | Body7 (825 × 425) | flat plate | ✅ standardised up to 5 mm |
-| 8.0 mm | Body1 (700 × 550), Body2, Body3 (104 × 63) | flat plate | ❌ see below |
+| **8.0 mm** | Body1 (700 × 550), Body2, Body3 (104 × 63) | flat plate | ✅ standardised down to 5 mm |
 | 10.0 mm | Body12 (425 × 275) | flat plate | ❌ excluded on request |
 | 1.5 mm | Body22, Body17, Body18, Body19, Body20 | **bent** sheet, 6–13 bend faces | ❌ see below |
 
-**Why the 8 mm plates are left out.** Going 4 → 5 mm makes a part stiffer, so standardising
-Body7 up is safe. Going 8 → 5 mm removes 37 % of the section from what are structural
-plates, so that is a design decision, not a nesting one. They would fit: sheet 2 still has a
-free 1155 × 1200 mm remnant, more than enough for Body1 at 700 × 550.
+**On the re-thicknessed parts.** Body7 goes 4 → 5 mm, which makes it stiffer — safe. Body1,
+Body2 and Body3 go 8 → 5 mm, which removes 37 % of their section; these are structural
+plates, so verify the load path before cutting. Both changes were requested explicitly.
 
 **Why the 1.5 mm parts are left out.** They are bent, not flat. They need unfolding to flat
 patterns (which requires a bend allowance / K-factor), and their bend radii are sized for
@@ -35,13 +34,13 @@ patterns (which requires a bend allowance / K-factor), and their bend radii are 
 | | |
 |---|---|
 | Sheet | 2440 × 1220 × 5 mm |
-| Parts / sheets | 8 on 2 |
+| Parts / sheets | 11 on 2 |
 | Edge margin | 10 mm |
 | Required part gap | 6 mm |
-| **Achieved minimum clearance** | **6.6 mm** |
+| **Achieved minimum clearance** | **6.4 mm** |
 | Kerf | 0.2 mm — **not** baked into the geometry, apply compensation in your CAM |
-| Net cut area | 2.433 m² |
-| Sheet 2 remnant | ~1155 × 1200 mm free |
+| Net cut area | 2.826 m² |
+| Sheet 2 remnant | ~1145 × 1200 mm free |
 
 Parts are rotated in 90° steps only, never mirrored and never scaled, so each cut profile
 is identical to the source model. Profile nesting (rather than bounding boxes) lets the
@@ -63,7 +62,7 @@ inside cut-outs of Body5/Body6.
 
 1. Open `CNC_WorkstationV1.step` in Fusion 360.
 2. **Utilities → ADD-INS → Scripts and Add-Ins → Scripts → “+” →** add `fusion360_nest_5mm.py` → **Run**.
-3. The eight plates are moved flat and nested; sheet 2 is offset clear in Y. Every other body is hidden.
+3. The eleven plates are moved flat and nested; sheet 2 is offset clear in Y. Every other body is hidden.
    Sheet outlines and 10 mm margins are drawn as sketches.
 
 Bodies are matched by name first, then by volume + centroid, so the script survives Fusion
@@ -95,11 +94,17 @@ sheet margin. The published layout passes with 0.0000 mm² overlap and 6.600 mm 
 clearance. `emit_fusion2.py` separately asserts every matrix is a proper rotation
 (det = +1) reproducing the plan to ~1e-13 mm.
 
+The raster nester spaces parts with a **Euclidean-disk** dilation. A repeated 4-neighbour
+dilation is a diamond, which only guarantees the gap along the axes and gap/√2 diagonally —
+that under-spaced a diagonal pair to 5.25 mm on an early 11-part layout, which the exact
+gate rejected. `nest11.py` carries a unit check for the disk.
+
 ## Caveats
 
 - Kerf compensation is deliberately **not** applied to the geometry — set it in the laser CAM
   so parts come out at nominal size.
-- Body7 is cut 1 mm thicker than the model specifies. Check it still fits its mating parts.
+- Body7 is cut 1 mm thicker than the model specifies; Body1/2/3 are cut 3 mm thinner. Check
+  fit against mating parts, and check the load path for the three 8 mm structural plates.
 - Mirroring is not used. If your material is isotropic and you are happy to flip plates over,
   allowing mirrored placements may nest tighter.
 - The 6 mm gap suits fiber-laser cutting of 5 mm steel. Re-run `nest11.py` with a larger
