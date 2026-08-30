@@ -1034,9 +1034,9 @@ const ING_FLAGS = [
   [/hydrogenated|vanaspati|trans\s*fat/i,'trans fats'],
   [/sugar|glucose|fructose|corn syrup|invert syrup/i,'added sugar'],
   [/maida|refined (wheat )?flour/i,'maida (refined flour)'],
-  [/msg|e\s*-?621|monosodium glutamate|ajinomoto/i,'MSG (E621)'],
-  [/artificial (colou?r|flavou?r)|tartrazine|e\s*-?1(02|10|24|29)/i,'artificial colours/flavours'],
-  [/sodium benzoate|e\s*-?211|potassium sorbate|e\s*-?202|preservative/i,'preservatives'],
+  [/msg|(?:e|ins)\s*-?\s*621|monosodium glutamate|ajinomoto/i,'MSG (E621/INS 621)'],
+  [/artificial (colou?r|flavou?r)|tartrazine|(?:e|ins)\s*-?\s*1(02|10|24|29)\b/i,'artificial colours/flavours'],
+  [/sodium benzoate|potassium sorbate|preservative|(?:e|ins)\s*-?\s*2(02|11|60|62)\b/i,'preservatives'],
   [/paraben/i,'parabens'],
   [/sodium (lauryl|laureth) sulfate|\bsls\b|\bsles\b/i,'SLS/SLES'],
   [/phthalate/i,'phthalates'],
@@ -2328,31 +2328,63 @@ function dateInText(s, endOfMonth){
   cands.sort((a,b)=>a.i-b.i);
   return cands[0].iso;
 }
-function afterKeyword(txt,re,span=34){
-  const m = re.exec(txt);
-  return m ? txt.substr(m.index+m[0].length, span) : null;
+/* try every occurrence of the keyword and keep the first that has a date
+   beside it — "Manufactured & Marketed by:" (no date) must not shadow
+   "Mfg. Date: 03/07/2026" further down the label */
+function dateNear(raw, reSrc, endOfMonth){
+  const re = new RegExp(reSrc,'gi');
+  let m;
+  while((m = re.exec(raw))){
+    const d = dateInText(raw.substr(m.index+m[0].length, 48), endOfMonth);
+    if(d) return d;
+  }
+  return null;
 }
 function addMonthsISO(isoDate,n){
   const d = new Date(isoDate+'T00:00:00');
   d.setMonth(d.getMonth()+n);
   return d.toISOString().slice(0,10);
 }
+/* MRP: sticker prints often put a date or a per-gram price between "M.R.P."
+   and the amount, and "MRP(₹) : 366" has no Rs before the number — so scan a
+   window after the MRP keyword, drop anything that is part of a date, and
+   take the largest plausible amount (₹449 beats the ₹4.49/g unit price). */
+function mrpFrom(raw){
+  const kw = /m\.?\s?r\.?\s?p\.?/i.exec(raw);
+  const win = kw ? raw.substr(kw.index, 90) : null;
+  const pick = (s, needCur)=>{
+    let best=null;
+    const re = needCur ? /(?:₹|rs\.?|inr)\s*([\d,]+(?:\.\d{1,2})?)/gi : /([\d,]+(?:\.\d{1,2})?)/g;
+    for(const m of s.matchAll(re)){
+      const numStr=m[1], i=m.index+m[0].indexOf(numStr);
+      const before=s[i-1]||' ', before2=s[i-2]||' ';
+      const after=s[i+numStr.length]||' ', after2=s[i+numStr.length+1]||' ';
+      if(/[\/\-.]/.test(before) && /\d/.test(before2)) continue;   // tail of a date
+      if(/[\/\-.]/.test(after) && /\d/.test(after2)) continue;     // head of a date
+      const v=parseFloat(numStr.replace(/,/g,''));
+      if(!v || v>100000) continue;
+      if(best===null||v>best) best=v;
+    }
+    return best;
+  };
+  if(win){const v=pick(win,false); if(v!==null) return v;}
+  return pick(raw,true);   // no MRP keyword read — accept only ₹/Rs-prefixed amounts
+}
 function parseLabel(raw){
   const out = {};
-  out.mfg = dateInText(afterKeyword(raw,/(?:mfd|mfg|manufactur\w*|pkd|packed)\.?\s*(?:date|dt|on)?\s*[:\-]?/i), false);
-  out.exp = dateInText(afterKeyword(raw,/(?:exp|expiry|expires?|use\s*by|best\s*before)\.?\s*(?:date|dt)?\s*[:\-]?/i), true);
+  out.mfg = dateNear(raw, '(?:mfd|mfg|manufactur\\w*|pkd|packed)\\.?\\s*(?:date|dt|on)?\\s*[:\\-]?', false);
+  out.exp = dateNear(raw, '(?:exp\\b|expiry|expires?|use\\s*by|best\\s*before)\\.?\\s*(?:date|dt)?\\s*[:\\-]?', true);
   if(!out.exp && out.mfg){
     const bb = raw.match(/best\s*before[^0-9]{0,12}(\d{1,3})\s*(?:month|mth|mo\b)/i);
     if(bb) out.exp = addMonthsISO(out.mfg, +bb[1]);
   }
-  const mrp = raw.match(/m\.?\s?r\.?\s?p\.?[^0-9₹]{0,10}(?:₹|rs\.?|inr)?\s*([\d,]+(?:\.\d{1,2})?)/i);
-  if(mrp) out.mrp = parseFloat(mrp[1].replace(/,/g,''));
+  out.mrp = mrpFrom(raw);
   const nq = raw.match(/net\s*(?:wt|weight|qty|quantity|content)s?\.?\s*[:\-]?\s*([\d.]+)\s*(kg|gm?|l(?:tr|itre)?|ml)/i);
   if(nq){
     const map={g:'g',gm:'g',kg:'kg',l:'L',ltr:'L',litre:'L',ml:'ml'};
     out.netQty={q:parseFloat(nq[1]), unit:map[nq[2].toLowerCase()]||nq[2]};
   }
-  const ing = raw.match(/ingredients?\s*[:\-]\s*([\s\S]{10,400}?)(?=\bnutri|\ballergen|\bstorage\b|\bmrp\b|\bmfd\b|\bmfg\b|\bbest\s*before|\bnet\s|\buse\s*by|\bexp\b|$)/i);
+  const ing = raw.match(/ingredients?\s*[:\-]\s*([\s\S]{10,400}?)(?=\bnutri|\ballergen|\bstorage\b|\bmrp\b|\bmfd\b|\bmfg\b|\bbest\s*before|\bnet\s|\buse\s*by|\bexp\b|\bmanufactur|\bmarketed|\bpacked\b|\bfssai\b|\broast\b|\bcustomer\b|\bfollow\b|\bgeneric\b|\bbatch\b|$)/i);
   if(ing) out.ing = ing[1].replace(/\s+/g,' ').trim().replace(/[,;.\s]+$/,'');
   return out;
 }
