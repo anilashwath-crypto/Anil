@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f6f4ef">
 <title>HouseKeeper — The House Of Ommi</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
 <style>
   :root{
     --bg:#f6f4ef; --card:#ffffff; --ink:#1f2a1f; --muted:#6b7280; --line:#e5e1d8;
@@ -777,7 +778,8 @@ en:{appName:'HouseKeeper',tagline:'The House Of Ommi',search:'Search items…',a
   addRep:'Repair / service',workDone:'Work done *',billPhotoLbl:'🧾 Bill photo (optional)',
   thisMonthS:'this month',needVehFirst:'Add a vehicle first.',
   noVeh:'No vehicles yet. Tap ＋ to add one.',noTrips:'No KM entries yet. Tap ＋ to log a day\'s run.',
-  noFuel:'No fuel bills yet.',noReps:'No repairs logged yet.'},
+  noFuel:'No fuel bills yet.',noReps:'No repairs logged yet.',
+  lockNeedsSecure:'App lock works on the https site or on localhost — on a WiFi hub address the app runs without the lock. Use "Forgot? Reset" only if you are locked out.'},
 kn:{appName:'ಹೌಸ್‌ಕೀಪರ್',tagline:'The House Of Ommi',search:'ವಸ್ತು ಹುಡುಕಿ…',allCats:'ಎಲ್ಲಾ ವರ್ಗಗಳು',
   catGrocery:'ದಿನಸಿ',catToiletry:'ಸ್ನಾನ/ಶೌಚ ಸಾಮಗ್ರಿ',catCleaning:'ಸ್ವಚ್ಛತೆ',catOther:'ಇತರೆ',
   tabInv:'ದಾಸ್ತಾನು',tabBuy:'ಖರೀದಿ',tabAlerts:'ಎಚ್ಚರಿಕೆ',tabAI:'ವಿಶ್ಲೇಷಣೆ',tabMore:'ಇನ್ನಷ್ಟು',
@@ -881,7 +883,8 @@ kn:{appName:'ಹೌಸ್‌ಕೀಪರ್',tagline:'The House Of Ommi',search:
   addRep:'ದುರಸ್ತಿ / ಸೇವೆ',workDone:'ಮಾಡಿದ ಕೆಲಸ *',billPhotoLbl:'🧾 ಬಿಲ್ ಫೋಟೋ (ಐಚ್ಛಿಕ)',
   thisMonthS:'ಈ ತಿಂಗಳು',needVehFirst:'ಮೊದಲು ವಾಹನ ಸೇರಿಸಿ.',
   noVeh:'ಇನ್ನೂ ವಾಹನಗಳಿಲ್ಲ. ＋ ಒತ್ತಿ ಸೇರಿಸಿ.',noTrips:'ಇನ್ನೂ KM ದಾಖಲೆ ಇಲ್ಲ. ＋ ಒತ್ತಿ ದಾಖಲಿಸಿ.',
-  noFuel:'ಇನ್ನೂ ಇಂಧನ ಬಿಲ್ ಇಲ್ಲ.',noReps:'ಇನ್ನೂ ದುರಸ್ತಿ ದಾಖಲೆ ಇಲ್ಲ.'},
+  noFuel:'ಇನ್ನೂ ಇಂಧನ ಬಿಲ್ ಇಲ್ಲ.',noReps:'ಇನ್ನೂ ದುರಸ್ತಿ ದಾಖಲೆ ಇಲ್ಲ.',
+  lockNeedsSecure:'ಆ್ಯಪ್ ಲಾಕ್ https ಸೈಟ್ ಅಥವಾ localhost ನಲ್ಲಿ ಮಾತ್ರ ಕೆಲಸ ಮಾಡುತ್ತದೆ — WiFi ಹಬ್ ವಿಳಾಸದಲ್ಲಿ ಆ್ಯಪ್ ಲಾಕ್ ಇಲ್ಲದೆ ನಡೆಯುತ್ತದೆ.'},
 hi:{appName:'हाउसकीपर',tagline:'The House Of Ommi',search:'वस्तु खोजें…',allCats:'सभी श्रेणियाँ',
   catGrocery:'किराना',catToiletry:'टॉयलेटरीज़',catCleaning:'सफ़ाई',catOther:'अन्य',
   tabInv:'स्टॉक',tabBuy:'ख़रीद',tabAlerts:'अलर्ट',tabAI:'विश्लेषण',tabMore:'और',
@@ -985,7 +988,8 @@ hi:{appName:'हाउसकीपर',tagline:'The House Of Ommi',search:'व�
   addRep:'मरम्मत / सर्विस',workDone:'किया गया काम *',billPhotoLbl:'🧾 बिल फ़ोटो (वैकल्पिक)',
   thisMonthS:'इस माह',needVehFirst:'पहले वाहन जोड़ें.',
   noVeh:'अभी कोई वाहन नहीं. ＋ दबाकर जोड़ें.',noTrips:'अभी KM प्रविष्टि नहीं. ＋ दबाकर दर्ज करें.',
-  noFuel:'अभी ईंधन बिल नहीं.',noReps:'अभी मरम्मत दर्ज नहीं.'}
+  noFuel:'अभी ईंधन बिल नहीं.',noReps:'अभी मरम्मत दर्ज नहीं.',
+  lockNeedsSecure:'ऐप लॉक https साइट या localhost पर ही चलता है — WiFi हब पते पर ऐप बिना लॉक चलता है.'}
 };
 let lang = localStorage.getItem('hs-lang') || 'en';
 const t = k => (L[lang][k] !== undefined ? L[lang][k] : L.en[k]);
@@ -2239,10 +2243,12 @@ async function pwHash(pw,saltB64){
   const bits = await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},key,256);
   return {salt:b64buf(salt), hash:b64buf(bits)};
 }
+const canLock = () => !!(window.crypto && crypto.subtle);   // https or localhost only
 function showLock(){
   if(!lockCfg()) return;
   document.getElementById('bioBtn').hidden = !localStorage.getItem('hs-bio');
   document.getElementById('lockScreen').classList.add('on');
+  if(!canLock()) lockErr(t('lockNeedsSecure'));
 }
 function unlockApp(){
   document.getElementById('lockScreen').classList.remove('on');
@@ -2251,6 +2257,7 @@ function unlockApp(){
 function lockErr(m){document.getElementById('lockMsg').textContent=m;}
 async function tryPwUnlock(){
   const cfg = lockCfg(); if(!cfg) return unlockApp();
+  if(!canLock()){lockErr(t('lockNeedsSecure')); return;}
   const {hash} = await pwHash(document.getElementById('lockPw').value, cfg.salt);
   if(hash===cfg.hash) unlockApp(); else lockErr(t('wrongPw'));
 }
@@ -2308,6 +2315,11 @@ async function forgotReset(){
   localStorage.clear(); location.reload();
 }
 function renderLockCard(){
+  if(!canLock()){
+    document.getElementById('lockCardBody').innerHTML =
+      `<p class="muted">🔓 ${esc(t('lockNeedsSecure'))}</p>`;
+    return;
+  }
   const has = !!lockCfg(), bio = !!localStorage.getItem('hs-bio');
   document.getElementById('lockCardBody').innerHTML = `
     <div style="margin-bottom:8px">

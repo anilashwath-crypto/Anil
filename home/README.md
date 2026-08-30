@@ -73,6 +73,26 @@ anywhere. **More → Export backup** writes everything (all modules) to one JSON
 file; import restores it on a new phone. Clearing the browser's site data
 deletes everything, so export now and then.
 
+## Local hub (while development continues)
+
+`home/hub.py` turns any computer on your home WiFi into the HouseKeeper hub:
+
+1. Install Python (python.org) if needed.
+2. Run `python3 hub.py` (Windows: `py hub.py`) in this folder.
+3. It prints two addresses — open the **“On phones”** one
+   (e.g. `http://192.168.1.5:8080`) on each phone on the same WiFi and
+   *Add to Home screen*.
+
+Notes: each phone keeps its own on-device data (move it with Export/Import
+backup); the app lock needs https or localhost, so on the plain hub address
+the app runs unlocked and says so under More → App lock.
+
+**Optional — ngrok:** with the hub running, `ngrok http 8080` (free account at
+ngrok.com) gives a temporary **https** URL reachable from anywhere — and
+because it's https, the app lock and face/fingerprint unlock work on it. The
+URL changes each run; it's a development preview, not the final deploy. The
+permanent deploy stays GitHub Pages (merge the PR).
+
 ## Using it on the phone
 
 1. Open the page in Chrome and **Add to Home screen** — it opens full-screen
