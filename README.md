@@ -10,6 +10,13 @@ Everything lives in one `index.html` — no build step, no dependencies — so i
 can be opened directly in a browser, hosted on GitHub Pages, or added to a
 phone home screen.
 
+> **Also in this repo:** [`home/`](home/) — **HouseKeeper** (Designed,
+> Initiated & Developed by The House Of Ommi), a mobile household suite:
+> kitchen/toiletries inventory with expiry reminders and invoice tracking,
+> housekeeping schedules with photo-verified placement, staff ID records and
+> selfie-proof attendance, and a drivers module (KM log, fuel, repairs). See
+> [`home/README.md`](home/README.md).
+
 ## Tabs
 
 **Overview** — system status chips (edge gateway, LoRa sensor count, 4G, SMS
