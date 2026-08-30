@@ -10,6 +10,12 @@ Everything lives in one `index.html` — no build step, no dependencies — so i
 can be opened directly in a browser, hosted on GitHub Pages, or added to a
 phone home screen.
 
+> **Also in this repo:** [`home/`](home/) — **Home Stock**, a mobile
+> household-inventory app for kitchen groceries and toiletries (opening stock,
+> packet photos, mfg/expiry dates, ingredient flags, expiry reminders, price
+> and invoice tracking, on-device spend/wastage analysis). See
+> [`home/README.md`](home/README.md).
+
 ## Tabs
 
 **Overview** — system status chips (edge gateway, LoRa sensor count, 4G, SMS

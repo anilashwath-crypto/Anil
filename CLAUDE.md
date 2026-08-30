@@ -9,6 +9,12 @@ dairy + Boer goats + Giriraja poultry), 100% organic/ZBNF, offline-first edge ga
 with LoRa sensors, GSM/SMS fallback, and solar-backed controls.
 
 - `index.html` — the app (see `ARCHITECTURE.md` for structure and function map)
+- `home/index.html` — **Home Stock**, a second single-file app: mobile household
+  inventory for kitchen groceries/toiletries (opening stock, packet photos,
+  mfg/expiry dates + reminders, ingredient flags, price/invoice tracking,
+  on-device insights). Same conventions (trilingual `L` dict, theme tokens,
+  no build step); data in IndexedDB on the phone. Docs in `home/README.md`.
+  Branch: `claude/household-inventory-tracker-qje7gi`.
 - `BOM.md` / `Smart_Farm_DIY_BOM.xlsx` — DIY electronics bill of materials (~₹1.67 lakh + 10%)
 - Working branch: `claude/farm-monitoring-dashboard-iorey1`
 - Published artifact: https://claude.ai/code/artifact/9d7580d8-d8bd-4c5d-b23d-61c88dc8a27d

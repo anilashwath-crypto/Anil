@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f4ef">
+<title>Home Stock — Household Inventory</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --ink:#1f2a1f; --muted:#6b7280; --line:#e5e1d8;
+    --accent:#2e7d32; --accent-soft:#e6f2e6; --amber:#b45309; --amber-soft:#fdf0dd;
+    --red:#b91c1c; --red-soft:#fde8e8; --blue:#1d4ed8; --blue-soft:#e5edff;
+    --chip:#eef2e9; --shadow:0 1px 3px rgba(0,0,0,.08);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#141613; --card:#1e211c; --ink:#e8e6df; --muted:#9aa094; --line:#2c302a;
+      --accent:#7cc47f; --accent-soft:#23331f; --amber:#f0b35e; --amber-soft:#3a2c14;
+      --red:#f08a8a; --red-soft:#3a1c1c; --blue:#8fb0ff; --blue-soft:#1c2740;
+      --chip:#262b23; --shadow:0 1px 3px rgba(0,0,0,.5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141613; --card:#1e211c; --ink:#e8e6df; --muted:#9aa094; --line:#2c302a;
+    --accent:#7cc47f; --accent-soft:#23331f; --amber:#f0b35e; --amber-soft:#3a2c14;
+    --red:#f08a8a; --red-soft:#3a1c1c; --blue:#8fb0ff; --blue-soft:#1c2740;
+    --chip:#262b23; --shadow:0 1px 3px rgba(0,0,0,.5);
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Kannada","Noto Sans Devanagari",sans-serif;
+    padding-bottom:calc(64px + env(safe-area-inset-bottom));
+  }
+  header{
+    position:sticky; top:0; z-index:20; background:var(--bg);
+    display:flex; align-items:center; gap:8px; padding:10px 14px 8px;
+    border-bottom:1px solid var(--line);
+  }
+  header h1{font-size:18px; margin:0; flex:1; display:flex; align-items:center; gap:8px}
+  header h1 small{font-size:11px; color:var(--muted); font-weight:400}
+  .iconbtn{
+    border:1px solid var(--line); background:var(--card); color:var(--ink);
+    border-radius:10px; padding:6px 10px; font-size:14px; cursor:pointer;
+  }
+  select.iconbtn{appearance:none}
+  main{padding:12px 14px; max-width:640px; margin:0 auto}
+  .tabpage{display:none}
+  .tabpage.active{display:block}
+  /* bottom nav */
+  nav{
+    position:fixed; bottom:0; left:0; right:0; z-index:30;
+    display:flex; background:var(--card); border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav button{
+    flex:1; background:none; border:0; color:var(--muted); font-size:10.5px;
+    padding:7px 2px 6px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;
+  }
+  nav button .ico{font-size:19px; line-height:1}
+  nav button.active{color:var(--accent); font-weight:600}
+  nav button .badge{
+    position:absolute; transform:translate(14px,-2px);
+    background:var(--red); color:#fff; font-size:9px; border-radius:8px; padding:0 4px; min-width:14px;
+  }
+  nav button{position:relative}
+  /* cards */
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:12px; margin-bottom:10px}
+  .card h3{margin:0 0 8px; font-size:14px}
+  .muted{color:var(--muted); font-size:12.5px}
+  .row{display:flex; gap:8px; align-items:center}
+  .grow{flex:1}
+  .chip{display:inline-block; background:var(--chip); border-radius:999px; padding:2px 9px; font-size:11.5px; margin:1px 2px 1px 0}
+  .chip.red{background:var(--red-soft); color:var(--red)}
+  .chip.amber{background:var(--amber-soft); color:var(--amber)}
+  .chip.green{background:var(--accent-soft); color:var(--accent)}
+  .chip.blue{background:var(--blue-soft); color:var(--blue)}
+  .btn{
+    border:0; border-radius:11px; padding:10px 14px; font-size:14px; font-weight:600; cursor:pointer;
+    background:var(--accent); color:#fff;
+  }
+  .btn.ghost{background:var(--chip); color:var(--ink)}
+  .btn.danger{background:var(--red-soft); color:var(--red)}
+  .btn.small{padding:6px 10px; font-size:12.5px; border-radius:9px}
+  .btn:disabled{opacity:.5}
+  /* inventory list */
+  .searchbar{display:flex; gap:8px; margin-bottom:10px}
+  .searchbar input,.searchbar select{
+    flex:1; border:1px solid var(--line); background:var(--card); color:var(--ink);
+    border-radius:11px; padding:9px 12px; font-size:14px; min-width:0;
+  }
+  .item{
+    display:flex; gap:10px; background:var(--card); border:1px solid var(--line);
+    border-radius:14px; padding:10px; margin-bottom:8px; cursor:pointer; box-shadow:var(--shadow);
+  }
+  .thumb{
+    width:56px; height:56px; border-radius:10px; background:var(--chip); flex:none;
+    display:flex; align-items:center; justify-content:center; font-size:24px; overflow:hidden;
+  }
+  .thumb img{width:100%; height:100%; object-fit:cover}
+  .item .name{font-weight:600; font-size:14.5px}
+  .item .sub{font-size:12px; color:var(--muted); margin-top:1px}
+  .fab{
+    position:fixed; right:16px; bottom:calc(76px + env(safe-area-inset-bottom)); z-index:25;
+    width:54px; height:54px; border-radius:50%; border:0; background:var(--accent); color:#fff;
+    font-size:28px; line-height:1; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.25);
+  }
+  /* forms & modal */
+  .modal{
+    position:fixed; inset:0; z-index:40; background:var(--bg); display:none;
+    overflow-y:auto; padding:0 0 40px;
+  }
+  .modal.open{display:block}
+  .modal .mhead{
+    position:sticky; top:0; background:var(--bg); z-index:5; display:flex; align-items:center; gap:10px;
+    padding:12px 14px; border-bottom:1px solid var(--line);
+  }
+  .modal .mhead h2{margin:0; font-size:16px; flex:1}
+  .modal .mbody{padding:14px; max-width:640px; margin:0 auto}
+  label.f{display:block; margin-bottom:11px}
+  label.f span{display:block; font-size:12px; color:var(--muted); margin-bottom:4px}
+  label.f input,label.f select,label.f textarea{
+    width:100%; border:1px solid var(--line); background:var(--card); color:var(--ink);
+    border-radius:11px; padding:10px 12px; font-size:15px; font-family:inherit;
+  }
+  label.f textarea{min-height:84px; resize:vertical}
+  .f2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .photobox{
+    border:1.5px dashed var(--line); border-radius:12px; min-height:110px; display:flex;
+    align-items:center; justify-content:center; text-align:center; cursor:pointer;
+    color:var(--muted); font-size:13px; overflow:hidden; background:var(--card); position:relative;
+  }
+  .photobox img{width:100%; max-height:260px; object-fit:contain; display:block}
+  .photobox .clearp{
+    position:absolute; top:6px; right:6px; background:rgba(0,0,0,.55); color:#fff; border:0;
+    border-radius:8px; padding:3px 8px; font-size:12px; cursor:pointer;
+  }
+  /* alerts */
+  .alert-item{display:flex; gap:10px; align-items:center; padding:9px 0; border-bottom:1px solid var(--line)}
+  .alert-item:last-child{border-bottom:0}
+  /* insights */
+  .bar-row{display:flex; align-items:center; gap:8px; margin:5px 0; font-size:12.5px}
+  .bar-row .lbl{width:34%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .bar-row .track{flex:1; height:14px; background:var(--chip); border-radius:7px; overflow:hidden}
+  .bar-row .fill{height:100%; background:var(--accent); border-radius:7px}
+  .bar-row .val{width:72px; text-align:right; font-variant-numeric:tabular-nums}
+  .kpis{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px}
+  .kpi{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px}
+  .kpi b{font-size:18px; display:block}
+  .kpi span{font-size:11px; color:var(--muted)}
+  table.hist{width:100%; border-collapse:collapse; font-size:12.5px}
+  table.hist td,table.hist th{padding:5px 4px; border-bottom:1px solid var(--line); text-align:left}
+  table.hist th{color:var(--muted); font-weight:500; font-size:11px}
+  .empty{color:var(--muted); text-align:center; padding:26px 10px; font-size:13.5px}
+  .verdict{border-left:4px solid var(--line); padding:7px 10px; margin:7px 0; border-radius:6px; background:var(--card); font-size:13px}
+  .verdict.good{border-color:var(--accent)}
+  .verdict.warn{border-color:var(--amber)}
+  .verdict.bad{border-color:var(--red)}
+  .big-ico{font-size:34px; text-align:center; display:block; margin:6px 0 2px}
+  a{color:var(--blue)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧺 <span data-t="appName">Home Stock</span><small data-t="tagline">kitchen &amp; household tracker</small></h1>
+  <select id="langSel" class="iconbtn" aria-label="Language">
+    <option value="en">EN</option><option value="kn">ಕನ್ನಡ</option><option value="hi">हिंदी</option>
+  </select>
+  <button id="themeBtn" class="iconbtn" aria-label="Theme">🌙</button>
+</header>
+
+<main>
+  <!-- ============ INVENTORY ============ -->
+  <section id="page-inv" class="tabpage active">
+    <div class="searchbar">
+      <input id="q" type="search" data-tp="search" placeholder="Search items…">
+      <select id="catFilter"></select>
+    </div>
+    <div id="invList"></div>
+  </section>
+
+  <!-- ============ PURCHASES ============ -->
+  <section id="page-buy" class="tabpage">
+    <div class="row" style="margin-bottom:10px">
+      <h3 class="grow" style="margin:0" data-t="purchases">Purchases &amp; invoices</h3>
+      <button class="btn small" onclick="openPurchaseForm()" data-t="logPurchase">+ Log purchase</button>
+    </div>
+    <div id="buyList"></div>
+  </section>
+
+  <!-- ============ ALERTS ============ -->
+  <section id="page-alerts" class="tabpage">
+    <div class="card">
+      <div class="row">
+        <h3 class="grow" style="margin:0" data-t="reminders">Expiry reminders</h3>
+        <button id="notifBtn" class="btn small ghost" onclick="askNotif()" data-t="enableNotif">Enable reminders</button>
+      </div>
+      <p class="muted" data-t="notifHint">Open the app once a day (or add it to your home screen) — anything expired or expiring within 7 days is announced here and as a phone notification.</p>
+    </div>
+    <div id="alertList"></div>
+  </section>
+
+  <!-- ============ INSIGHTS ============ -->
+  <section id="page-ai" class="tabpage">
+    <div id="aiBody"></div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section id="page-more" class="tabpage">
+    <div class="card">
+      <h3 data-t="backup">Backup &amp; data</h3>
+      <p class="muted" data-t="backupHint">Everything is stored only on this phone (offline). Export a backup file now and then, or move data to a new phone with import.</p>
+      <div class="row" style="flex-wrap:wrap; gap:8px">
+        <button class="btn small ghost" onclick="exportData()" data-t="exportData">⬇ Export backup</button>
+        <button class="btn small ghost" onclick="document.getElementById('importFile').click()" data-t="importData">⬆ Import backup</button>
+        <input id="importFile" type="file" accept="application/json" hidden onchange="importData(this.files[0])">
+        <button class="btn small ghost" onclick="loadSample()" data-t="sampleData">Load sample data</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3 data-t="howTitle">How to use</h3>
+      <ol class="muted" style="padding-left:18px; margin:6px 0" id="howList"></ol>
+    </div>
+  </section>
+</main>
+
+<button class="fab" id="fabAdd" onclick="openItemForm()" aria-label="Add item">＋</button>
+
+<nav>
+  <button data-page="inv"    class="active"><span class="ico">🧺</span><span data-t="tabInv">Stock</span></button>
+  <button data-page="buy"    ><span class="ico">🧾</span><span data-t="tabBuy">Purchases</span></button>
+  <button data-page="alerts" ><span class="ico">⏰</span><span data-t="tabAlerts">Alerts</span><span class="badge" id="alertBadge" hidden></span></button>
+  <button data-page="ai"     ><span class="ico">🤖</span><span data-t="tabAI">Insights</span></button>
+  <button data-page="more"   ><span class="ico">⚙️</span><span data-t="tabMore">More</span></button>
+</nav>
+
+<!-- ============ ITEM FORM MODAL ============ -->
+<div class="modal" id="itemModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('itemModal')">←</button>
+    <h2 id="itemFormTitle" data-t="addItem">Add item</h2>
+    <button class="btn small" onclick="saveItem()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <div class="photobox" id="photoBox" onclick="document.getElementById('photoInput').click()">
+      <span id="photoHint" data-t="takePhoto">📷 Tap to photograph the packet<br>(front + ingredients label)</span>
+    </div>
+    <input id="photoInput" type="file" accept="image/*" capture="environment" hidden>
+    <div style="height:12px"></div>
+    <label class="f"><span data-t="itemName">Item name *</span><input id="fName" placeholder="e.g. Toor dal 1kg"></label>
+    <div class="f2">
+      <label class="f"><span data-t="category">Category</span>
+        <select id="fCat"></select></label>
+      <label class="f"><span data-t="brand">Brand</span><input id="fBrand"></label>
+    </div>
+    <div class="f2">
+      <label class="f"><span data-t="openingStock">Opening stock *</span><input id="fStock" type="number" step="any" min="0" inputmode="decimal"></label>
+      <label class="f"><span data-t="unit">Unit</span>
+        <select id="fUnit">
+          <option>pcs</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>packet</option><option>bottle</option><option>box</option>
+        </select></label>
+    </div>
+    <div class="f2">
+      <label class="f"><span data-t="mfgDate">Manufacturing date</span><input id="fMfg" type="date"></label>
+      <label class="f"><span data-t="expDate">Expiry date</span><input id="fExp" type="date"></label>
+    </div>
+    <div class="f2">
+      <label class="f"><span data-t="lastPrice">Price paid (₹, per unit)</span><input id="fPrice" type="number" step="any" min="0" inputmode="decimal"></label>
+      <label class="f"><span data-t="lowLevel">Remind when stock ≤</span><input id="fLow" type="number" step="any" min="0" inputmode="decimal" value="1"></label>
+    </div>
+    <label class="f"><span data-t="vendor">Bought from (store / vendor)</span><input id="fVendor" placeholder="e.g. More Supermarket, JioMart"></label>
+    <label class="f"><span data-t="ingredients">Ingredients (copy from the label)</span><textarea id="fIng" placeholder="e.g. Refined palm oil, sugar, maida, salt, E621…"></textarea></label>
+    <button class="btn danger small" id="btnDeleteItem" hidden onclick="deleteItem()" data-t="delete">Delete item</button>
+  </div>
+</div>
+
+<!-- ============ ITEM DETAIL MODAL ============ -->
+<div class="modal" id="detailModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('detailModal')">←</button>
+    <h2 id="detTitle"></h2>
+    <button class="btn small ghost" id="detEditBtn" data-t="edit">Edit</button>
+  </div>
+  <div class="mbody" id="detBody"></div>
+</div>
+
+<!-- ============ PURCHASE FORM MODAL ============ -->
+<div class="modal" id="buyModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('buyModal')">←</button>
+    <h2 data-t="logPurchase2">Log a purchase</h2>
+    <button class="btn small" onclick="savePurchase()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <label class="f"><span data-t="item">Item *</span><select id="pItem"></select></label>
+    <div class="f2">
+      <label class="f"><span data-t="purchaseDate">Date</span><input id="pDate" type="date"></label>
+      <label class="f"><span data-t="qty">Quantity *</span><input id="pQty" type="number" step="any" min="0" inputmode="decimal"></label>
+    </div>
+    <div class="f2">
+      <label class="f"><span data-t="unitPrice">Price per unit (₹) *</span><input id="pPrice" type="number" step="any" min="0" inputmode="decimal"></label>
+      <label class="f"><span data-t="vendor2">Store / vendor</span><input id="pVendor"></label>
+    </div>
+    <div class="f2">
+      <label class="f"><span data-t="newMfg">New batch mfg date</span><input id="pMfg" type="date"></label>
+      <label class="f"><span data-t="newExp">New batch expiry date</span><input id="pExp" type="date"></label>
+    </div>
+    <span class="muted" data-t="invoiceHint">Invoice / bill photo (optional)</span>
+    <div class="photobox" id="invBox" style="margin-top:6px" onclick="document.getElementById('invInput').click()">
+      <span id="invHint" data-t="snapInvoice">🧾 Tap to photograph the invoice</span>
+    </div>
+    <input id="invInput" type="file" accept="image/*" capture="environment" hidden>
+  </div>
+</div>
+
+<!-- ============ INVOICE VIEW MODAL ============ -->
+<div class="modal" id="invViewModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('invViewModal')">←</button>
+    <h2 data-t="invoice">Invoice</h2><span></span>
+  </div>
+  <div class="mbody" id="invViewBody"></div>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Home Stock — offline household inventory for kitchen & toiletries.
+   Single file, no build step. All data lives in IndexedDB on the phone.
+   ===================================================================== */
+
+/* ---------------- i18n ---------------- */
+const L = {
+en:{appName:'Home Stock',tagline:'kitchen & household tracker',search:'Search items…',allCats:'All categories',
+  catGrocery:'Grocery',catToiletry:'Toiletries',catCleaning:'Cleaning',catOther:'Other',
+  tabInv:'Stock',tabBuy:'Purchases',tabAlerts:'Alerts',tabAI:'Insights',tabMore:'More',
+  purchases:'Purchases & invoices',logPurchase:'+ Log purchase',logPurchase2:'Log a purchase',
+  reminders:'Expiry reminders',enableNotif:'Enable reminders',notifOn:'Reminders on ✓',
+  notifHint:'Open the app once a day (or add it to your home screen) — anything expired or expiring within 7 days is announced here and as a phone notification.',
+  addItem:'Add item',editItem:'Edit item',save:'Save',edit:'Edit',delete:'Delete item',
+  itemName:'Item name *',category:'Category',brand:'Brand',openingStock:'Opening stock *',unit:'Unit',
+  mfgDate:'Manufacturing date',expDate:'Expiry date',lastPrice:'Price paid (₹, per unit)',
+  lowLevel:'Remind when stock ≤',vendor:'Bought from (store / vendor)',vendor2:'Store / vendor',
+  ingredients:'Ingredients (copy from the label)',takePhoto:'📷 Tap to photograph the packet\n(front + ingredients label)',
+  item:'Item *',purchaseDate:'Date',qty:'Quantity *',unitPrice:'Price per unit (₹) *',
+  newMfg:'New batch mfg date',newExp:'New batch expiry date',
+  invoiceHint:'Invoice / bill photo (optional)',snapInvoice:'🧾 Tap to photograph the invoice',invoice:'Invoice',
+  backup:'Backup & data',exportData:'⬇ Export backup',importData:'⬆ Import backup',sampleData:'Load sample data',
+  backupHint:'Everything is stored only on this phone (offline). Export a backup file now and then, or move data to a new phone with import.',
+  howTitle:'How to use',
+  how:['Add every product once with its opening stock, packet photo, mfg/expiry dates and the ingredients printed on the label.',
+       'Each time you buy, log the purchase with price and the invoice photo — stock and price history update automatically.',
+       'Tap “Use” on an item whenever you open/consume it, so stock stays true.',
+       'Check Alerts daily: never use anything marked EXPIRED.',
+       'Insights analyses prices, wastage and ingredients — what is useful, what needs a change, what to avoid.'],
+  expired:'EXPIRED',expToday:'expires today',expIn:d=>`expires in ${d}d`,noExp:'no expiry set',
+  stock:'Stock',use:'− Use',restock:'+ Buy',lowStock:'Low stock',
+  expiredHead:'⛔ Expired — do not use',soonHead:'⚠️ Expiring within 30 days',lowHead:'🧾 Running low — buy soon',
+  allClear:'✅ All clear — nothing expired, nothing running low.',
+  noItems:'No items yet. Tap ＋ to add your opening stock.',noBuys:'No purchases logged yet.',
+  confirmDel:'Delete this item and its history?',useQty:'Quantity used?',
+  aiTitle:'🤖 Household insights',spendMonth:'Spend this month',spendTotal:'Spend all-time',
+  itemsTracked:'Items tracked',expiredCount:'Expired in stock',
+  spendByCat:'Where the money goes (by category)',monthly:'Monthly spend (₹)',
+  priceWatch:'📈 Price watch (unit price, first vs latest purchase)',
+  verdicts:'Verdicts — useful / needs a change / avoid',
+  ingFlags:'🧪 Ingredient flags (from your labels)',
+  noData:'Add items and log purchases — the analysis appears here automatically.',
+  vGoodUse:n=>`👍 Useful: ${n} — fully used before expiry, price stable. Keep buying.`,
+  vPriceUp:(n,p)=>`🔁 Needs a change: ${n} — unit price up ${p}%. Compare vendors or switch brand/pack size.`,
+  vWasted:n=>`🚫 Avoid / buy smaller: ${n} — expired with stock left (money wasted).`,
+  vFlag:(n,f)=>`⚠️ Review: ${n} — label lists ${f}. Consider a cleaner alternative.`,
+  wastedVal:v=>`~₹${v} lost to expired stock so far`,
+  mfg:'Mfg',exp:'Expiry',bought:'Purchase history',usage:'Usage log',noPhoto:'no photo',
+  date:'Date',price:'₹/unit',qtyS:'Qty',store:'Store',viewInv:'bill 🧾',used:'used',
+  aiNote:'Analysis runs on this phone from your own entries — prices, expiry outcomes and label ingredients. The more you log, the sharper it gets.'},
+kn:{appName:'ಹೋಮ್ ಸ್ಟಾಕ್',tagline:'ಅಡುಗೆಮನೆ ಮತ್ತು ಮನೆಬಳಕೆ ಟ್ರ್ಯಾಕರ್',search:'ವಸ್ತು ಹುಡುಕಿ…',allCats:'ಎಲ್ಲಾ ವರ್ಗಗಳು',
+  catGrocery:'ದಿನಸಿ',catToiletry:'ಸ್ನಾನ/ಶೌಚ ಸಾಮಗ್ರಿ',catCleaning:'ಸ್ವಚ್ಛತೆ',catOther:'ಇತರೆ',
+  tabInv:'ದಾಸ್ತಾನು',tabBuy:'ಖರೀದಿ',tabAlerts:'ಎಚ್ಚರಿಕೆ',tabAI:'ವಿಶ್ಲೇಷಣೆ',tabMore:'ಇನ್ನಷ್ಟು',
+  purchases:'ಖರೀದಿ ಮತ್ತು ಬಿಲ್‌ಗಳು',logPurchase:'+ ಖರೀದಿ ದಾಖಲಿಸಿ',logPurchase2:'ಖರೀದಿ ದಾಖಲಿಸಿ',
+  reminders:'ಅವಧಿ ಮುಗಿಯುವ ಎಚ್ಚರಿಕೆ',enableNotif:'ಎಚ್ಚರಿಕೆ ಆನ್ ಮಾಡಿ',notifOn:'ಎಚ್ಚರಿಕೆ ಆನ್ ✓',
+  notifHint:'ದಿನಕ್ಕೊಮ್ಮೆ ಆ್ಯಪ್ ತೆರೆಯಿರಿ — ಅವಧಿ ಮುಗಿದ ಅಥವಾ 7 ದಿನದೊಳಗೆ ಮುಗಿಯುವ ವಸ್ತುಗಳು ಇಲ್ಲಿ ಮತ್ತು ಫೋನ್ ನೋಟಿಫಿಕೇಶನ್ ಆಗಿ ಕಾಣುತ್ತವೆ.',
+  addItem:'ವಸ್ತು ಸೇರಿಸಿ',editItem:'ವಸ್ತು ತಿದ್ದಿ',save:'ಉಳಿಸಿ',edit:'ತಿದ್ದಿ',delete:'ವಸ್ತು ಅಳಿಸಿ',
+  itemName:'ವಸ್ತುವಿನ ಹೆಸರು *',category:'ವರ್ಗ',brand:'ಬ್ರ್ಯಾಂಡ್',openingStock:'ಆರಂಭಿಕ ದಾಸ್ತಾನು *',unit:'ಘಟಕ',
+  mfgDate:'ತಯಾರಿಕೆ ದಿನಾಂಕ',expDate:'ಅವಧಿ ಮುಗಿಯುವ ದಿನಾಂಕ',lastPrice:'ಕೊಟ್ಟ ಬೆಲೆ (₹, ಪ್ರತಿ ಘಟಕ)',
+  lowLevel:'ದಾಸ್ತಾನು ≤ ಆದಾಗ ನೆನಪಿಸು',vendor:'ಎಲ್ಲಿಂದ ಖರೀದಿ (ಅಂಗಡಿ)',vendor2:'ಅಂಗಡಿ / ಮಾರಾಟಗಾರ',
+  ingredients:'ಪದಾರ್ಥಗಳು (ಲೇಬಲ್‌ನಿಂದ ನಕಲಿಸಿ)',takePhoto:'📷 ಪ್ಯಾಕೆಟ್ ಫೋಟೋ ತೆಗೆಯಲು ಒತ್ತಿ\n(ಮುಂಭಾಗ + ಪದಾರ್ಥ ಲೇಬಲ್)',
+  item:'ವಸ್ತು *',purchaseDate:'ದಿನಾಂಕ',qty:'ಪ್ರಮಾಣ *',unitPrice:'ಪ್ರತಿ ಘಟಕದ ಬೆಲೆ (₹) *',
+  newMfg:'ಹೊಸ ಬ್ಯಾಚ್ ತಯಾರಿಕೆ ದಿನಾಂಕ',newExp:'ಹೊಸ ಬ್ಯಾಚ್ ಅವಧಿ ದಿನಾಂಕ',
+  invoiceHint:'ಬಿಲ್ ಫೋಟೋ (ಐಚ್ಛಿಕ)',snapInvoice:'🧾 ಬಿಲ್ ಫೋಟೋ ತೆಗೆಯಲು ಒತ್ತಿ',invoice:'ಬಿಲ್',
+  backup:'ಬ್ಯಾಕಪ್ ಮತ್ತು ಡೇಟಾ',exportData:'⬇ ಬ್ಯಾಕಪ್ ರಫ್ತು',importData:'⬆ ಬ್ಯಾಕಪ್ ಆಮದು',sampleData:'ಮಾದರಿ ಡೇಟಾ',
+  backupHint:'ಎಲ್ಲಾ ಡೇಟಾ ಈ ಫೋನ್‌ನಲ್ಲೇ (ಆಫ್‌ಲೈನ್) ಇರುತ್ತದೆ. ಆಗಾಗ ಬ್ಯಾಕಪ್ ಫೈಲ್ ರಫ್ತು ಮಾಡಿ.',
+  howTitle:'ಬಳಸುವ ವಿಧಾನ',
+  how:['ಪ್ರತಿ ವಸ್ತುವನ್ನು ಒಮ್ಮೆ ಸೇರಿಸಿ — ಆರಂಭಿಕ ದಾಸ್ತಾನು, ಪ್ಯಾಕೆಟ್ ಫೋಟೋ, ತಯಾರಿಕೆ/ಅವಧಿ ದಿನಾಂಕ, ಪದಾರ್ಥಗಳು.',
+       'ಪ್ರತಿ ಖರೀದಿಯನ್ನು ಬೆಲೆ ಮತ್ತು ಬಿಲ್ ಫೋಟೋ ಸಹಿತ ದಾಖಲಿಸಿ — ದಾಸ್ತಾನು ತಾನಾಗಿ ಹೆಚ್ಚುತ್ತದೆ.',
+       'ಬಳಸಿದಾಗ “ಬಳಕೆ” ಒತ್ತಿ — ದಾಸ್ತಾನು ಸರಿಯಾಗಿರುತ್ತದೆ.',
+       'ಎಚ್ಚರಿಕೆ ಟ್ಯಾಬ್ ದಿನಾ ನೋಡಿ: ಅವಧಿ ಮುಗಿದದ್ದನ್ನು ಬಳಸಬೇಡಿ.',
+       'ವಿಶ್ಲೇಷಣೆ — ಬೆಲೆ, ವ್ಯರ್ಥ, ಪದಾರ್ಥ — ಯಾವುದು ಒಳ್ಳೆಯದು, ಯಾವುದು ಬದಲಿಸಬೇಕು ಎಂದು ತೋರಿಸುತ್ತದೆ.'],
+  expired:'ಅವಧಿ ಮುಗಿದಿದೆ',expToday:'ಇಂದು ಅವಧಿ ಮುಗಿಯುತ್ತದೆ',expIn:d=>`${d} ದಿನದಲ್ಲಿ ಅವಧಿ ಮುಗಿಯುತ್ತದೆ`,noExp:'ಅವಧಿ ದಿನಾಂಕ ಇಲ್ಲ',
+  stock:'ದಾಸ್ತಾನು',use:'− ಬಳಕೆ',restock:'+ ಖರೀದಿ',lowStock:'ಕಡಿಮೆ ದಾಸ್ತಾನು',
+  expiredHead:'⛔ ಅವಧಿ ಮುಗಿದಿದೆ — ಬಳಸಬೇಡಿ',soonHead:'⚠️ 30 ದಿನದೊಳಗೆ ಅವಧಿ ಮುಗಿಯುತ್ತದೆ',lowHead:'🧾 ದಾಸ್ತಾನು ಕಡಿಮೆ — ಬೇಗ ಖರೀದಿಸಿ',
+  allClear:'✅ ಎಲ್ಲವೂ ಸರಿ — ಏನೂ ಅವಧಿ ಮುಗಿದಿಲ್ಲ, ಏನೂ ಕಡಿಮೆಯಿಲ್ಲ.',
+  noItems:'ಇನ್ನೂ ವಸ್ತುಗಳಿಲ್ಲ. ＋ ಒತ್ತಿ ಆರಂಭಿಕ ದಾಸ್ತಾನು ಸೇರಿಸಿ.',noBuys:'ಇನ್ನೂ ಖರೀದಿ ದಾಖಲಾಗಿಲ್ಲ.',
+  confirmDel:'ಈ ವಸ್ತು ಮತ್ತು ಇತಿಹಾಸ ಅಳಿಸಬೇಕೆ?',useQty:'ಎಷ್ಟು ಬಳಸಿದಿರಿ?',
+  aiTitle:'🤖 ಮನೆಯ ವಿಶ್ಲೇಷಣೆ',spendMonth:'ಈ ತಿಂಗಳ ಖರ್ಚು',spendTotal:'ಒಟ್ಟು ಖರ್ಚು',
+  itemsTracked:'ಟ್ರ್ಯಾಕ್ ಆಗುತ್ತಿರುವ ವಸ್ತುಗಳು',expiredCount:'ದಾಸ್ತಾನಿನಲ್ಲಿ ಅವಧಿ ಮುಗಿದವು',
+  spendByCat:'ಹಣ ಎಲ್ಲಿ ಹೋಗುತ್ತದೆ (ವರ್ಗವಾರು)',monthly:'ತಿಂಗಳ ಖರ್ಚು (₹)',
+  priceWatch:'📈 ಬೆಲೆ ಗಮನ (ಮೊದಲ vs ಇತ್ತೀಚಿನ ಖರೀದಿ)',
+  verdicts:'ತೀರ್ಪು — ಒಳ್ಳೆಯದು / ಬದಲಿಸಿ / ತಪ್ಪಿಸಿ',
+  ingFlags:'🧪 ಪದಾರ್ಥ ಎಚ್ಚರಿಕೆ (ನಿಮ್ಮ ಲೇಬಲ್‌ಗಳಿಂದ)',
+  noData:'ವಸ್ತು ಸೇರಿಸಿ, ಖರೀದಿ ದಾಖಲಿಸಿ — ವಿಶ್ಲೇಷಣೆ ತಾನಾಗಿ ಇಲ್ಲಿ ಬರುತ್ತದೆ.',
+  vGoodUse:n=>`👍 ಒಳ್ಳೆಯದು: ${n} — ಅವಧಿಗೆ ಮುನ್ನ ಪೂರ್ಣ ಬಳಕೆ, ಬೆಲೆ ಸ್ಥಿರ. ಖರೀದಿ ಮುಂದುವರಿಸಿ.`,
+  vPriceUp:(n,p)=>`🔁 ಬದಲಿಸಿ: ${n} — ಬೆಲೆ ${p}% ಹೆಚ್ಚಳ. ಬೇರೆ ಅಂಗಡಿ/ಬ್ರ್ಯಾಂಡ್ ನೋಡಿ.`,
+  vWasted:n=>`🚫 ತಪ್ಪಿಸಿ / ಚಿಕ್ಕ ಪ್ಯಾಕ್: ${n} — ದಾಸ್ತಾನು ಇದ್ದೂ ಅವಧಿ ಮುಗಿಯಿತು (ಹಣ ವ್ಯರ್ಥ).`,
+  vFlag:(n,f)=>`⚠️ ಪರಿಶೀಲಿಸಿ: ${n} — ಲೇಬಲ್‌ನಲ್ಲಿ ${f} ಇದೆ. ಉತ್ತಮ ಪರ್ಯಾಯ ನೋಡಿ.`,
+  wastedVal:v=>`ಅವಧಿ ಮುಗಿದ ದಾಸ್ತಾನಿನಿಂದ ~₹${v} ನಷ್ಟ`,
+  mfg:'ತಯಾರಿಕೆ',exp:'ಅವಧಿ',bought:'ಖರೀದಿ ಇತಿಹಾಸ',usage:'ಬಳಕೆ ದಾಖಲೆ',noPhoto:'ಫೋಟೋ ಇಲ್ಲ',
+  date:'ದಿನಾಂಕ',price:'₹/ಘಟಕ',qtyS:'ಪ್ರಮಾಣ',store:'ಅಂಗಡಿ',viewInv:'ಬಿಲ್ 🧾',used:'ಬಳಸಿದ್ದು',
+  aiNote:'ವಿಶ್ಲೇಷಣೆ ಈ ಫೋನ್‌ನಲ್ಲೇ ನಿಮ್ಮ ದಾಖಲೆಗಳಿಂದ ನಡೆಯುತ್ತದೆ. ಹೆಚ್ಚು ದಾಖಲಿಸಿದಷ್ಟೂ ನಿಖರವಾಗುತ್ತದೆ.'},
+hi:{appName:'होम स्टॉक',tagline:'रसोई और घरेलू ट्रैकर',search:'वस्तु खोजें…',allCats:'सभी श्रेणियाँ',
+  catGrocery:'किराना',catToiletry:'टॉयलेटरीज़',catCleaning:'सफ़ाई',catOther:'अन्य',
+  tabInv:'स्टॉक',tabBuy:'ख़रीद',tabAlerts:'अलर्ट',tabAI:'विश्लेषण',tabMore:'और',
+  purchases:'ख़रीद और बिल',logPurchase:'+ ख़रीद दर्ज करें',logPurchase2:'ख़रीद दर्ज करें',
+  reminders:'एक्सपायरी रिमाइंडर',enableNotif:'रिमाइंडर चालू करें',notifOn:'रिमाइंडर चालू ✓',
+  notifHint:'दिन में एक बार ऐप खोलें — एक्सपायर या 7 दिन में एक्सपायर होने वाली चीज़ें यहाँ और फ़ोन नोटिफ़िकेशन में दिखेंगी.',
+  addItem:'वस्तु जोड़ें',editItem:'वस्तु संपादित करें',save:'सेव',edit:'संपादित',delete:'वस्तु हटाएँ',
+  itemName:'वस्तु का नाम *',category:'श्रेणी',brand:'ब्रांड',openingStock:'ओपनिंग स्टॉक *',unit:'इकाई',
+  mfgDate:'निर्माण तिथि',expDate:'एक्सपायरी तिथि',lastPrice:'चुकाई कीमत (₹, प्रति इकाई)',
+  lowLevel:'स्टॉक ≤ होने पर याद दिलाएँ',vendor:'कहाँ से ख़रीदा (दुकान)',vendor2:'दुकान / विक्रेता',
+  ingredients:'सामग्री (लेबल से लिखें)',takePhoto:'📷 पैकेट की फ़ोटो लेने के लिए दबाएँ\n(आगे का भाग + सामग्री लेबल)',
+  item:'वस्तु *',purchaseDate:'तिथि',qty:'मात्रा *',unitPrice:'प्रति इकाई कीमत (₹) *',
+  newMfg:'नए बैच की निर्माण तिथि',newExp:'नए बैच की एक्सपायरी',
+  invoiceHint:'बिल की फ़ोटो (वैकल्पिक)',snapInvoice:'🧾 बिल की फ़ोटो लेने के लिए दबाएँ',invoice:'बिल',
+  backup:'बैकअप और डेटा',exportData:'⬇ बैकअप निर्यात',importData:'⬆ बैकअप आयात',sampleData:'नमूना डेटा',
+  backupHint:'सारा डेटा इसी फ़ोन में (ऑफ़लाइन) रहता है. समय-समय पर बैकअप फ़ाइल निर्यात करें.',
+  howTitle:'उपयोग कैसे करें',
+  how:['हर वस्तु एक बार जोड़ें — ओपनिंग स्टॉक, पैकेट फ़ोटो, निर्माण/एक्सपायरी तिथि, सामग्री.',
+       'हर ख़रीद कीमत और बिल फ़ोटो के साथ दर्ज करें — स्टॉक और कीमत इतिहास अपने आप अपडेट होगा.',
+       'इस्तेमाल पर “उपयोग” दबाएँ — स्टॉक सही रहेगा.',
+       'अलर्ट रोज़ देखें: एक्सपायर चीज़ कभी इस्तेमाल न करें.',
+       'विश्लेषण — कीमत, बर्बादी, सामग्री — क्या ठीक है, क्या बदलें, क्या छोड़ें बताता है.'],
+  expired:'एक्सपायर्ड',expToday:'आज एक्सपायर',expIn:d=>`${d} दिन में एक्सपायर`,noExp:'एक्सपायरी नहीं भरी',
+  stock:'स्टॉक',use:'− उपयोग',restock:'+ ख़रीद',lowStock:'कम स्टॉक',
+  expiredHead:'⛔ एक्सपायर्ड — इस्तेमाल न करें',soonHead:'⚠️ 30 दिन में एक्सपायर',lowHead:'🧾 स्टॉक कम — जल्द ख़रीदें',
+  allClear:'✅ सब ठीक — कुछ भी एक्सपायर या कम नहीं.',
+  noItems:'अभी कोई वस्तु नहीं. ＋ दबाकर ओपनिंग स्टॉक जोड़ें.',noBuys:'अभी कोई ख़रीद दर्ज नहीं.',
+  confirmDel:'यह वस्तु और उसका इतिहास हटाएँ?',useQty:'कितना उपयोग हुआ?',
+  aiTitle:'🤖 घरेलू विश्लेषण',spendMonth:'इस माह का खर्च',spendTotal:'कुल खर्च',
+  itemsTracked:'ट्रैक हो रही वस्तुएँ',expiredCount:'स्टॉक में एक्सपायर्ड',
+  spendByCat:'पैसा कहाँ जाता है (श्रेणीवार)',monthly:'मासिक खर्च (₹)',
+  priceWatch:'📈 कीमत पर नज़र (पहली vs ताज़ा ख़रीद)',
+  verdicts:'निष्कर्ष — उपयोगी / बदलें / छोड़ें',
+  ingFlags:'🧪 सामग्री चेतावनी (आपके लेबल से)',
+  noData:'वस्तुएँ जोड़ें, ख़रीद दर्ज करें — विश्लेषण अपने आप यहाँ आएगा.',
+  vGoodUse:n=>`👍 उपयोगी: ${n} — एक्सपायरी से पहले पूरा उपयोग, कीमत स्थिर. ख़रीदते रहें.`,
+  vPriceUp:(n,p)=>`🔁 बदलें: ${n} — कीमत ${p}% बढ़ी. दूसरी दुकान/ब्रांड देखें.`,
+  vWasted:n=>`🚫 छोड़ें / छोटा पैक: ${n} — स्टॉक रहते एक्सपायर (पैसा बर्बाद).`,
+  vFlag:(n,f)=>`⚠️ जाँचें: ${n} — लेबल में ${f} है. बेहतर विकल्प देखें.`,
+  wastedVal:v=>`एक्सपायर्ड स्टॉक से अब तक ~₹${v} का नुकसान`,
+  mfg:'निर्माण',exp:'एक्सपायरी',bought:'ख़रीद इतिहास',usage:'उपयोग लॉग',noPhoto:'फ़ोटो नहीं',
+  date:'तिथि',price:'₹/इकाई',qtyS:'मात्रा',store:'दुकान',viewInv:'बिल 🧾',used:'उपयोग',
+  aiNote:'विश्लेषण इसी फ़ोन पर आपकी प्रविष्टियों से चलता है. जितना अधिक दर्ज करेंगे, उतना सटीक होगा.'}
+};
+let lang = localStorage.getItem('hs-lang') || 'en';
+const t = k => (L[lang][k] !== undefined ? L[lang][k] : L.en[k]);
+
+const CATS = ['grocery','toiletry','cleaning','other'];
+const catLabel = c => t('cat'+c[0].toUpperCase()+c.slice(1)) || c;
+const CAT_ICO = {grocery:'🌾',toiletry:'🧴',cleaning:'🧹',other:'📦'};
+
+/* Ingredient watch-list: keyword → flag label (kept in English; matched case-insensitively) */
+const ING_FLAGS = [
+  [/palm\s*oil|palmolein/i,'palm oil'],
+  [/hydrogenated|vanaspati|trans\s*fat/i,'trans fats'],
+  [/sugar|glucose|fructose|corn syrup|invert syrup/i,'added sugar'],
+  [/maida|refined (wheat )?flour/i,'maida (refined flour)'],
+  [/msg|e\s*-?621|monosodium glutamate|ajinomoto/i,'MSG (E621)'],
+  [/artificial (colou?r|flavou?r)|tartrazine|e\s*-?1(02|10|24|29)/i,'artificial colours/flavours'],
+  [/sodium benzoate|e\s*-?211|potassium sorbate|e\s*-?202|preservative/i,'preservatives'],
+  [/paraben/i,'parabens'],
+  [/sodium (lauryl|laureth) sulfate|\bsls\b|\bsles\b/i,'SLS/SLES'],
+  [/phthalate/i,'phthalates'],
+];
+
+/* ---------------- IndexedDB ---------------- */
+let db;
+function openDB(){
+  return new Promise((res,rej)=>{
+    const rq = indexedDB.open('homestock',1);
+    rq.onupgradeneeded = e=>{
+      const d = e.target.result;
+      d.createObjectStore('items',{keyPath:'id'});
+      d.createObjectStore('purchases',{keyPath:'id'});
+      d.createObjectStore('usage',{keyPath:'id'});
+    };
+    rq.onsuccess = ()=>{db=rq.result; res();};
+    rq.onerror = ()=>rej(rq.error);
+  });
+}
+const dbAll = s => new Promise((res,rej)=>{const r=db.transaction(s).objectStore(s).getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});
+const dbPut = (s,o) => new Promise((res,rej)=>{const r=db.transaction(s,'readwrite').objectStore(s).put(o); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});
+const dbDel = (s,id) => new Promise((res,rej)=>{const r=db.transaction(s,'readwrite').objectStore(s).delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});
+const dbClear = s => new Promise((res,rej)=>{const r=db.transaction(s,'readwrite').objectStore(s).clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});
+
+let items=[], purchases=[], usage=[];
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const byId = id => items.find(i=>i.id===id);
+const today = () => new Date().toISOString().slice(0,10);
+const fmt = n => Number.isFinite(+n) ? (+n%1?(+n).toFixed(2):+n) : n;
+const rup = n => '₹'+Math.round(+n||0).toLocaleString('en-IN');
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function daysTo(exp){
+  if(!exp) return null;
+  return Math.floor((new Date(exp+'T00:00:00') - new Date(new Date().toDateString()))/864e5);
+}
+function expChip(it){
+  const d = daysTo(it.exp);
+  if(d===null) return `<span class="chip">${t('noExp')}</span>`;
+  if(d<0)  return `<span class="chip red">⛔ ${t('expired')} ${esc(it.exp)}</span>`;
+  if(d===0)return `<span class="chip red">⚠️ ${t('expToday')}</span>`;
+  if(d<=7) return `<span class="chip red">⚠️ ${t('expIn')(d)}</span>`;
+  if(d<=30)return `<span class="chip amber">${t('expIn')(d)}</span>`;
+  return `<span class="chip green">${t('exp')}: ${esc(it.exp)}</span>`;
+}
+function lastPrice(it){
+  const ps = purchases.filter(p=>p.itemId===it.id).sort((a,b)=>a.date<b.date?1:-1);
+  return ps.length ? ps[0].unitPrice : it.price;
+}
+
+/* ---------------- image helper ---------------- */
+function compressImage(file,maxW=1000,q=0.72){
+  return new Promise((res,rej)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const sc = Math.min(1, maxW/img.width);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(img.src);
+      res(c.toDataURL('image/jpeg',q));
+    };
+    img.onerror = rej;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/* ---------------- navigation ---------------- */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));
+    document.querySelectorAll('.tabpage').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+b.dataset.page).classList.add('active');
+    document.getElementById('fabAdd').style.display = b.dataset.page==='inv'?'':'none';
+    render();
+  });
+});
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function openModal(id){document.getElementById(id).classList.add('open'); document.getElementById(id).scrollTop=0}
+
+/* ---------------- theme & language ---------------- */
+const themeBtn = document.getElementById('themeBtn');
+function applyTheme(v){
+  if(v) document.documentElement.dataset.theme = v; else delete document.documentElement.dataset.theme;
+  themeBtn.textContent = (document.documentElement.dataset.theme==='dark') ? '☀️' : '🌙';
+}
+themeBtn.onclick = ()=>{
+  const cur = document.documentElement.dataset.theme ||
+    (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  const next = cur==='dark' ? 'light':'dark';
+  localStorage.setItem('hs-theme',next); applyTheme(next);
+};
+applyTheme(localStorage.getItem('hs-theme')||'');
+
+const langSel = document.getElementById('langSel');
+langSel.value = lang;
+langSel.onchange = ()=>{lang=langSel.value; localStorage.setItem('hs-lang',lang); applyLang(); render();};
+function applyLang(){
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    const v = t(el.dataset.t);
+    if(typeof v==='string') el.innerHTML = esc(v).replace(/\n/g,'<br>');
+  });
+  document.querySelectorAll('[data-tp]').forEach(el=>el.placeholder = t(el.dataset.tp));
+  const cf = document.getElementById('catFilter');
+  const keep = cf.value;
+  cf.innerHTML = `<option value="">${esc(t('allCats'))}</option>`+CATS.map(c=>`<option value="${c}">${CAT_ICO[c]} ${esc(catLabel(c))}</option>`).join('');
+  cf.value = keep;
+  document.getElementById('fCat').innerHTML = CATS.map(c=>`<option value="${c}">${CAT_ICO[c]} ${esc(catLabel(c))}</option>`).join('');
+  document.getElementById('howList').innerHTML = t('how').map(s=>`<li>${esc(s)}</li>`).join('');
+  document.getElementById('notifBtn').textContent =
+    ('Notification' in window && Notification.permission==='granted') ? t('notifOn') : t('enableNotif');
+}
+
+/* ---------------- render: inventory ---------------- */
+document.getElementById('q').addEventListener('input',renderInventory);
+document.getElementById('catFilter').addEventListener('change',renderInventory);
+
+function renderInventory(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const cat = document.getElementById('catFilter').value;
+  const list = items
+    .filter(i=>(!cat||i.cat===cat) && (!q || (i.name+' '+(i.brand||'')).toLowerCase().includes(q)))
+    .sort((a,b)=>{
+      const da=daysTo(a.exp), dbb=daysTo(b.exp);
+      return (da===null?9e9:da)-(dbb===null?9e9:dbb);
+    });
+  const el = document.getElementById('invList');
+  if(!list.length){el.innerHTML = `<div class="empty">${esc(t('noItems'))}</div>`; return;}
+  el.innerHTML = list.map(it=>{
+    const lp = lastPrice(it);
+    return `<div class="item" onclick="openDetail('${it.id}')">
+      <div class="thumb">${it.photo?`<img src="${it.photo}" alt="">`:CAT_ICO[it.cat]||'📦'}</div>
+      <div class="grow">
+        <div class="name">${esc(it.name)}</div>
+        <div class="sub">${esc(it.brand||'')} ${it.brand?'·':''} ${esc(catLabel(it.cat))}${lp?` · ${rup(lp)}/${esc(it.unit)}`:''}</div>
+        <div style="margin-top:3px">
+          <span class="chip ${+it.stock<=+(it.low||0)?'amber':''}">${esc(t('stock'))}: <b>${fmt(it.stock)} ${esc(it.unit)}</b></span>
+          ${expChip(it)}
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px" onclick="event.stopPropagation()">
+        <button class="btn small ghost" onclick="useItem('${it.id}')">${esc(t('use'))}</button>
+        <button class="btn small ghost" onclick="openPurchaseForm('${it.id}')">${esc(t('restock'))}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------------- item form ---------------- */
+let editingId=null, formPhoto=null;
+document.getElementById('photoInput').addEventListener('change',async e=>{
+  if(e.target.files[0]){formPhoto = await compressImage(e.target.files[0]); paintPhoto();}
+  e.target.value='';
+});
+function paintPhoto(){
+  const box = document.getElementById('photoBox');
+  box.innerHTML = formPhoto
+    ? `<img src="${formPhoto}" alt=""><button class="clearp" onclick="event.stopPropagation();formPhoto=null;paintPhoto()">✕</button>`
+    : `<span id="photoHint">${esc(t('takePhoto')).replace(/\n/g,'<br>')}</span>`;
+}
+function openItemForm(id){
+  editingId = id||null;
+  const it = id?byId(id):null;
+  document.getElementById('itemFormTitle').textContent = it?t('editItem'):t('addItem');
+  document.getElementById('btnDeleteItem').hidden = !it;
+  formPhoto = it?.photo||null; paintPhoto();
+  fName.value=it?.name||''; fCat.value=it?.cat||'grocery'; fBrand.value=it?.brand||'';
+  fStock.value=it?.stock??''; fUnit.value=it?.unit||'pcs';
+  fMfg.value=it?.mfg||''; fExp.value=it?.exp||''; fPrice.value=it?.price??'';
+  fLow.value=it?.low??1; fVendor.value=it?.vendor||''; fIng.value=it?.ingredients||'';
+  openModal('itemModal');
+}
+async function saveItem(){
+  const name = fName.value.trim();
+  if(!name){fName.focus(); return;}
+  const stock = parseFloat(fStock.value);
+  if(!(stock>=0)){fStock.focus(); return;}
+  const prev = editingId?byId(editingId):null;
+  const it = {
+    id: editingId||uid(), name, cat:fCat.value, brand:fBrand.value.trim(),
+    stock, openingStock: prev?prev.openingStock:stock, unit:fUnit.value,
+    mfg:fMfg.value, exp:fExp.value, price:parseFloat(fPrice.value)||null,
+    low:parseFloat(fLow.value)||0, vendor:fVendor.value.trim(),
+    ingredients:fIng.value.trim(), photo:formPhoto,
+    created: prev?prev.created:today(), wastedNoted: prev?.wastedNoted||false,
+  };
+  await dbPut('items',it);
+  if(prev) Object.assign(prev,it); else items.push(it);
+  closeModal('itemModal'); render();
+}
+async function deleteItem(){
+  if(!editingId || !confirm(t('confirmDel'))) return;
+  await dbDel('items',editingId);
+  for(const p of purchases.filter(p=>p.itemId===editingId)) await dbDel('purchases',p.id);
+  for(const u of usage.filter(u=>u.itemId===editingId)) await dbDel('usage',u.id);
+  items = items.filter(i=>i.id!==editingId);
+  purchases = purchases.filter(p=>p.itemId!==editingId);
+  usage = usage.filter(u=>u.itemId!==editingId);
+  closeModal('itemModal'); render();
+}
+
+/* ---------------- item detail ---------------- */
+function openDetail(id){
+  const it = byId(id); if(!it) return;
+  document.getElementById('detTitle').textContent = it.name;
+  document.getElementById('detEditBtn').onclick = ()=>{closeModal('detailModal'); openItemForm(id);};
+  const ps = purchases.filter(p=>p.itemId===id).sort((a,b)=>a.date<b.date?1:-1);
+  const us = usage.filter(u=>u.itemId===id).sort((a,b)=>a.date<b.date?1:-1);
+  const flags = ingFlagsOf(it);
+  document.getElementById('detBody').innerHTML = `
+    ${it.photo?`<div class="card" style="padding:6px"><img src="${it.photo}" style="width:100%;border-radius:10px" alt=""></div>`:''}
+    <div class="card">
+      <div>${expChip(it)} <span class="chip">${CAT_ICO[it.cat]} ${esc(catLabel(it.cat))}</span>
+      ${it.brand?`<span class="chip">${esc(it.brand)}</span>`:''}</div>
+      <table class="hist" style="margin-top:8px">
+        <tr><th>${esc(t('stock'))}</th><td><b>${fmt(it.stock)} ${esc(it.unit)}</b> (opening ${fmt(it.openingStock)})</td></tr>
+        <tr><th>${esc(t('mfg'))}</th><td>${esc(it.mfg||'—')}</td></tr>
+        <tr><th>${esc(t('exp'))}</th><td>${esc(it.exp||'—')}</td></tr>
+        <tr><th>${esc(t('price'))}</th><td>${lastPrice(it)?rup(lastPrice(it)):'—'}</td></tr>
+        <tr><th>${esc(t('store'))}</th><td>${esc(it.vendor||'—')}</td></tr>
+      </table>
+      <div class="row" style="margin-top:10px; gap:8px">
+        <button class="btn small grow" onclick="useItem('${it.id}');openDetail('${it.id}')">${esc(t('use'))}</button>
+        <button class="btn small ghost grow" onclick="closeModal('detailModal');openPurchaseForm('${it.id}')">${esc(t('restock'))}</button>
+      </div>
+    </div>
+    ${it.ingredients?`<div class="card"><h3>${esc(t('ingredients')).split('(')[0]}</h3>
+      <p class="muted" style="margin:4px 0">${esc(it.ingredients)}</p>
+      ${flags.length?`<div>${flags.map(f=>`<span class="chip amber">⚠ ${esc(f)}</span>`).join('')}</div>`:''}
+    </div>`:''}
+    <div class="card"><h3>${esc(t('bought'))}</h3>
+      ${ps.length?`<table class="hist"><tr><th>${esc(t('date'))}</th><th>${esc(t('qtyS'))}</th><th>${esc(t('price'))}</th><th>${esc(t('store'))}</th><th></th></tr>
+        ${ps.map(p=>`<tr><td>${esc(p.date)}</td><td>${fmt(p.qty)}</td><td>${rup(p.unitPrice)}</td><td>${esc(p.vendor||'—')}</td>
+        <td>${p.invoice?`<a href="#" onclick="viewInvoice('${p.id}');return false">${esc(t('viewInv'))}</a>`:''}</td></tr>`).join('')}</table>`
+      :`<p class="muted">${esc(t('noBuys'))}</p>`}
+    </div>
+    ${us.length?`<div class="card"><h3>${esc(t('usage'))}</h3><table class="hist">
+      ${us.slice(0,10).map(u=>`<tr><td>${esc(u.date)}</td><td>−${fmt(u.qty)} ${esc(it.unit)} ${esc(t('used'))}</td></tr>`).join('')}</table></div>`:''}
+  `;
+  openModal('detailModal');
+}
+function ingFlagsOf(it){
+  if(!it.ingredients) return [];
+  const out=[];
+  for(const [re,label] of ING_FLAGS) if(re.test(it.ingredients)) out.push(label);
+  return out;
+}
+async function useItem(id){
+  const it = byId(id); if(!it) return;
+  const q = parseFloat(prompt(t('useQty'),'1'));
+  if(!(q>0)) return;
+  it.stock = Math.max(0, +(it.stock-q).toFixed(3));
+  await dbPut('items',it);
+  const u = {id:uid(), itemId:id, date:today(), qty:q};
+  usage.push(u); await dbPut('usage',u);
+  render();
+}
+
+/* ---------------- purchases ---------------- */
+let formInvoice=null;
+document.getElementById('invInput').addEventListener('change',async e=>{
+  if(e.target.files[0]){formInvoice = await compressImage(e.target.files[0],1400,.75); paintInvoice();}
+  e.target.value='';
+});
+function paintInvoice(){
+  const box = document.getElementById('invBox');
+  box.innerHTML = formInvoice
+    ? `<img src="${formInvoice}" alt=""><button class="clearp" onclick="event.stopPropagation();formInvoice=null;paintInvoice()">✕</button>`
+    : `<span id="invHint">${esc(t('snapInvoice'))}</span>`;
+}
+function openPurchaseForm(itemId){
+  if(!items.length){openItemForm(); return;}
+  const sel = document.getElementById('pItem');
+  sel.innerHTML = items.slice().sort((a,b)=>a.name.localeCompare(b.name))
+    .map(i=>`<option value="${i.id}">${esc(i.name)}${i.brand?' — '+esc(i.brand):''}</option>`).join('');
+  if(itemId) sel.value=itemId;
+  pDate.value=today(); pQty.value=''; pPrice.value=lastPrice(byId(sel.value))||'';
+  pVendor.value=byId(sel.value)?.vendor||''; pMfg.value=''; pExp.value='';
+  formInvoice=null; paintInvoice();
+  sel.onchange = ()=>{pPrice.value=lastPrice(byId(sel.value))||''; pVendor.value=byId(sel.value)?.vendor||'';};
+  openModal('buyModal');
+}
+async function savePurchase(){
+  const it = byId(pItem.value); if(!it) return;
+  const qty = parseFloat(pQty.value), price = parseFloat(pPrice.value);
+  if(!(qty>0)){pQty.focus(); return;}
+  if(!(price>=0)){pPrice.focus(); return;}
+  const p = {id:uid(), itemId:it.id, date:pDate.value||today(), qty, unitPrice:price,
+    total:+(qty*price).toFixed(2), vendor:pVendor.value.trim(), invoice:formInvoice};
+  purchases.push(p); await dbPut('purchases',p);
+  it.stock = +(it.stock+qty).toFixed(3);
+  if(pMfg.value) it.mfg = pMfg.value;
+  if(pExp.value){it.exp = pExp.value; it.wastedNoted=false;}
+  if(pVendor.value.trim()) it.vendor = pVendor.value.trim();
+  it.price = price;
+  await dbPut('items',it);
+  closeModal('buyModal'); render();
+}
+function renderPurchases(){
+  const el = document.getElementById('buyList');
+  const ps = purchases.slice().sort((a,b)=>a.date<b.date?1:-1);
+  if(!ps.length){el.innerHTML=`<div class="empty">${esc(t('noBuys'))}</div>`; return;}
+  const byMonth = {};
+  for(const p of ps){const m=p.date.slice(0,7); (byMonth[m]=byMonth[m]||[]).push(p);}
+  el.innerHTML = Object.keys(byMonth).sort().reverse().map(m=>{
+    const rows = byMonth[m];
+    const tot = rows.reduce((s,p)=>s+p.total,0);
+    return `<div class="card"><h3>${m} · ${rup(tot)}</h3>
+      <table class="hist"><tr><th>${esc(t('date'))}</th><th></th><th>${esc(t('qtyS'))}</th><th>₹</th><th></th></tr>
+      ${rows.map(p=>{const it=byId(p.itemId);return `<tr>
+        <td>${p.date.slice(8)}</td>
+        <td>${esc(it?it.name:'?')}<br><span class="muted">${esc(p.vendor||'')}</span></td>
+        <td>${fmt(p.qty)}</td><td>${rup(p.total)}</td>
+        <td>${p.invoice?`<a href="#" onclick="viewInvoice('${p.id}');return false">🧾</a>`:''}</td></tr>`;}).join('')}
+      </table></div>`;
+  }).join('');
+}
+function viewInvoice(pid){
+  const p = purchases.find(x=>x.id===pid); if(!p||!p.invoice) return;
+  const it = byId(p.itemId);
+  document.getElementById('invViewBody').innerHTML =
+    `<p class="muted">${esc(it?it.name:'')} · ${esc(p.date)} · ${rup(p.total)} · ${esc(p.vendor||'')}</p>
+     <img src="${p.invoice}" style="width:100%;border-radius:10px" alt="invoice">`;
+  openModal('invViewModal');
+}
+
+/* ---------------- alerts & notifications ---------------- */
+function alertBuckets(){
+  const expired = items.filter(i=>i.stock>0 && daysTo(i.exp)!==null && daysTo(i.exp)<0);
+  const soon    = items.filter(i=>i.stock>0 && daysTo(i.exp)!==null && daysTo(i.exp)>=0 && daysTo(i.exp)<=30);
+  const low     = items.filter(i=>+i.stock<=+(i.low||0));
+  return {expired,soon,low};
+}
+function renderAlerts(){
+  const {expired,soon,low} = alertBuckets();
+  const badge = document.getElementById('alertBadge');
+  const n = expired.length + soon.filter(i=>daysTo(i.exp)<=7).length;
+  badge.hidden = !n; badge.textContent = n;
+  const block = (head,arr,cls) => arr.length?`<div class="card"><h3 style="color:var(--${cls})">${head}</h3>
+    ${arr.map(i=>`<div class="alert-item" onclick="openDetail('${i.id}')">
+      <div class="thumb" style="width:40px;height:40px;font-size:18px">${i.photo?`<img src="${i.photo}">`:CAT_ICO[i.cat]}</div>
+      <div class="grow"><b>${esc(i.name)}</b><div class="muted">${esc(t('stock'))}: ${fmt(i.stock)} ${esc(i.unit)}</div></div>
+      ${expChip(i)}</div>`).join('')}</div>`:'';
+  const html = block(esc(t('expiredHead')),expired,'red')
+             + block(esc(t('soonHead')),soon.sort((a,b)=>daysTo(a.exp)-daysTo(b.exp)),'amber')
+             + block(esc(t('lowHead')),low,'blue');
+  document.getElementById('alertList').innerHTML = html || `<div class="card">${esc(t('allClear'))}</div>`;
+}
+function askNotif(){
+  if(!('Notification' in window)) return;
+  Notification.requestPermission().then(()=>{applyLang(); notifCheck(true);});
+}
+function notifCheck(force){
+  if(!('Notification' in window) || Notification.permission!=='granted') return;
+  const key='hs-notified', last=localStorage.getItem(key);
+  if(!force && last===today()) return;          // one reminder per day
+  const {expired,soon} = alertBuckets();
+  const urgent = soon.filter(i=>daysTo(i.exp)<=7);
+  if(expired.length||urgent.length){
+    const lines = [
+      ...expired.map(i=>`⛔ ${i.name} — ${t('expired')}`),
+      ...urgent.map(i=>`⚠️ ${i.name} — ${typeof t('expIn')==='function'?t('expIn')(daysTo(i.exp)):''}`),
+    ].slice(0,6).join('\n');
+    try{ new Notification(t('appName')+' · '+t('reminders'), {body:lines, tag:'homestock-expiry'}); }catch(e){}
+  }
+  localStorage.setItem(key,today());
+}
+
+/* ---------------- insights ---------------- */
+function renderInsights(){
+  const el = document.getElementById('aiBody');
+  if(!items.length){el.innerHTML=`<div class="empty">${esc(t('noData'))}</div>`; return;}
+  const mNow = today().slice(0,7);
+  const spendMonth = purchases.filter(p=>p.date.slice(0,7)===mNow).reduce((s,p)=>s+p.total,0);
+  const spendTotal = purchases.reduce((s,p)=>s+p.total,0);
+  const {expired} = alertBuckets();
+  const wastedVal = expired.reduce((s,i)=>s+(lastPrice(i)||0)*i.stock,0);
+
+  // spend by category
+  const catSpend = {};
+  for(const p of purchases){const it=byId(p.itemId); if(!it) continue; catSpend[it.cat]=(catSpend[it.cat]||0)+p.total;}
+  const catMax = Math.max(1,...Object.values(catSpend));
+
+  // monthly spend (last 6 months present in data)
+  const months = {};
+  for(const p of purchases) months[p.date.slice(0,7)]=(months[p.date.slice(0,7)]||0)+p.total;
+  const mKeys = Object.keys(months).sort().slice(-6);
+  const mMax = Math.max(1,...mKeys.map(k=>months[k]));
+
+  // price watch: items with ≥2 purchases
+  const priceRows=[];
+  for(const it of items){
+    const ps = purchases.filter(p=>p.itemId===it.id).sort((a,b)=>a.date<b.date?-1:1);
+    if(ps.length>=2){
+      const a=ps[0].unitPrice, b=ps[ps.length-1].unitPrice;
+      if(a>0) priceRows.push({it, first:a, last:b, pct:Math.round((b-a)/a*100)});
+    }
+  }
+  priceRows.sort((x,y)=>y.pct-x.pct);
+
+  // verdicts
+  const verdicts=[];
+  for(const it of items){
+    const d = daysTo(it.exp);
+    const flags = ingFlagsOf(it);
+    const pr = priceRows.find(r=>r.it.id===it.id);
+    if(d!==null && d<0 && it.stock>0) verdicts.push(['bad', t('vWasted')(it.name)]);
+    else if(pr && pr.pct>=12) verdicts.push(['warn', t('vPriceUp')(it.name,pr.pct)]);
+    else if(it.stock===0 && (d===null||d>=0) && usage.some(u=>u.itemId===it.id))
+      verdicts.push(['good', t('vGoodUse')(it.name)]);
+    if(flags.length) verdicts.push(['warn', t('vFlag')(it.name, flags.join(', '))]);
+  }
+
+  el.innerHTML = `
+    <h3 style="margin:2px 0 10px">${esc(t('aiTitle'))}</h3>
+    <div class="kpis">
+      <div class="kpi"><b>${rup(spendMonth)}</b><span>${esc(t('spendMonth'))}</span></div>
+      <div class="kpi"><b>${rup(spendTotal)}</b><span>${esc(t('spendTotal'))}</span></div>
+      <div class="kpi"><b>${items.length}</b><span>${esc(t('itemsTracked'))}</span></div>
+      <div class="kpi"><b style="color:${expired.length?'var(--red)':'var(--accent)'}">${expired.length}</b><span>${esc(t('expiredCount'))}</span></div>
+    </div>
+    ${wastedVal>0?`<div class="verdict bad">${esc(t('wastedVal')(Math.round(wastedVal)))}</div>`:''}
+    ${Object.keys(catSpend).length?`<div class="card"><h3>${esc(t('spendByCat'))}</h3>
+      ${Object.entries(catSpend).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`
+        <div class="bar-row"><span class="lbl">${CAT_ICO[c]} ${esc(catLabel(c))}</span>
+        <div class="track"><div class="fill" style="width:${Math.round(v/catMax*100)}%"></div></div>
+        <span class="val">${rup(v)}</span></div>`).join('')}</div>`:''}
+    ${mKeys.length?`<div class="card"><h3>${esc(t('monthly'))}</h3>
+      ${mKeys.map(k=>`<div class="bar-row"><span class="lbl">${k}</span>
+        <div class="track"><div class="fill" style="width:${Math.round(months[k]/mMax*100)}%;background:var(--blue)"></div></div>
+        <span class="val">${rup(months[k])}</span></div>`).join('')}</div>`:''}
+    ${priceRows.length?`<div class="card"><h3>${esc(t('priceWatch'))}</h3>
+      <table class="hist"><tr><th></th><th>₹ →</th><th>%</th></tr>
+      ${priceRows.map(r=>`<tr><td>${esc(r.it.name)}</td>
+        <td>${rup(r.first)} → ${rup(r.last)}</td>
+        <td style="color:${r.pct>0?'var(--red)':'var(--accent)'}">${r.pct>0?'+':''}${r.pct}%</td></tr>`).join('')}
+      </table></div>`:''}
+    ${verdicts.length?`<div class="card"><h3>${esc(t('verdicts'))}</h3>
+      ${verdicts.map(([cls,txt])=>`<div class="verdict ${cls}">${esc(txt)}</div>`).join('')}</div>`:''}
+    <p class="muted" style="text-align:center">${esc(t('aiNote'))}</p>`;
+}
+
+/* ---------------- backup / sample ---------------- */
+function exportData(){
+  const blob = new Blob([JSON.stringify({v:1,exported:new Date().toISOString(),items,purchases,usage})],
+    {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `homestock-backup-${today()}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+}
+async function importData(file){
+  if(!file) return;
+  try{
+    const d = JSON.parse(await file.text());
+    if(!Array.isArray(d.items)) throw new Error('bad file');
+    await dbClear('items'); await dbClear('purchases'); await dbClear('usage');
+    items=d.items||[]; purchases=d.purchases||[]; usage=d.usage||[];
+    for(const i of items) await dbPut('items',i);
+    for(const p of purchases) await dbPut('purchases',p);
+    for(const u of usage) await dbPut('usage',u);
+    render();
+  }catch(e){alert('Import failed: '+e.message);}
+}
+async function loadSample(){
+  const d = today(), plus = n=>{const x=new Date(); x.setDate(x.getDate()+n); return x.toISOString().slice(0,10);};
+  const mAgo = n=>{const x=new Date(); x.setMonth(x.getMonth()-n); return x.toISOString().slice(0,10);};
+  const S = [
+    {name:'Toor dal',cat:'grocery',brand:'Udupi',unit:'kg',stock:2,mfg:mAgo(2),exp:plus(200),price:160,vendor:'More Supermarket',ing:''},
+    {name:'Sunflower oil 1L',cat:'grocery',brand:'Fortune',unit:'bottle',stock:1,mfg:mAgo(1),exp:plus(120),price:135,vendor:'JioMart',ing:'Refined sunflower oil, antioxidant (E319)'},
+    {name:'Biscuits',cat:'grocery',brand:'Parle',unit:'packet',stock:4,mfg:mAgo(1),exp:plus(5),price:30,vendor:'Local kirana',ing:'Maida, sugar, refined palm oil, invert syrup, salt, artificial flavour'},
+    {name:'Curd 500g',cat:'grocery',brand:'Nandini',unit:'packet',stock:1,mfg:d,exp:plus(-1),price:25,vendor:'Local kirana',ing:'Toned milk, active cultures'},
+    {name:'Toothpaste',cat:'toiletry',brand:'Colgate',unit:'pcs',stock:2,mfg:mAgo(3),exp:plus(400),price:95,vendor:'DMart',ing:'Sorbitol, hydrated silica, sodium lauryl sulfate, flavour, sodium fluoride'},
+    {name:'Bath soap',cat:'toiletry',brand:'Mysore Sandal',unit:'pcs',stock:5,mfg:mAgo(2),exp:plus(500),price:44,vendor:'DMart',ing:'Sodium palmate, sandalwood oil, glycerin, perfume'},
+    {name:'Floor cleaner 1L',cat:'cleaning',brand:'Lizol',unit:'bottle',stock:0.5,mfg:mAgo(4),exp:plus(600),price:189,vendor:'JioMart',ing:'Benzalkonium chloride solution, perfume, colour'},
+  ];
+  for(const s of S){
+    const it = {id:uid(),name:s.name,cat:s.cat,brand:s.brand,stock:s.stock,openingStock:s.stock,
+      unit:s.unit,mfg:s.mfg,exp:s.exp,price:s.price,low:1,vendor:s.vendor,ingredients:s.ing,
+      photo:null,created:d,wastedNoted:false};
+    items.push(it); await dbPut('items',it);
+    // two purchases so price-watch has history
+    for(const [k,off,mult] of [[0,3,0.9],[1,1,1]]){
+      const p = {id:uid(),itemId:it.id,date:mAgo(off),qty:s.stock,unitPrice:+(s.price*mult).toFixed(0),
+        total:+(s.stock*s.price*mult).toFixed(2),vendor:s.vendor,invoice:null};
+      purchases.push(p); await dbPut('purchases',p);
+    }
+  }
+  render();
+}
+
+/* ---------------- main render + boot ---------------- */
+function render(){renderInventory(); renderPurchases(); renderAlerts(); renderInsights();}
+(async function(){
+  await openDB();
+  [items,purchases,usage] = await Promise.all([dbAll('items'),dbAll('purchases'),dbAll('usage')]);
+  applyLang(); render(); notifCheck();
+  setInterval(notifCheck, 60*60*1000);   // re-check hourly while the app stays open
+})();
+</script>
+</body>
+</html>
