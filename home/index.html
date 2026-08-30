@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f6f4ef">
-<title>Home Stock — Household Inventory</title>
+<title>HouseKeeper — The House Of Ommi</title>
 <style>
   :root{
     --bg:#f6f4ef; --card:#ffffff; --ink:#1f2a1f; --muted:#6b7280; --line:#e5e1d8;
@@ -58,9 +58,11 @@
     padding-bottom:env(safe-area-inset-bottom);
   }
   nav button{
-    flex:1; background:none; border:0; color:var(--muted); font-size:10.5px;
-    padding:7px 2px 6px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;
+    flex:1; background:none; border:0; color:var(--muted); font-size:9.5px;
+    padding:7px 1px 6px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;
+    min-width:0; overflow:hidden;
   }
+  nav button span:last-child{white-space:nowrap; text-overflow:ellipsis; overflow:hidden; max-width:100%}
   nav button .ico{font-size:19px; line-height:1}
   nav button.active{color:var(--accent); font-weight:600}
   nav button .badge{
@@ -162,6 +164,24 @@
   .verdict.bad{border-color:var(--red)}
   .big-ico{font-size:34px; text-align:center; display:block; margin:6px 0 2px}
   a{color:var(--blue)}
+  /* housekeeping module */
+  .subtabs{display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap}
+  .subtabs button{border:1px solid var(--line); background:var(--card); color:var(--muted);
+    border-radius:999px; padding:6px 13px; font-size:12.5px; cursor:pointer}
+  .subtabs button.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600}
+  .subpage{display:none}
+  .subpage.active{display:block}
+  .dowbar{display:flex; gap:5px; flex-wrap:wrap; margin:4px 0 12px}
+  .dowbar button{border:1px solid var(--line); background:var(--card); color:var(--muted);
+    border-radius:9px; padding:6px 0; width:42px; font-size:12px; cursor:pointer}
+  .dowbar button.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600}
+  .scorebar{height:14px; background:var(--chip); border-radius:7px; overflow:hidden; margin:6px 0}
+  .scorebar .fill{height:100%; border-radius:7px}
+  .duo{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .duo figure{margin:0}
+  .duo img,.duo canvas{width:100%; border-radius:10px; display:block; background:var(--chip)}
+  .duo figcaption{font-size:11px; color:var(--muted); text-align:center; margin-top:3px}
+  .brand{color:var(--muted); font-size:11px; text-align:center; margin:14px 0 4px; letter-spacing:.03em}
   /* app lock */
   #lockScreen{position:fixed; inset:0; z-index:100; background:var(--bg); display:none;
     align-items:center; justify-content:center; text-align:center; padding:24px}
@@ -178,7 +198,7 @@
 <body>
 
 <header>
-  <h1>🧺 <span data-t="appName">Home Stock</span><small data-t="tagline">kitchen &amp; household tracker</small></h1>
+  <h1>🏠 <span data-t="appName">HouseKeeper</span><small>The House Of Ommi</small></h1>
   <select id="langSel" class="iconbtn" aria-label="Language">
     <option value="en">EN</option><option value="kn">ಕನ್ನಡ</option><option value="hi">हिंदी</option>
   </select>
@@ -234,11 +254,6 @@
       </div>
     </div>
     <div class="card">
-      <h3>🧹 <span data-t="hkTitle">Housekeeping module</span></h3>
-      <p class="muted" data-t="hkHint">Schedules & assignments for the house team, master photos of how objects are arranged, and photo-verified placement after cleaning.</p>
-      <a class="btn small ghost" href="housekeeping.html" style="text-decoration:none; display:inline-block" data-t="hkOpen">Open Home Keeper →</a>
-    </div>
-    <div class="card">
       <h3 data-t="lockCard">App lock (login)</h3>
       <p class="muted" data-t="lockHint">Protects the app with a password/PIN and — where the phone supports it — face or fingerprint unlock, using the phone's own screen-lock biometrics. This blocks casual access to the app; the data itself stays on this phone.</p>
       <div id="lockCardBody"></div>
@@ -247,6 +262,46 @@
       <h3 data-t="howTitle">How to use</h3>
       <ol class="muted" style="padding-left:18px; margin:6px 0" id="howList"></ol>
     </div>
+    <p class="brand">🏠 HouseKeeper — Designed, Initiated &amp; Developed by <b>The House Of Ommi</b></p>
+  </section>
+
+  <!-- ============ KEEPING (housekeeping module) ============ -->
+  <section id="page-keep" class="tabpage">
+    <div class="subtabs">
+      <button data-sub="today" class="on"><span data-t="tabToday">Today</span></button>
+      <button data-sub="areas"><span data-t="tabAreas">Areas</span></button>
+      <button data-sub="team"><span data-t="tabTeam">Team</span></button>
+      <button data-sub="attend"><span data-t="attTab">Attendance</span></button>
+      <button data-sub="history"><span data-t="tabHistory">History</span></button>
+    </div>
+    <div id="sub-today" class="subpage active">
+      <h3 id="todayHead" style="margin:2px 0 10px"></h3>
+      <div id="todayList"></div>
+    </div>
+    <div id="sub-areas" class="subpage">
+      <p class="muted" data-t="areasHint">Each area (showcase, shelf, mantel…) keeps a master photo of how its objects are arranged. After cleaning, the after-photo is checked against this master.</p>
+      <div id="areaList"></div>
+    </div>
+    <div id="sub-team" class="subpage"><div id="teamList"></div></div>
+    <div id="sub-attend" class="subpage">
+      <p class="muted" data-t="attHint">Mark IN when work starts and OUT when leaving — a selfie is taken each time as photo proof of who marked it.</p>
+      <div id="attList"></div>
+    </div>
+    <div id="sub-history" class="subpage"><div id="histList"></div></div>
+  </section>
+
+  <!-- ============ DRIVE (drivers module) ============ -->
+  <section id="page-drive" class="tabpage">
+    <div class="subtabs">
+      <button data-dsub="veh" class="on"><span data-t="vehTab">Vehicles</span></button>
+      <button data-dsub="trip"><span data-t="tripTab">KM log</span></button>
+      <button data-dsub="fuel"><span data-t="fuelTab">Fuel</span></button>
+      <button data-dsub="rep"><span data-t="repTab">Repairs</span></button>
+    </div>
+    <div id="dsub-veh" class="subpage active"><div id="vehList"></div></div>
+    <div id="dsub-trip" class="subpage"><div id="tripList"></div></div>
+    <div id="dsub-fuel" class="subpage"><div id="fuelList"></div></div>
+    <div id="dsub-rep" class="subpage"><div id="repList"></div></div>
   </section>
 </main>
 
@@ -257,6 +312,8 @@
   <button data-page="buy"    ><span class="ico">🧾</span><span data-t="tabBuy">Purchases</span></button>
   <button data-page="alerts" ><span class="ico">⏰</span><span data-t="tabAlerts">Alerts</span><span class="badge" id="alertBadge" hidden></span></button>
   <button data-page="ai"     ><span class="ico">🤖</span><span data-t="tabAI">Insights</span></button>
+  <button data-page="keep"   ><span class="ico">🧹</span><span data-t="tabKeep">Keeping</span></button>
+  <button data-page="drive"  ><span class="ico">🚗</span><span data-t="tabDrive">Drive</span></button>
   <button data-page="more"   ><span class="ico">⚙️</span><span data-t="tabMore">More</span></button>
 </nav>
 
@@ -375,11 +432,215 @@
   <div class="mbody" id="invViewBody"></div>
 </div>
 
+<!-- ============ KEEPING: TASK FORM ============ -->
+<div class="modal" id="taskModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('taskModal')">←</button>
+    <h2 data-t="addTask">Schedule a task</h2>
+    <button class="btn small" onclick="saveTask()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <label class="f"><span data-t="taskTitle">Task *</span><input id="tkTitle" placeholder="e.g. Dust & rearrange showcase"></label>
+    <div class="f2">
+      <label class="f"><span data-t="areaLbl">Area</span><select id="tkArea"></select></label>
+      <label class="f"><span data-t="assignee">Assigned to</span><select id="tkWho"></select></label>
+    </div>
+    <label class="f"><span data-t="freq">Repeat</span>
+      <select id="tkFreq" onchange="freqUI()">
+        <option value="daily" data-t="everyday">Every day</option>
+        <option value="weekly" data-t="weeklyOn">Weekly (choose days)</option>
+        <option value="once" data-t="once">One time</option>
+      </select></label>
+    <div id="dowWrap" hidden><span class="muted" data-t="chooseDays">Days of the week</span><div class="dowbar" id="dowBar"></div></div>
+    <label class="f" id="onceWrap" hidden><span data-t="date">Date</span><input id="tkDate" type="date"></label>
+    <button class="btn danger small" id="btnDelTask" hidden onclick="deleteTask()" data-t="hkDel">Delete</button>
+  </div>
+</div>
+
+<!-- ============ KEEPING: AREA FORM ============ -->
+<div class="modal" id="areaModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('areaModal')">←</button>
+    <h2 data-t="addArea">Area & master photo</h2>
+    <button class="btn small" onclick="saveArea()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <label class="f"><span data-t="areaName">Area name *</span><input id="arName" placeholder="e.g. Living-room showcase"></label>
+    <span class="muted" data-t="masterHint">Master photo — arrange everything exactly right, then photograph it. This is the reference the after-clean photo is checked against.</span>
+    <div class="photobox" id="arBox" style="margin-top:6px" onclick="document.getElementById('arInput').click()">
+      <span data-t="snapMaster">📷 Tap to photograph the master arrangement</span>
+    </div>
+    <input id="arInput" type="file" accept="image/*" capture="environment" hidden>
+    <p class="muted" id="arMasterDate"></p>
+    <label class="f" style="margin-top:8px"><span data-t="notesLbl">Notes (fragile items, order…)</span><textarea id="arNotes" rows="2"></textarea></label>
+    <button class="btn danger small" id="btnDelArea" hidden onclick="deleteArea()" data-t="hkDel">Delete</button>
+  </div>
+</div>
+
+<!-- ============ KEEPING: STAFF FORM ============ -->
+<div class="modal" id="staffModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('staffModal')">←</button>
+    <h2 data-t="addStaff">Team member</h2>
+    <button class="btn small" onclick="saveStaff()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <label class="f"><span data-t="staffName">Name *</span><input id="stName"></label>
+    <div class="f2">
+      <label class="f"><span data-t="roleLbl">Role</span><input id="stRole" placeholder="e.g. Housekeeping, Cook"></label>
+      <label class="f"><span data-t="phoneLbl">Phone</span><input id="stPhone" type="tel" inputmode="tel"></label>
+    </div>
+    <label class="f" style="display:flex; align-items:center; gap:8px">
+      <input id="stDriver" type="checkbox" style="width:auto"> <span style="margin:0" data-t="isDriver">Is a driver 🚗</span>
+    </label>
+    <label class="f"><span data-t="aadhaar">Aadhaar number</span><input id="stAadhaar" inputmode="numeric" maxlength="14" placeholder="XXXX XXXX XXXX"></label>
+    <span class="muted" data-t="idPhotoLbl">🪪 Aadhaar / ID card photo</span>
+    <div class="photobox" id="stBox" style="margin-top:6px; min-height:80px" onclick="document.getElementById('stInput').click()">
+      <span>🪪📷</span>
+    </div>
+    <input id="stInput" type="file" accept="image/*" capture="environment" hidden>
+    <p class="muted" data-t="idPrivacy">ID details are stored only on this phone, for household staff records — collect them with the person's consent.</p>
+    <button class="btn danger small" id="btnDelStaff" hidden onclick="deleteStaff()" data-t="hkDel">Delete</button>
+  </div>
+</div>
+
+<!-- ============ DRIVE: VEHICLE FORM ============ -->
+<div class="modal" id="vehModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('vehModal')">←</button>
+    <h2 data-t="addVeh">Vehicle</h2>
+    <button class="btn small" onclick="saveVeh()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <label class="f"><span data-t="vehName">Vehicle *</span><input id="vhName" placeholder="e.g. Innova"></label>
+    <label class="f"><span data-t="regNo">Registration no.</span><input id="vhReg" placeholder="KA-01-AB-1234"></label>
+    <button class="btn danger small" id="btnDelVeh" hidden onclick="deleteVeh()" data-t="hkDel">Delete</button>
+  </div>
+</div>
+
+<!-- ============ DRIVE: TRIP / KM FORM ============ -->
+<div class="modal" id="tripModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('tripModal')">←</button>
+    <h2 data-t="addTrip">Log a day's run</h2>
+    <button class="btn small" onclick="saveTrip()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <div class="f2">
+      <label class="f"><span data-t="vehicleLbl">Vehicle *</span><select id="trVeh"></select></label>
+      <label class="f"><span data-t="driverLbl">Driver</span><select id="trWho"></select></label>
+    </div>
+    <div class="f2">
+      <label class="f"><span data-t="date">Date</span><input id="trDate" type="date"></label>
+      <label class="f"><span data-t="purpose">Purpose / route</span><input id="trWhy"></label>
+    </div>
+    <div class="f2">
+      <label class="f"><span data-t="startKm">Start KM *</span><input id="trStart" type="number" inputmode="numeric"></label>
+      <label class="f"><span data-t="endKm">End KM *</span><input id="trEnd" type="number" inputmode="numeric"></label>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DRIVE: FUEL FORM ============ -->
+<div class="modal" id="fuelModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('fuelModal')">←</button>
+    <h2 data-t="addFuel">Fuel bill</h2>
+    <button class="btn small" onclick="saveFuel()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <div class="f2">
+      <label class="f"><span data-t="vehicleLbl">Vehicle *</span><select id="fuVeh"></select></label>
+      <label class="f"><span data-t="date">Date</span><input id="fuDate" type="date"></label>
+    </div>
+    <div class="f2">
+      <label class="f"><span data-t="litres">Litres</span><input id="fuLit" type="number" step="any" inputmode="decimal"></label>
+      <label class="f"><span data-t="amountLbl">Amount (₹) *</span><input id="fuAmt" type="number" step="any" inputmode="decimal"></label>
+    </div>
+    <div class="f2">
+      <label class="f"><span data-t="odoAt">Odometer (km)</span><input id="fuOdo" type="number" inputmode="numeric"></label>
+      <label class="f"><span data-t="vendor2">Fuel station</span><input id="fuVendor"></label>
+    </div>
+    <span class="muted" data-t="billPhotoLbl">🧾 Bill photo (optional)</span>
+    <div class="photobox" id="fuBox" style="margin-top:6px; min-height:80px" onclick="document.getElementById('fuInput').click()"><span>🧾📷</span></div>
+    <input id="fuInput" type="file" accept="image/*" capture="environment" hidden>
+  </div>
+</div>
+
+<!-- ============ DRIVE: REPAIR FORM ============ -->
+<div class="modal" id="repModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('repModal')">←</button>
+    <h2 data-t="addRep">Repair / service</h2>
+    <button class="btn small" onclick="saveRep()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <div class="f2">
+      <label class="f"><span data-t="vehicleLbl">Vehicle *</span><select id="rpVeh"></select></label>
+      <label class="f"><span data-t="date">Date</span><input id="rpDate" type="date"></label>
+    </div>
+    <label class="f"><span data-t="workDone">Work done *</span><input id="rpDesc" placeholder="e.g. Brake pads, general service"></label>
+    <label class="f"><span data-t="amountLbl">Amount (₹) *</span><input id="rpAmt" type="number" step="any" inputmode="decimal"></label>
+    <span class="muted" data-t="billPhotoLbl">🧾 Bill photo (optional)</span>
+    <div class="photobox" id="rpBox" style="margin-top:6px; min-height:80px" onclick="document.getElementById('rpInput').click()"><span>🧾📷</span></div>
+    <input id="rpInput" type="file" accept="image/*" capture="environment" hidden>
+  </div>
+</div>
+
+<!-- attendance selfie capture (front camera) -->
+<input id="attInput" type="file" accept="image/*" capture="user" hidden>
+
+<!-- ============ FIRST-RUN LANGUAGE SETUP ============ -->
+<div id="welcome" style="display:none; position:fixed; inset:0; z-index:95; background:var(--bg); align-items:center; justify-content:center; text-align:center; padding:24px">
+  <div style="max-width:320px; width:100%">
+    <span style="font-size:52px">🏠</span>
+    <h2 style="margin:8px 0 2px">HouseKeeper</h2>
+    <p class="muted" style="margin:0 0 18px">The House Of Ommi</p>
+    <p style="font-weight:600">Choose your language<br>ನಿಮ್ಮ ಭಾಷೆ ಆರಿಸಿ · अपनी भाषा चुनें</p>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px">
+      <button class="btn" onclick="pickLang('en')">English</button>
+      <button class="btn" onclick="pickLang('kn')">ಕನ್ನಡ</button>
+      <button class="btn" onclick="pickLang('hi')">हिंदी</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ KEEPING: VERIFY ============ -->
+<div class="modal" id="verifyModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('verifyModal')">←</button>
+    <h2 data-t="verifyTitle">Placement check</h2><span></span>
+  </div>
+  <div class="mbody">
+    <p class="muted" id="vfTask"></p>
+    <div class="duo">
+      <figure><img id="vfMaster" alt="master"><figcaption data-t="masterCap">Master</figcaption></figure>
+      <figure>
+        <div class="photobox" id="vfBox" style="min-height:80px" onclick="document.getElementById('vfInput').click()">
+          <span data-t="snapAfter">📷 After-clean photo</span>
+        </div>
+        <figcaption data-t="afterCap">After cleaning</figcaption>
+      </figure>
+    </div>
+    <input id="vfInput" type="file" accept="image/*" capture="environment" hidden>
+    <div id="vfResult"></div>
+  </div>
+</div>
+
+<!-- ============ KEEPING: PHOTO VIEW ============ -->
+<div class="modal" id="hkPhotoModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('hkPhotoModal')">←</button>
+    <h2 id="hkPhotoTitle"></h2><span></span>
+  </div>
+  <div class="mbody" id="hkPhotoBody"></div>
+</div>
+
 <!-- ============ LOCK SCREEN ============ -->
 <div id="lockScreen">
   <div class="lockbox">
     <span class="lockico">🧺🔒</span>
-    <h2 data-t="lockTitle">Home Stock is locked</h2>
+    <h2 data-t="lockTitle">HouseKeeper is locked</h2>
     <input id="lockPw" type="password" data-tp="unlockPw" placeholder="Password / PIN" autocomplete="current-password">
     <div id="lockMsg"></div>
     <button class="btn" onclick="tryPwUnlock()" data-t="unlock">Unlock</button>
@@ -406,13 +667,14 @@
 <script>
 'use strict';
 /* =====================================================================
-   Home Stock — offline household inventory for kitchen & toiletries.
+   HouseKeeper — The House Of Ommi. Offline household suite: kitchen &
+   toiletries inventory, housekeeping/attendance, and vehicles.
    Single file, no build step. All data lives in IndexedDB on the phone.
    ===================================================================== */
 
 /* ---------------- i18n ---------------- */
 const L = {
-en:{appName:'Home Stock',tagline:'kitchen & household tracker',search:'Search items…',allCats:'All categories',
+en:{appName:'HouseKeeper',tagline:'The House Of Ommi',search:'Search items…',allCats:'All categories',
   catGrocery:'Grocery',catToiletry:'Toiletries',catCleaning:'Cleaning',catOther:'Other',
   tabInv:'Stock',tabBuy:'Purchases',tabAlerts:'Alerts',tabAI:'Insights',tabMore:'More',
   purchases:'Purchases & invoices',logPurchase:'+ Log purchase',logPurchase2:'Log a purchase',
@@ -452,9 +714,7 @@ en:{appName:'Home Stock',tagline:'kitchen & household tracker',search:'Search it
   vWasted:n=>`🚫 Avoid / buy smaller: ${n} — expired with stock left (money wasted).`,
   vFlag:(n,f)=>`⚠️ Review: ${n} — label lists ${f}. Consider a cleaner alternative.`,
   wastedVal:v=>`~₹${v} lost to expired stock so far`,
-  hkTitle:'Housekeeping module',hkOpen:'Open Home Keeper →',
-  hkHint:'Schedules & assignments for the house team, master photos of how objects are arranged, and photo-verified placement after cleaning.',
-  lockTitle:'Home Stock is locked',unlockPw:'Password / PIN',unlock:'Unlock',
+  lockTitle:'HouseKeeper is locked',unlockPw:'Password / PIN',unlock:'Unlock',
   faceUnlock:'👤 Face / fingerprint',wrongPw:'Wrong password',
   forgot:'Forgot? Reset app (erases data)',
   forgotWarn:'This erases ALL app data on this phone — items, photos, invoices, history. Continue?',
@@ -475,8 +735,50 @@ en:{appName:'Home Stock',tagline:'kitchen & household tracker',search:'Search it
   weighedTo:(n,u)=>`⚖ weighed → ${n} ${u}`,viewPhoto:'photo 📷',
   mfg:'Mfg',exp:'Expiry',bought:'Purchase history',usage:'Usage log',noPhoto:'no photo',
   date:'Date',price:'₹/unit',qtyS:'Qty',store:'Store',viewInv:'bill 🧾',used:'used',
-  aiNote:'Analysis runs on this phone from your own entries — prices, expiry outcomes and label ingredients. The more you log, the sharper it gets.'},
-kn:{appName:'ಹೋಮ್ ಸ್ಟಾಕ್',tagline:'ಅಡುಗೆಮನೆ ಮತ್ತು ಮನೆಬಳಕೆ ಟ್ರ್ಯಾಕರ್',search:'ವಸ್ತು ಹುಡುಕಿ…',allCats:'ಎಲ್ಲಾ ವರ್ಗಗಳು',
+  aiNote:'Analysis runs on this phone from your own entries — prices, expiry outcomes and label ingredients. The more you log, the sharper it gets.',
+  tabKeep:'Keeping',tabToday:'Today',tabAreas:'Areas',tabTeam:'Team',tabHistory:'History',
+  todayHead:d=>`📋 Schedule — ${d}`,hkDel:'Delete',
+  addTask:'Schedule a task',taskTitle:'Task *',areaLbl:'Area',assignee:'Assigned to',
+  freq:'Repeat',everyday:'Every day',weeklyOn:'Weekly (choose days)',once:'One time',
+  chooseDays:'Days of the week',noArea:'— no area —',noWho:'— unassigned —',
+  addArea:'Area & master photo',areaName:'Area name *',notesLbl:'Notes (fragile items, order…)',
+  areasHint:'Each area (showcase, shelf, mantel…) keeps a master photo of how its objects are arranged. After cleaning, the after-photo is checked against this master.',
+  masterHint:'Master photo — arrange everything exactly right, then photograph it. This is the reference the after-clean photo is checked against.',
+  snapMaster:'📷 Tap to photograph the master arrangement',
+  masterSet:d=>`Master photo taken ${d}`,noMaster:'No master photo yet',
+  addStaff:'Team member',staffName:'Name *',roleLbl:'Role',
+  verifyTitle:'Placement check',masterCap:'Master',afterCap:'After cleaning',
+  snapAfter:'📷 After-clean photo',
+  match:'Placement match',flagged:n=>`${n} area(s) look different — check the red boxes`,
+  verdictOk:'✅ Looks correctly placed',verdictCheck:'⚠️ Some objects may have moved — compare the red boxes with the master',
+  confirmOk:'✓ Placed correctly',confirmRedo:'✗ Needs re-doing',
+  doneVerify:'📷 Done — verify placement',markDone:'Mark done',
+  verified:'verified',mismatch:'re-do flagged',plainDone:'done',
+  noTasksToday:'Nothing scheduled today. Tap ＋ to schedule a task.',
+  noAreas:'No areas yet. Tap ＋ to add an area and its master photo.',
+  noStaff:'No team members yet. Tap ＋ to add one.',
+  noHist:'No history yet — completed tasks appear here with their placement checks.',
+  needMasterFirst:'Add a master photo for this area first (Areas sub-tab).',
+  allDone:'🎉 All of today\'s tasks are done.',
+  by:'by',viewPhotos:'photos 🖼️',reMaster:'Make this the new master',
+  histScore:'match',everyDay:'daily',onceOn:d=>`once · ${d}`,
+  dows:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+  attTab:'Attendance',attRegister:'Recent days',inLbl:'IN',outLbl:'OUT',
+  attIn:'📷 IN',attOut:'📷 OUT',
+  attHint:'Mark IN when work starts and OUT when leaving — a selfie is taken each time as photo proof of who marked it.',
+  phoneLbl:'Phone',isDriver:'Is a driver 🚗',aadhaar:'Aadhaar number',
+  idPhotoLbl:'🪪 Aadhaar / ID card photo',
+  idPrivacy:'ID details are stored only on this phone, for household staff records — collect them with the person\'s consent.',
+  tabDrive:'Drive',vehTab:'Vehicles',tripTab:'KM log',fuelTab:'Fuel',repTab:'Repairs',
+  addVeh:'Vehicle',vehName:'Vehicle *',regNo:'Registration no.',
+  addTrip:'Log a day\'s run',vehicleLbl:'Vehicle *',driverLbl:'Driver',purpose:'Purpose / route',
+  startKm:'Start KM *',endKm:'End KM *',endGtStart:'End KM must be ≥ start KM',
+  addFuel:'Fuel bill',litres:'Litres',amountLbl:'Amount (₹) *',odoAt:'Odometer (km)',
+  addRep:'Repair / service',workDone:'Work done *',billPhotoLbl:'🧾 Bill photo (optional)',
+  thisMonthS:'this month',needVehFirst:'Add a vehicle first.',
+  noVeh:'No vehicles yet. Tap ＋ to add one.',noTrips:'No KM entries yet. Tap ＋ to log a day\'s run.',
+  noFuel:'No fuel bills yet.',noReps:'No repairs logged yet.'},
+kn:{appName:'ಹೌಸ್‌ಕೀಪರ್',tagline:'The House Of Ommi',search:'ವಸ್ತು ಹುಡುಕಿ…',allCats:'ಎಲ್ಲಾ ವರ್ಗಗಳು',
   catGrocery:'ದಿನಸಿ',catToiletry:'ಸ್ನಾನ/ಶೌಚ ಸಾಮಗ್ರಿ',catCleaning:'ಸ್ವಚ್ಛತೆ',catOther:'ಇತರೆ',
   tabInv:'ದಾಸ್ತಾನು',tabBuy:'ಖರೀದಿ',tabAlerts:'ಎಚ್ಚರಿಕೆ',tabAI:'ವಿಶ್ಲೇಷಣೆ',tabMore:'ಇನ್ನಷ್ಟು',
   purchases:'ಖರೀದಿ ಮತ್ತು ಬಿಲ್‌ಗಳು',logPurchase:'+ ಖರೀದಿ ದಾಖಲಿಸಿ',logPurchase2:'ಖರೀದಿ ದಾಖಲಿಸಿ',
@@ -516,9 +818,7 @@ kn:{appName:'ಹೋಮ್ ಸ್ಟಾಕ್',tagline:'ಅಡುಗೆಮನೆ 
   vWasted:n=>`🚫 ತಪ್ಪಿಸಿ / ಚಿಕ್ಕ ಪ್ಯಾಕ್: ${n} — ದಾಸ್ತಾನು ಇದ್ದೂ ಅವಧಿ ಮುಗಿಯಿತು (ಹಣ ವ್ಯರ್ಥ).`,
   vFlag:(n,f)=>`⚠️ ಪರಿಶೀಲಿಸಿ: ${n} — ಲೇಬಲ್‌ನಲ್ಲಿ ${f} ಇದೆ. ಉತ್ತಮ ಪರ್ಯಾಯ ನೋಡಿ.`,
   wastedVal:v=>`ಅವಧಿ ಮುಗಿದ ದಾಸ್ತಾನಿನಿಂದ ~₹${v} ನಷ್ಟ`,
-  hkTitle:'ಮನೆ ನಿರ್ವಹಣೆ ಮಾಡ್ಯೂಲ್',hkOpen:'ಹೋಮ್ ಕೀಪರ್ ತೆರೆಯಿರಿ →',
-  hkHint:'ಮನೆ ತಂಡಕ್ಕೆ ವೇಳಾಪಟ್ಟಿ ಮತ್ತು ಕೆಲಸ ಹಂಚಿಕೆ, ವಸ್ತು ಜೋಡಣೆಯ ಮಾಸ್ಟರ್ ಫೋಟೋಗಳು, ಸ್ವಚ್ಛತೆಯ ನಂತರ ಫೋಟೋ-ಪರಿಶೀಲಿತ ಜೋಡಣೆ.',
-  lockTitle:'ಹೋಮ್ ಸ್ಟಾಕ್ ಲಾಕ್ ಆಗಿದೆ',unlockPw:'ಪಾಸ್‌ವರ್ಡ್ / ಪಿನ್',unlock:'ಅನ್‌ಲಾಕ್',
+  lockTitle:'ಹೌಸ್‌ಕೀಪರ್ ಲಾಕ್ ಆಗಿದೆ',unlockPw:'ಪಾಸ್‌ವರ್ಡ್ / ಪಿನ್',unlock:'ಅನ್‌ಲಾಕ್',
   faceUnlock:'👤 ಮುಖ / ಬೆರಳಚ್ಚು',wrongPw:'ತಪ್ಪು ಪಾಸ್‌ವರ್ಡ್',
   forgot:'ಮರೆತಿರಾ? ಆ್ಯಪ್ ರೀಸೆಟ್ (ಡೇಟಾ ಅಳಿಯುತ್ತದೆ)',
   forgotWarn:'ಇದು ಈ ಫೋನ್‌ನ ಎಲ್ಲಾ ಆ್ಯಪ್ ಡೇಟಾ ಅಳಿಸುತ್ತದೆ — ವಸ್ತು, ಫೋಟೋ, ಬಿಲ್, ಇತಿಹಾಸ. ಮುಂದುವರಿಸಬೇಕೆ?',
@@ -539,8 +839,50 @@ kn:{appName:'ಹೋಮ್ ಸ್ಟಾಕ್',tagline:'ಅಡುಗೆಮನೆ 
   weighedTo:(n,u)=>`⚖ ತೂಕದಂತೆ → ${n} ${u}`,viewPhoto:'ಫೋಟೋ 📷',
   mfg:'ತಯಾರಿಕೆ',exp:'ಅವಧಿ',bought:'ಖರೀದಿ ಇತಿಹಾಸ',usage:'ಬಳಕೆ ದಾಖಲೆ',noPhoto:'ಫೋಟೋ ಇಲ್ಲ',
   date:'ದಿನಾಂಕ',price:'₹/ಘಟಕ',qtyS:'ಪ್ರಮಾಣ',store:'ಅಂಗಡಿ',viewInv:'ಬಿಲ್ 🧾',used:'ಬಳಸಿದ್ದು',
-  aiNote:'ವಿಶ್ಲೇಷಣೆ ಈ ಫೋನ್‌ನಲ್ಲೇ ನಿಮ್ಮ ದಾಖಲೆಗಳಿಂದ ನಡೆಯುತ್ತದೆ. ಹೆಚ್ಚು ದಾಖಲಿಸಿದಷ್ಟೂ ನಿಖರವಾಗುತ್ತದೆ.'},
-hi:{appName:'होम स्टॉक',tagline:'रसोई और घरेलू ट्रैकर',search:'वस्तु खोजें…',allCats:'सभी श्रेणियाँ',
+  aiNote:'ವಿಶ್ಲೇಷಣೆ ಈ ಫೋನ್‌ನಲ್ಲೇ ನಿಮ್ಮ ದಾಖಲೆಗಳಿಂದ ನಡೆಯುತ್ತದೆ. ಹೆಚ್ಚು ದಾಖಲಿಸಿದಷ್ಟೂ ನಿಖರವಾಗುತ್ತದೆ.',
+  tabKeep:'ನಿರ್ವಹಣೆ',tabToday:'ಇಂದು',tabAreas:'ಸ್ಥಳಗಳು',tabTeam:'ತಂಡ',tabHistory:'ಇತಿಹಾಸ',
+  todayHead:d=>`📋 ವೇಳಾಪಟ್ಟಿ — ${d}`,hkDel:'ಅಳಿಸಿ',
+  addTask:'ಕೆಲಸ ನಿಗದಿಪಡಿಸಿ',taskTitle:'ಕೆಲಸ *',areaLbl:'ಸ್ಥಳ',assignee:'ಯಾರಿಗೆ',
+  freq:'ಪುನರಾವರ್ತನೆ',everyday:'ಪ್ರತಿದಿನ',weeklyOn:'ವಾರಕ್ಕೊಮ್ಮೆ (ದಿನ ಆರಿಸಿ)',once:'ಒಂದು ಬಾರಿ',
+  chooseDays:'ವಾರದ ದಿನಗಳು',noArea:'— ಸ್ಥಳ ಇಲ್ಲ —',noWho:'— ನಿಯೋಜನೆ ಇಲ್ಲ —',
+  addArea:'ಸ್ಥಳ ಮತ್ತು ಮಾಸ್ಟರ್ ಫೋಟೋ',areaName:'ಸ್ಥಳದ ಹೆಸರು *',notesLbl:'ಟಿಪ್ಪಣಿ (ಸೂಕ್ಷ್ಮ ವಸ್ತು, ಕ್ರಮ…)',
+  areasHint:'ಪ್ರತಿ ಸ್ಥಳಕ್ಕೂ (ಶೋಕೇಸ್, ಕಪಾಟು…) ವಸ್ತುಗಳ ಜೋಡಣೆಯ ಮಾಸ್ಟರ್ ಫೋಟೋ ಇರುತ್ತದೆ. ಸ್ವಚ್ಛತೆಯ ನಂತರದ ಫೋಟೋವನ್ನು ಇದರೊಂದಿಗೆ ಹೋಲಿಸಲಾಗುತ್ತದೆ.',
+  masterHint:'ಮಾಸ್ಟರ್ ಫೋಟೋ — ಎಲ್ಲವನ್ನೂ ಸರಿಯಾಗಿ ಜೋಡಿಸಿ ಫೋಟೋ ತೆಗೆಯಿರಿ. ಸ್ವಚ್ಛತೆಯ ನಂತರದ ಫೋಟೋವನ್ನು ಇದಕ್ಕೆ ಹೋಲಿಸಲಾಗುತ್ತದೆ.',
+  snapMaster:'📷 ಮಾಸ್ಟರ್ ಜೋಡಣೆಯ ಫೋಟೋ ತೆಗೆಯಲು ಒತ್ತಿ',
+  masterSet:d=>`ಮಾಸ್ಟರ್ ಫೋಟೋ ${d} ರಂದು ತೆಗೆದದ್ದು`,noMaster:'ಇನ್ನೂ ಮಾಸ್ಟರ್ ಫೋಟೋ ಇಲ್ಲ',
+  addStaff:'ತಂಡದ ಸದಸ್ಯ',staffName:'ಹೆಸರು *',roleLbl:'ಪಾತ್ರ',
+  verifyTitle:'ಜೋಡಣೆ ಪರಿಶೀಲನೆ',masterCap:'ಮಾಸ್ಟರ್',afterCap:'ಸ್ವಚ್ಛತೆಯ ನಂತರ',
+  snapAfter:'📷 ಸ್ವಚ್ಛತೆಯ ನಂತರದ ಫೋಟೋ',
+  match:'ಜೋಡಣೆ ಹೊಂದಾಣಿಕೆ',flagged:n=>`${n} ಭಾಗ ಭಿನ್ನವಾಗಿ ಕಾಣುತ್ತದೆ — ಕೆಂಪು ಚೌಕ ನೋಡಿ`,
+  verdictOk:'✅ ಸರಿಯಾಗಿ ಜೋಡಿಸಿದಂತೆ ಕಾಣುತ್ತದೆ',verdictCheck:'⚠️ ಕೆಲವು ವಸ್ತುಗಳು ಸರಿದಿರಬಹುದು — ಕೆಂಪು ಚೌಕಗಳನ್ನು ಮಾಸ್ಟರ್‌ನೊಂದಿಗೆ ಹೋಲಿಸಿ',
+  confirmOk:'✓ ಸರಿಯಾಗಿ ಇಡಲಾಗಿದೆ',confirmRedo:'✗ ಮತ್ತೆ ಮಾಡಬೇಕು',
+  doneVerify:'📷 ಮುಗಿಯಿತು — ಜೋಡಣೆ ಪರಿಶೀಲಿಸಿ',markDone:'ಮುಗಿಯಿತು ಎಂದು ಗುರುತಿಸಿ',
+  verified:'ಪರಿಶೀಲಿತ',mismatch:'ಮತ್ತೆ ಮಾಡಲು ಗುರುತು',plainDone:'ಮುಗಿದಿದೆ',
+  noTasksToday:'ಇಂದು ಯಾವ ಕೆಲಸವೂ ಇಲ್ಲ. ＋ ಒತ್ತಿ ನಿಗದಿಪಡಿಸಿ.',
+  noAreas:'ಇನ್ನೂ ಸ್ಥಳಗಳಿಲ್ಲ. ＋ ಒತ್ತಿ ಸ್ಥಳ ಮತ್ತು ಮಾಸ್ಟರ್ ಫೋಟೋ ಸೇರಿಸಿ.',
+  noStaff:'ಇನ್ನೂ ತಂಡದ ಸದಸ್ಯರಿಲ್ಲ. ＋ ಒತ್ತಿ ಸೇರಿಸಿ.',
+  noHist:'ಇನ್ನೂ ಇತಿಹಾಸವಿಲ್ಲ — ಮುಗಿದ ಕೆಲಸಗಳು ಪರಿಶೀಲನೆಯೊಂದಿಗೆ ಇಲ್ಲಿ ಕಾಣುತ್ತವೆ.',
+  needMasterFirst:'ಮೊದಲು ಈ ಸ್ಥಳಕ್ಕೆ ಮಾಸ್ಟರ್ ಫೋಟೋ ಸೇರಿಸಿ (ಸ್ಥಳಗಳು ಟ್ಯಾಬ್).',
+  allDone:'🎉 ಇಂದಿನ ಎಲ್ಲಾ ಕೆಲಸ ಮುಗಿದಿದೆ.',
+  by:'ಮಾಡಿದವರು',viewPhotos:'ಫೋಟೋಗಳು 🖼️',reMaster:'ಇದನ್ನೇ ಹೊಸ ಮಾಸ್ಟರ್ ಮಾಡಿ',
+  histScore:'ಹೊಂದಾಣಿಕೆ',everyDay:'ಪ್ರತಿದಿನ',onceOn:d=>`ಒಮ್ಮೆ · ${d}`,
+  dows:['ಭಾನು','ಸೋಮ','ಮಂಗಳ','ಬುಧ','ಗುರು','ಶುಕ್ರ','ಶನಿ'],
+  attTab:'ಹಾಜರಾತಿ',attRegister:'ಇತ್ತೀಚಿನ ದಿನಗಳು',inLbl:'ಒಳಗೆ',outLbl:'ಹೊರಗೆ',
+  attIn:'📷 ಒಳಗೆ',attOut:'📷 ಹೊರಗೆ',
+  attHint:'ಕೆಲಸ ಆರಂಭವಾದಾಗ ಒಳಗೆ, ಹೊರಡುವಾಗ ಹೊರಗೆ ಗುರುತಿಸಿ — ಪ್ರತಿ ಬಾರಿ ಸೆಲ್ಫಿ ಫೋಟೋ ಸಾಕ್ಷಿಯಾಗಿ ದಾಖಲಾಗುತ್ತದೆ.',
+  phoneLbl:'ಫೋನ್',isDriver:'ಚಾಲಕರೇ? 🚗',aadhaar:'ಆಧಾರ್ ಸಂಖ್ಯೆ',
+  idPhotoLbl:'🪪 ಆಧಾರ್ / ಗುರುತಿನ ಚೀಟಿ ಫೋಟೋ',
+  idPrivacy:'ಗುರುತಿನ ವಿವರ ಈ ಫೋನ್‌ನಲ್ಲೇ ಇರುತ್ತದೆ — ಮನೆ ಸಿಬ್ಬಂದಿ ದಾಖಲೆಗಾಗಿ; ಅವರ ಒಪ್ಪಿಗೆಯೊಂದಿಗೆ ಸಂಗ್ರಹಿಸಿ.',
+  tabDrive:'ವಾಹನ',vehTab:'ವಾಹನಗಳು',tripTab:'KM ದಾಖಲೆ',fuelTab:'ಇಂಧನ',repTab:'ದುರಸ್ತಿ',
+  addVeh:'ವಾಹನ',vehName:'ವಾಹನ *',regNo:'ನೋಂದಣಿ ಸಂಖ್ಯೆ',
+  addTrip:'ದಿನದ ಓಟ ದಾಖಲಿಸಿ',vehicleLbl:'ವಾಹನ *',driverLbl:'ಚಾಲಕ',purpose:'ಉದ್ದೇಶ / ಮಾರ್ಗ',
+  startKm:'ಆರಂಭ KM *',endKm:'ಅಂತ್ಯ KM *',endGtStart:'ಅಂತ್ಯ KM ≥ ಆರಂಭ KM ಇರಬೇಕು',
+  addFuel:'ಇಂಧನ ಬಿಲ್',litres:'ಲೀಟರ್',amountLbl:'ಮೊತ್ತ (₹) *',odoAt:'ಓಡೋಮೀಟರ್ (km)',
+  addRep:'ದುರಸ್ತಿ / ಸೇವೆ',workDone:'ಮಾಡಿದ ಕೆಲಸ *',billPhotoLbl:'🧾 ಬಿಲ್ ಫೋಟೋ (ಐಚ್ಛಿಕ)',
+  thisMonthS:'ಈ ತಿಂಗಳು',needVehFirst:'ಮೊದಲು ವಾಹನ ಸೇರಿಸಿ.',
+  noVeh:'ಇನ್ನೂ ವಾಹನಗಳಿಲ್ಲ. ＋ ಒತ್ತಿ ಸೇರಿಸಿ.',noTrips:'ಇನ್ನೂ KM ದಾಖಲೆ ಇಲ್ಲ. ＋ ಒತ್ತಿ ದಾಖಲಿಸಿ.',
+  noFuel:'ಇನ್ನೂ ಇಂಧನ ಬಿಲ್ ಇಲ್ಲ.',noReps:'ಇನ್ನೂ ದುರಸ್ತಿ ದಾಖಲೆ ಇಲ್ಲ.'},
+hi:{appName:'हाउसकीपर',tagline:'The House Of Ommi',search:'वस्तु खोजें…',allCats:'सभी श्रेणियाँ',
   catGrocery:'किराना',catToiletry:'टॉयलेटरीज़',catCleaning:'सफ़ाई',catOther:'अन्य',
   tabInv:'स्टॉक',tabBuy:'ख़रीद',tabAlerts:'अलर्ट',tabAI:'विश्लेषण',tabMore:'और',
   purchases:'ख़रीद और बिल',logPurchase:'+ ख़रीद दर्ज करें',logPurchase2:'ख़रीद दर्ज करें',
@@ -580,9 +922,7 @@ hi:{appName:'होम स्टॉक',tagline:'रसोई और घरे�
   vWasted:n=>`🚫 छोड़ें / छोटा पैक: ${n} — स्टॉक रहते एक्सपायर (पैसा बर्बाद).`,
   vFlag:(n,f)=>`⚠️ जाँचें: ${n} — लेबल में ${f} है. बेहतर विकल्प देखें.`,
   wastedVal:v=>`एक्सपायर्ड स्टॉक से अब तक ~₹${v} का नुकसान`,
-  hkTitle:'हाउसकीपिंग मॉड्यूल',hkOpen:'होम कीपर खोलें →',
-  hkHint:'घर की टीम के लिए शेड्यूल और कार्य-आवंटन, वस्तु-सजावट की मास्टर फ़ोटो, और सफ़ाई के बाद फ़ोटो-सत्यापित सजावट.',
-  lockTitle:'होम स्टॉक लॉक है',unlockPw:'पासवर्ड / पिन',unlock:'अनलॉक',
+  lockTitle:'हाउसकीपर लॉक है',unlockPw:'पासवर्ड / पिन',unlock:'अनलॉक',
   faceUnlock:'👤 चेहरा / फ़िंगरप्रिंट',wrongPw:'गलत पासवर्ड',
   forgot:'भूल गए? ऐप रीसेट (डेटा मिट जाएगा)',
   forgotWarn:'इससे इस फ़ोन का सारा ऐप डेटा मिट जाएगा — वस्तुएँ, फ़ोटो, बिल, इतिहास. जारी रखें?',
@@ -603,7 +943,49 @@ hi:{appName:'होम स्टॉक',tagline:'रसोई और घरे�
   weighedTo:(n,u)=>`⚖ तौल से → ${n} ${u}`,viewPhoto:'फ़ोटो 📷',
   mfg:'निर्माण',exp:'एक्सपायरी',bought:'ख़रीद इतिहास',usage:'उपयोग लॉग',noPhoto:'फ़ोटो नहीं',
   date:'तिथि',price:'₹/इकाई',qtyS:'मात्रा',store:'दुकान',viewInv:'बिल 🧾',used:'उपयोग',
-  aiNote:'विश्लेषण इसी फ़ोन पर आपकी प्रविष्टियों से चलता है. जितना अधिक दर्ज करेंगे, उतना सटीक होगा.'}
+  aiNote:'विश्लेषण इसी फ़ोन पर आपकी प्रविष्टियों से चलता है. जितना अधिक दर्ज करेंगे, उतना सटीक होगा.',
+  tabKeep:'हाउसकीपिंग',tabToday:'आज',tabAreas:'स्थान',tabTeam:'टीम',tabHistory:'इतिहास',
+  todayHead:d=>`📋 शेड्यूल — ${d}`,hkDel:'हटाएँ',
+  addTask:'कार्य निर्धारित करें',taskTitle:'कार्य *',areaLbl:'स्थान',assignee:'किसे सौंपा',
+  freq:'दोहराव',everyday:'हर दिन',weeklyOn:'साप्ताहिक (दिन चुनें)',once:'एक बार',
+  chooseDays:'सप्ताह के दिन',noArea:'— कोई स्थान नहीं —',noWho:'— किसी को नहीं —',
+  addArea:'स्थान और मास्टर फ़ोटो',areaName:'स्थान का नाम *',notesLbl:'नोट (नाज़ुक वस्तुएँ, क्रम…)',
+  areasHint:'हर स्थान (शोकेस, शेल्फ़…) की वस्तु-सजावट की एक मास्टर फ़ोटो रहती है. सफ़ाई के बाद की फ़ोटो इसी से मिलाई जाती है.',
+  masterHint:'मास्टर फ़ोटो — सब कुछ सही जगह सजाकर फ़ोटो लें. सफ़ाई के बाद की फ़ोटो इसी से जाँची जाएगी.',
+  snapMaster:'📷 मास्टर सजावट की फ़ोटो लेने के लिए दबाएँ',
+  masterSet:d=>`मास्टर फ़ोटो ${d} को ली गई`,noMaster:'अभी मास्टर फ़ोटो नहीं',
+  addStaff:'टीम सदस्य',staffName:'नाम *',roleLbl:'भूमिका',
+  verifyTitle:'सजावट जाँच',masterCap:'मास्टर',afterCap:'सफ़ाई के बाद',
+  snapAfter:'📷 सफ़ाई के बाद की फ़ोटो',
+  match:'सजावट मिलान',flagged:n=>`${n} हिस्से अलग दिखते हैं — लाल बक्से देखें`,
+  verdictOk:'✅ सही जगह रखा लगता है',verdictCheck:'⚠️ कुछ वस्तुएँ खिसकी हो सकती हैं — लाल बक्सों को मास्टर से मिलाएँ',
+  confirmOk:'✓ सही रखा गया',confirmRedo:'✗ दोबारा करना होगा',
+  doneVerify:'📷 हो गया — सजावट जाँचें',markDone:'पूर्ण चिह्नित करें',
+  verified:'सत्यापित',mismatch:'दोबारा करने को कहा',plainDone:'पूर्ण',
+  noTasksToday:'आज कुछ निर्धारित नहीं. ＋ दबाकर कार्य जोड़ें.',
+  noAreas:'अभी कोई स्थान नहीं. ＋ दबाकर स्थान और मास्टर फ़ोटो जोड़ें.',
+  noStaff:'अभी कोई टीम सदस्य नहीं. ＋ दबाकर जोड़ें.',
+  noHist:'अभी इतिहास नहीं — पूर्ण कार्य जाँच सहित यहाँ दिखेंगे.',
+  needMasterFirst:'पहले इस स्थान की मास्टर फ़ोटो जोड़ें (स्थान टैब).',
+  allDone:'🎉 आज के सभी कार्य पूर्ण.',
+  by:'द्वारा',viewPhotos:'फ़ोटो 🖼️',reMaster:'इसे नया मास्टर बनाएँ',
+  histScore:'मिलान',everyDay:'दैनिक',onceOn:d=>`एक बार · ${d}`,
+  dows:['रवि','सोम','मंगल','बुध','गुरु','शुक्र','शनि'],
+  attTab:'हाज़िरी',attRegister:'हाल के दिन',inLbl:'IN',outLbl:'OUT',
+  attIn:'📷 IN',attOut:'📷 OUT',
+  attHint:'काम शुरू होने पर IN और जाते समय OUT करें — हर बार सेल्फ़ी फ़ोटो प्रमाण के रूप में दर्ज होती है.',
+  phoneLbl:'फ़ोन',isDriver:'ड्राइवर हैं? 🚗',aadhaar:'आधार नंबर',
+  idPhotoLbl:'🪪 आधार / पहचान पत्र फ़ोटो',
+  idPrivacy:'पहचान विवरण इसी फ़ोन में रहता है — घरेलू स्टाफ़ रिकॉर्ड के लिए; उनकी सहमति से लें.',
+  tabDrive:'वाहन',vehTab:'वाहन',tripTab:'KM लॉग',fuelTab:'ईंधन',repTab:'मरम्मत',
+  addVeh:'वाहन',vehName:'वाहन *',regNo:'पंजीकरण नंबर',
+  addTrip:'दिन की दौड़ दर्ज करें',vehicleLbl:'वाहन *',driverLbl:'ड्राइवर',purpose:'उद्देश्य / मार्ग',
+  startKm:'आरंभ KM *',endKm:'अंत KM *',endGtStart:'अंत KM ≥ आरंभ KM होना चाहिए',
+  addFuel:'ईंधन बिल',litres:'लीटर',amountLbl:'राशि (₹) *',odoAt:'ओडोमीटर (km)',
+  addRep:'मरम्मत / सर्विस',workDone:'किया गया काम *',billPhotoLbl:'🧾 बिल फ़ोटो (वैकल्पिक)',
+  thisMonthS:'इस माह',needVehFirst:'पहले वाहन जोड़ें.',
+  noVeh:'अभी कोई वाहन नहीं. ＋ दबाकर जोड़ें.',noTrips:'अभी KM प्रविष्टि नहीं. ＋ दबाकर दर्ज करें.',
+  noFuel:'अभी ईंधन बिल नहीं.',noReps:'अभी मरम्मत दर्ज नहीं.'}
 };
 let lang = localStorage.getItem('hs-lang') || 'en';
 const t = k => (L[lang][k] !== undefined ? L[lang][k] : L.en[k]);
@@ -626,27 +1008,34 @@ const ING_FLAGS = [
   [/phthalate/i,'phthalates'],
 ];
 
-/* ---------------- IndexedDB ---------------- */
-let db;
-function openDB(){
+/* ---------------- IndexedDB ----------------
+   Two DBs, one app: 'homestock' (inventory) and 'homekeeper' (housekeeping) —
+   kept separate so data from the earlier standalone modules survives. */
+let db, db2;
+const KEEP_STORES = ['staff','areas','tasks','logs','attend','vehicles','trips','fuel','repairs'];
+function openOne(name,stores,version){
   return new Promise((res,rej)=>{
-    const rq = indexedDB.open('homestock',1);
+    const rq = indexedDB.open(name,version);
     rq.onupgradeneeded = e=>{
       const d = e.target.result;
-      d.createObjectStore('items',{keyPath:'id'});
-      d.createObjectStore('purchases',{keyPath:'id'});
-      d.createObjectStore('usage',{keyPath:'id'});
+      for(const s of stores) if(!d.objectStoreNames.contains(s)) d.createObjectStore(s,{keyPath:'id'});
     };
-    rq.onsuccess = ()=>{db=rq.result; res();};
+    rq.onsuccess = ()=>res(rq.result);
     rq.onerror = ()=>rej(rq.error);
   });
 }
-const dbAll = s => new Promise((res,rej)=>{const r=db.transaction(s).objectStore(s).getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});
-const dbPut = (s,o) => new Promise((res,rej)=>{const r=db.transaction(s,'readwrite').objectStore(s).put(o); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});
-const dbDel = (s,id) => new Promise((res,rej)=>{const r=db.transaction(s,'readwrite').objectStore(s).delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});
-const dbClear = s => new Promise((res,rej)=>{const r=db.transaction(s,'readwrite').objectStore(s).clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});
+async function openDB(){
+  db  = await openOne('homestock',['items','purchases','usage'],1);
+  db2 = await openOne('homekeeper',KEEP_STORES,2);   // v2 adds attendance + drivers stores
+}
+const dbFor = s => KEEP_STORES.includes(s) ? db2 : db;
+const dbAll = s => new Promise((res,rej)=>{const r=dbFor(s).transaction(s).objectStore(s).getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});
+const dbPut = (s,o) => new Promise((res,rej)=>{const r=dbFor(s).transaction(s,'readwrite').objectStore(s).put(o); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});
+const dbDel = (s,id) => new Promise((res,rej)=>{const r=dbFor(s).transaction(s,'readwrite').objectStore(s).delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});
+const dbClear = s => new Promise((res,rej)=>{const r=dbFor(s).transaction(s,'readwrite').objectStore(s).clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});
 
 let items=[], purchases=[], usage=[];
+let staff=[], areas=[], tasks=[], logs=[], attend=[], vehicles=[], trips=[], fuel=[], repairs=[];
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const byId = id => items.find(i=>i.id===id);
 const today = () => new Date().toISOString().slice(0,10);
@@ -690,13 +1079,52 @@ function compressImage(file,maxW=1000,q=0.72){
 }
 
 /* ---------------- navigation ---------------- */
+let curPage='inv', keepTab='today', driveTab='veh';
+function fabState(){
+  const show = curPage==='inv' || curPage==='drive'
+    || (curPage==='keep' && keepTab!=='history' && keepTab!=='attend');
+  document.getElementById('fabAdd').style.display = show?'':'none';
+}
+function fabClick(){
+  if(curPage==='keep'){
+    if(keepTab==='areas') openAreaForm();
+    else if(keepTab==='team') openStaffForm();
+    else openTaskForm();
+  } else if(curPage==='drive'){
+    if(driveTab==='trip') openTripForm();
+    else if(driveTab==='fuel') openFuelForm();
+    else if(driveTab==='rep') openRepForm();
+    else openVehForm();
+  } else openItemForm();
+}
 document.querySelectorAll('nav button').forEach(b=>{
   b.addEventListener('click',()=>{
+    curPage = b.dataset.page;
     document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));
     document.querySelectorAll('.tabpage').forEach(p=>p.classList.remove('active'));
-    document.getElementById('page-'+b.dataset.page).classList.add('active');
-    document.getElementById('fabAdd').style.display = b.dataset.page==='inv'?'':'none';
+    document.getElementById('page-'+curPage).classList.add('active');
+    fabState();
     render();
+  });
+});
+document.querySelectorAll('#page-keep .subtabs button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    keepTab = b.dataset.sub;
+    document.querySelectorAll('#page-keep .subtabs button').forEach(x=>x.classList.toggle('on',x===b));
+    document.querySelectorAll('#page-keep .subpage').forEach(p=>p.classList.remove('active'));
+    document.getElementById('sub-'+keepTab).classList.add('active');
+    fabState();
+    renderKeep();
+  });
+});
+document.querySelectorAll('#page-drive .subtabs button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    driveTab = b.dataset.dsub;
+    document.querySelectorAll('#page-drive .subtabs button').forEach(x=>x.classList.toggle('on',x===b));
+    document.querySelectorAll('#page-drive .subpage').forEach(p=>p.classList.remove('active'));
+    document.getElementById('dsub-'+driveTab).classList.add('active');
+    fabState();
+    renderDrive();
   });
 });
 function closeModal(id){document.getElementById(id).classList.remove('open')}
@@ -1138,12 +1566,16 @@ function renderInsights(){
 }
 
 /* ---------------- backup / sample ---------------- */
+const BK_STORES = {items:()=>items,purchases:()=>purchases,usage:()=>usage,staff:()=>staff,
+  areas:()=>areas,tasks:()=>tasks,logs:()=>logs,attend:()=>attend,vehicles:()=>vehicles,
+  trips:()=>trips,fuel:()=>fuel,repairs:()=>repairs};
 function exportData(){
-  const blob = new Blob([JSON.stringify({v:1,exported:new Date().toISOString(),items,purchases,usage})],
-    {type:'application/json'});
+  const out = {v:2, exported:new Date().toISOString()};
+  for(const k in BK_STORES) out[k]=BK_STORES[k]();
+  const blob = new Blob([JSON.stringify(out)],{type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `homestock-backup-${today()}.json`;
+  a.download = `housekeeper-backup-${today()}.json`;
   a.click(); URL.revokeObjectURL(a.href);
 }
 async function importData(file){
@@ -1151,11 +1583,14 @@ async function importData(file){
   try{
     const d = JSON.parse(await file.text());
     if(!Array.isArray(d.items)) throw new Error('bad file');
-    await dbClear('items'); await dbClear('purchases'); await dbClear('usage');
+    for(const k in BK_STORES){
+      await dbClear(k);
+      const rows = d[k]||[];
+      for(const r of rows) await dbPut(k,r);
+    }
     items=d.items||[]; purchases=d.purchases||[]; usage=d.usage||[];
-    for(const i of items) await dbPut('items',i);
-    for(const p of purchases) await dbPut('purchases',p);
-    for(const u of usage) await dbPut('usage',u);
+    staff=d.staff||[]; areas=d.areas||[]; tasks=d.tasks||[]; logs=d.logs||[];
+    attend=d.attend||[]; vehicles=d.vehicles||[]; trips=d.trips||[]; fuel=d.fuel||[]; repairs=d.repairs||[];
     render();
   }catch(e){alert('Import failed: '+e.message);}
 }
@@ -1183,7 +1618,611 @@ async function loadSample(){
       purchases.push(p); await dbPut('purchases',p);
     }
   }
+  // keeping + drive demo
+  const st1 = {id:uid(),name:'Lakshmi',role:'Housekeeping',phone:'',aadhaar:'',idPhoto:null,isDriver:false};
+  const st2 = {id:uid(),name:'Manju',role:'Driver',phone:'',aadhaar:'',idPhoto:null,isDriver:true};
+  staff.push(st1,st2); await dbPut('staff',st1); await dbPut('staff',st2);
+  const ar1 = {id:uid(),name:'Living-room showcase',notes:'Brass idol is fragile',master:null,masterDate:null};
+  areas.push(ar1); await dbPut('areas',ar1);
+  for(const tk of [
+    {id:uid(),title:'Dust & rearrange showcase',areaId:ar1.id,whoId:st1.id,freq:'daily',dows:[],date:d},
+    {id:uid(),title:'Sweep the veranda',areaId:null,whoId:st1.id,freq:'daily',dows:[],date:d}]){
+    tasks.push(tk); await dbPut('tasks',tk);
+  }
+  const v1 = {id:uid(),name:'Innova',reg:'KA-01-AB-1234'};
+  vehicles.push(v1); await dbPut('vehicles',v1);
+  for(const tr of [
+    {id:uid(),vehId:v1.id,whoId:st2.id,date:plus(-2),startKm:42100,endKm:42162,km:62,why:'School + market'},
+    {id:uid(),vehId:v1.id,whoId:st2.id,date:plus(-1),startKm:42162,endKm:42230,km:68,why:'Farm visit'}]){
+    trips.push(tr); await dbPut('trips',tr);
+  }
+  for(const f of [
+    {id:uid(),vehId:v1.id,date:mAgo(1),litres:40,amount:4080,odo:41800,vendor:'IOCL Kanakapura Rd',bill:null},
+    {id:uid(),vehId:v1.id,date:plus(-1),litres:38,amount:3900,odo:42230,vendor:'HP Banashankari',bill:null}]){
+    fuel.push(f); await dbPut('fuel',f);
+  }
+  const rp1 = {id:uid(),vehId:v1.id,date:mAgo(1),desc:'General service + brake pads',amount:8500,bill:null};
+  repairs.push(rp1); await dbPut('repairs',rp1);
   render();
+}
+
+/* ================================================================
+   KEEPING — housekeeping schedules, placement checks, attendance
+   ================================================================ */
+const areaOf = id => areas.find(a=>a.id===id);
+const staffOf = id => staff.find(s=>s.id===id);
+const taskOf = id => tasks.find(x=>x.id===id);
+const vehOf = id => vehicles.find(v=>v.id===id);
+function loadImg(src){return new Promise((res,rej)=>{const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=src;});}
+const fmtAadhaar = a => a ? 'XXXX XXXX '+String(a).replace(/\D/g,'').slice(-4) : '';
+
+function dueToday(task){
+  const dow = new Date().getDay();
+  if(task.freq==='daily') return true;
+  if(task.freq==='weekly') return (task.dows||[]).includes(dow);
+  if(task.freq==='once') return task.date===today();
+  return false;
+}
+function logForToday(taskId){return logs.find(l=>l.taskId===taskId && l.date===today());}
+function freqLabel(task){
+  if(task.freq==='daily') return t('everyDay');
+  if(task.freq==='weekly') return (task.dows||[]).map(d=>t('dows')[d]).join(' ');
+  return t('onceOn')(task.date||'');
+}
+function renderToday(){
+  document.getElementById('todayHead').textContent =
+    t('todayHead')(new Date().toLocaleDateString(lang==='kn'?'kn-IN':lang==='hi'?'hi-IN':'en-IN',{weekday:'long',day:'numeric',month:'short'}));
+  const due = tasks.filter(dueToday);
+  const el = document.getElementById('todayList');
+  if(!due.length){el.innerHTML=`<div class="empty">${esc(t('noTasksToday'))}</div>`; return;}
+  const open = due.filter(x=>!logForToday(x.id)), closed = due.filter(x=>logForToday(x.id));
+  const card = (task)=>{
+    const ar = areaOf(task.areaId), who = staffOf(task.whoId), lg = logForToday(task.id);
+    const status = lg ? (lg.status==='verified'?`<span class="chip green">✅ ${esc(t('verified'))} ${lg.score!=null?lg.score+'%':''}</span>`
+                      : lg.status==='mismatch'?`<span class="chip red">⚠️ ${esc(t('mismatch'))}</span>`
+                      : `<span class="chip green">${esc(t('plainDone'))}</span>`) : '';
+    return `<div class="item">
+      <div class="thumb">${ar&&ar.master?`<img src="${ar.master}">`:'🧹'}</div>
+      <div class="grow" onclick="openTaskForm('${task.id}')">
+        <div class="name">${esc(task.title)}</div>
+        <div class="sub">${ar?esc(ar.name)+' · ':''}${who?'👤 '+esc(who.name)+' · ':''}${esc(freqLabel(task))}</div>
+        <div style="margin-top:3px">${status}</div>
+      </div>
+      ${lg?'':`<div style="display:flex; flex-direction:column; gap:6px">
+        ${ar&&ar.master
+          ?`<button class="btn small" onclick="startVerify('${task.id}')">${esc(t('doneVerify'))}</button>`
+          :`<button class="btn small ghost" onclick="markPlainDone('${task.id}')">${esc(t('markDone'))}</button>`}
+      </div>`}
+    </div>`;
+  };
+  el.innerHTML = open.map(card).join('')
+    + (open.length===0?`<div class="card">${esc(t('allDone'))}</div>`:'')
+    + closed.map(card).join('');
+}
+async function markPlainDone(taskId){
+  const task = taskOf(taskId); if(!task) return;
+  const l = {id:uid(), taskId, areaId:task.areaId, whoId:task.whoId, date:today(), status:'done'};
+  logs.push(l); await dbPut('logs',l); render();
+}
+
+/* ---- task form ---- */
+let editTaskId=null, dowSel=new Set();
+function freqUI(){
+  document.getElementById('dowWrap').hidden = tkFreq.value!=='weekly';
+  document.getElementById('onceWrap').hidden = tkFreq.value!=='once';
+}
+function paintDows(){
+  document.getElementById('dowBar').innerHTML = t('dows').map((d,i)=>
+    `<button type="button" class="${dowSel.has(i)?'on':''}" onclick="dowSel.has(${i})?dowSel.delete(${i}):dowSel.add(${i});paintDows()">${esc(d)}</button>`).join('');
+}
+function openTaskForm(id){
+  editTaskId = id||null;
+  const task = id?taskOf(id):null;
+  tkTitle.value = task?.title||'';
+  tkArea.innerHTML = `<option value="">${esc(t('noArea'))}</option>`+areas.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+  tkWho.innerHTML = `<option value="">${esc(t('noWho'))}</option>`+staff.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  tkArea.value = task?.areaId||''; tkWho.value = task?.whoId||'';
+  tkFreq.value = task?.freq||'daily'; tkDate.value = task?.date||today();
+  dowSel = new Set(task?.dows||[]); paintDows(); freqUI();
+  document.getElementById('btnDelTask').hidden = !task;
+  openModal('taskModal');
+}
+async function saveTask(){
+  if(!tkTitle.value.trim()){tkTitle.focus(); return;}
+  const task = {id:editTaskId||uid(), title:tkTitle.value.trim(), areaId:tkArea.value||null,
+    whoId:tkWho.value||null, freq:tkFreq.value, dows:[...dowSel].sort(), date:tkDate.value};
+  await dbPut('tasks',task);
+  const i = tasks.findIndex(x=>x.id===task.id);
+  if(i>=0) tasks[i]=task; else tasks.push(task);
+  closeModal('taskModal'); render();
+}
+async function deleteTask(){
+  if(!editTaskId || !confirm(t('confirmDel'))) return;
+  await dbDel('tasks',editTaskId);
+  tasks = tasks.filter(x=>x.id!==editTaskId);
+  closeModal('taskModal'); render();
+}
+
+/* ---- areas & master photos ---- */
+let editAreaId=null, areaPhoto=null;
+document.getElementById('arInput').addEventListener('change',async e=>{
+  if(e.target.files[0]){areaPhoto = await compressImage(e.target.files[0]); paintAreaPhoto();}
+  e.target.value='';
+});
+function paintAreaPhoto(){
+  const box = document.getElementById('arBox');
+  box.innerHTML = areaPhoto
+    ? `<img src="${areaPhoto}"><button class="clearp" onclick="event.stopPropagation();areaPhoto=null;paintAreaPhoto()">✕</button>`
+    : `<span>${esc(t('snapMaster'))}</span>`;
+}
+function openAreaForm(id){
+  editAreaId = id||null;
+  const a = id?areaOf(id):null;
+  arName.value = a?.name||''; arNotes.value = a?.notes||'';
+  areaPhoto = a?.master||null; paintAreaPhoto();
+  document.getElementById('arMasterDate').textContent = a?.masterDate?t('masterSet')(a.masterDate):'';
+  document.getElementById('btnDelArea').hidden = !a;
+  openModal('areaModal');
+}
+async function saveArea(){
+  if(!arName.value.trim()){arName.focus(); return;}
+  const prev = editAreaId?areaOf(editAreaId):null;
+  const a = {id:editAreaId||uid(), name:arName.value.trim(), notes:arNotes.value.trim(),
+    master:areaPhoto, masterDate:areaPhoto ? (areaPhoto===prev?.master?prev.masterDate:today()) : null};
+  await dbPut('areas',a);
+  const i = areas.findIndex(x=>x.id===a.id);
+  if(i>=0) areas[i]=a; else areas.push(a);
+  closeModal('areaModal'); render();
+}
+async function deleteArea(){
+  if(!editAreaId || !confirm(t('confirmDel'))) return;
+  await dbDel('areas',editAreaId);
+  areas = areas.filter(x=>x.id!==editAreaId);
+  closeModal('areaModal'); render();
+}
+function renderAreas(){
+  const el = document.getElementById('areaList');
+  if(!areas.length){el.innerHTML=`<div class="empty">${esc(t('noAreas'))}</div>`; return;}
+  el.innerHTML = areas.map(a=>`<div class="item" onclick="openAreaForm('${a.id}')">
+    <div class="thumb">${a.master?`<img src="${a.master}">`:'🖼️'}</div>
+    <div class="grow">
+      <div class="name">${esc(a.name)}</div>
+      <div class="sub">${a.master?esc(t('masterSet')(a.masterDate||'')):esc(t('noMaster'))}</div>
+      ${a.notes?`<div class="sub">📝 ${esc(a.notes)}</div>`:''}
+    </div>
+  </div>`).join('');
+}
+
+/* ---- team (with ID records) ---- */
+let editStaffId=null, staffIdPhoto=null;
+document.getElementById('stInput').addEventListener('change',async e=>{
+  if(e.target.files[0]){staffIdPhoto = await compressImage(e.target.files[0],1100,.75); paintStaffPhoto();}
+  e.target.value='';
+});
+function paintStaffPhoto(){
+  const box = document.getElementById('stBox');
+  box.innerHTML = staffIdPhoto
+    ? `<img src="${staffIdPhoto}"><button class="clearp" onclick="event.stopPropagation();staffIdPhoto=null;paintStaffPhoto()">✕</button>`
+    : `<span>🪪📷</span>`;
+}
+function openStaffForm(id){
+  editStaffId = id||null;
+  const s = id?staffOf(id):null;
+  stName.value = s?.name||''; stRole.value = s?.role||''; stPhone.value = s?.phone||'';
+  stAadhaar.value = s?.aadhaar||''; stDriver.checked = !!s?.isDriver;
+  staffIdPhoto = s?.idPhoto||null; paintStaffPhoto();
+  document.getElementById('btnDelStaff').hidden = !s;
+  openModal('staffModal');
+}
+async function saveStaff(){
+  if(!stName.value.trim()){stName.focus(); return;}
+  const s = {id:editStaffId||uid(), name:stName.value.trim(), role:stRole.value.trim(),
+    phone:stPhone.value.trim(), aadhaar:stAadhaar.value.replace(/\D/g,''),
+    idPhoto:staffIdPhoto, isDriver:stDriver.checked};
+  await dbPut('staff',s);
+  const i = staff.findIndex(x=>x.id===s.id);
+  if(i>=0) staff[i]=s; else staff.push(s);
+  closeModal('staffModal'); render();
+}
+async function deleteStaff(){
+  if(!editStaffId || !confirm(t('confirmDel'))) return;
+  await dbDel('staff',editStaffId);
+  staff = staff.filter(x=>x.id!==editStaffId);
+  closeModal('staffModal'); render();
+}
+function renderTeam(){
+  const el = document.getElementById('teamList');
+  if(!staff.length){el.innerHTML=`<div class="empty">${esc(t('noStaff'))}</div>`; return;}
+  el.innerHTML = staff.map(s=>{
+    const open = tasks.filter(x=>x.whoId===s.id && dueToday(x) && !logForToday(x.id)).length;
+    return `<div class="item" onclick="openStaffForm('${s.id}')">
+      <div class="thumb">${s.isDriver?'🚗':'👤'}</div>
+      <div class="grow">
+        <div class="name">${esc(s.name)}</div>
+        <div class="sub">${esc(s.role||'')}${s.phone?' · 📞 '+esc(s.phone):''}</div>
+        ${s.aadhaar?`<div class="sub">🪪 ${esc(fmtAadhaar(s.aadhaar))}${s.idPhoto?' 📷':''}</div>`:''}
+      </div>
+      ${open?`<span class="chip amber">${open} 📋</span>`:`<span class="chip green">✓</span>`}
+    </div>`;
+  }).join('');
+}
+
+/* ---- attendance (selfie-proof IN/OUT) ---- */
+let attPending=null;
+document.getElementById('attInput').addEventListener('change',async e=>{
+  if(e.target.files[0] && attPending){
+    const photo = await compressImage(e.target.files[0],600,.6);
+    const now = new Date();
+    const a = {id:uid(), staffId:attPending.staffId, date:today(), kind:attPending.kind,
+      time:now.toTimeString().slice(0,5), photo};
+    attend.push(a); await dbPut('attend',a);
+    attPending=null; render();
+  }
+  e.target.value='';
+});
+function markAtt(staffId,kind){
+  attPending={staffId,kind};
+  document.getElementById('attInput').click();
+}
+function attOfToday(staffId,kind){return attend.find(a=>a.staffId===staffId && a.date===today() && a.kind===kind);}
+function renderAttend(){
+  const el = document.getElementById('attList');
+  if(!staff.length){el.innerHTML=`<div class="empty">${esc(t('noStaff'))}</div>`; return;}
+  const rows = staff.map(s=>{
+    const ain = attOfToday(s.id,'in'), aout = attOfToday(s.id,'out');
+    return `<div class="item">
+      <div class="thumb">${ain&&ain.photo?`<img src="${ain.photo}">`:(s.isDriver?'🚗':'👤')}</div>
+      <div class="grow">
+        <div class="name">${esc(s.name)}</div>
+        <div class="sub">
+          ${ain?`<span class="chip green">${esc(t('inLbl'))} ${ain.time}</span>`:''}
+          ${aout?`<span class="chip blue">${esc(t('outLbl'))} ${aout.time}</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px">
+        ${ain?'':`<button class="btn small" onclick="markAtt('${s.id}','in')">${esc(t('attIn'))}</button>`}
+        ${(!ain||aout)?'':`<button class="btn small ghost" onclick="markAtt('${s.id}','out')">${esc(t('attOut'))}</button>`}
+      </div>
+    </div>`;
+  }).join('');
+  const days = [...new Set(attend.map(a=>a.date))].sort().reverse().slice(0,14);
+  const reg = days.length?`<div class="card"><h3>${esc(t('attRegister'))}</h3><table class="hist">
+    ${days.map(d=>{
+      const list = attend.filter(a=>a.date===d);
+      const names = [...new Set(list.map(a=>a.staffId))].map(sid=>{
+        const s=staffOf(sid), i=list.find(a=>a.staffId===sid&&a.kind==='in'), o=list.find(a=>a.staffId===sid&&a.kind==='out');
+        return `${s?esc(s.name):'?'} ${i?i.time:'—'}→${o?o.time:'—'}`;
+      }).join('<br>');
+      return `<tr><td>${d}</td><td>${names}</td>
+        <td><a href="#" onclick="viewAttDay('${d}');return false">🖼️</a></td></tr>`;
+    }).join('')}</table></div>`:'';
+  el.innerHTML = rows + reg;
+}
+function viewAttDay(d){
+  const list = attend.filter(a=>a.date===d && a.photo);
+  document.getElementById('hkPhotoTitle').textContent = `${t('attTab')} · ${d}`;
+  document.getElementById('hkPhotoBody').innerHTML = `<div class="duo">`+list.map(a=>{
+    const s=staffOf(a.staffId);
+    return `<figure><img src="${a.photo}"><figcaption>${s?esc(s.name):''} · ${a.kind==='in'?esc(t('inLbl')):esc(t('outLbl'))} ${a.time}</figcaption></figure>`;
+  }).join('')+`</div>`;
+  openModal('hkPhotoModal');
+}
+
+/* ---- placement verification (region diff + human confirm) ---- */
+async function compareImages(masterSrc, afterSrc){
+  const S=96, G=12, cell=S/G;
+  const [ia,ib] = await Promise.all([loadImg(masterSrc),loadImg(afterSrc)]);
+  const gray = img=>{
+    const c=document.createElement('canvas'); c.width=c.height=S;
+    c.getContext('2d').drawImage(img,0,0,S,S);
+    const d=c.getContext('2d').getImageData(0,0,S,S).data;
+    const g=new Float32Array(S*S);
+    for(let i=0;i<S*S;i++) g[i]=d[i*4]*.299+d[i*4+1]*.587+d[i*4+2]*.114;
+    return g;
+  };
+  const norm = g=>{
+    let m=0; for(const v of g) m+=v; m/=g.length;
+    let sd=0; for(const v of g) sd+=(v-m)*(v-m); sd=Math.sqrt(sd/g.length)||1;
+    const o=new Float32Array(g.length);
+    for(let i=0;i<g.length;i++) o[i]=(g[i]-m)/sd;
+    return o;
+  };
+  const na=norm(gray(ia)), nb=norm(gray(ib));
+  const blocks=[]; let total=0;
+  for(let gy=0;gy<G;gy++)for(let gx=0;gx<G;gx++){
+    let diff=0;
+    for(let y=0;y<cell;y++)for(let x=0;x<cell;x++){
+      const i=(gy*cell+y)*S+(gx*cell+x);
+      diff+=Math.abs(na[i]-nb[i]);
+    }
+    diff/=cell*cell;
+    blocks.push({gx,gy,diff}); total+=diff;
+  }
+  const avg = total/blocks.length;
+  const score = Math.max(0, Math.min(100, Math.round(100 - avg*70)));
+  const flagged = blocks.filter(b=>b.diff>Math.max(0.5, avg*1.7));
+  return {score, flagged, G, afterImg:ib};
+}
+function drawOverlay(canvas, res){
+  const img = res.afterImg, W = Math.min(480, img.width);
+  const H = Math.round(img.height*W/img.width);
+  canvas.width=W; canvas.height=H;
+  const x = canvas.getContext('2d');
+  x.drawImage(img,0,0,W,H);
+  x.strokeStyle='rgba(220,38,38,.95)'; x.fillStyle='rgba(220,38,38,.18)'; x.lineWidth=2;
+  for(const b of res.flagged){
+    const bx=b.gx*W/res.G, by=b.gy*H/res.G, bw=W/res.G, bh=H/res.G;
+    x.fillRect(bx,by,bw,bh); x.strokeRect(bx,by,bw,bh);
+  }
+}
+let verifyTaskId=null, afterPhoto=null, verifyRes=null;
+document.getElementById('vfInput').addEventListener('change',async e=>{
+  if(e.target.files[0]){
+    afterPhoto = await compressImage(e.target.files[0]);
+    document.getElementById('vfBox').innerHTML = `<img src="${afterPhoto}">`;
+    runCompare();
+  }
+  e.target.value='';
+});
+function startVerify(taskId){
+  const task = taskOf(taskId), ar = task&&areaOf(task.areaId);
+  if(!ar || !ar.master){alert(t('needMasterFirst')); return;}
+  verifyTaskId = taskId; afterPhoto=null; verifyRes=null;
+  document.getElementById('vfTask').textContent = `${task.title} · ${ar.name}`;
+  document.getElementById('vfMaster').src = ar.master;
+  document.getElementById('vfBox').innerHTML = `<span>${esc(t('snapAfter'))}</span>`;
+  document.getElementById('vfResult').innerHTML = '';
+  openModal('verifyModal');
+}
+async function runCompare(){
+  const task = taskOf(verifyTaskId), ar = areaOf(task.areaId);
+  verifyRes = await compareImages(ar.master, afterPhoto);
+  const ok = verifyRes.score>=85 && verifyRes.flagged.length<=3;
+  const col = ok?'var(--accent)':verifyRes.score>=70?'var(--amber)':'var(--red)';
+  document.getElementById('vfResult').innerHTML = `
+    <div class="card" style="margin-top:10px">
+      <div class="row"><b class="grow">${esc(t('match'))}</b><b style="color:${col}">${verifyRes.score}%</b></div>
+      <div class="scorebar"><div class="fill" style="width:${verifyRes.score}%;background:${col}"></div></div>
+      <p style="margin:6px 0">${esc(ok?t('verdictOk'):t('verdictCheck'))}</p>
+      ${verifyRes.flagged.length?`<p class="muted">${esc(t('flagged')(verifyRes.flagged.length))}</p>`:''}
+      <canvas id="vfOverlay" style="width:100%; border-radius:10px"></canvas>
+      <div class="row" style="margin-top:10px; gap:8px">
+        <button class="btn small grow" onclick="finishVerify('verified')">${esc(t('confirmOk'))}</button>
+        <button class="btn small danger grow" onclick="finishVerify('mismatch')">${esc(t('confirmRedo'))}</button>
+      </div>
+    </div>`;
+  drawOverlay(document.getElementById('vfOverlay'), verifyRes);
+}
+async function finishVerify(status){
+  const task = taskOf(verifyTaskId); if(!task) return;
+  const l = {id:uid(), taskId:task.id, areaId:task.areaId, whoId:task.whoId, date:today(),
+    status, score:verifyRes?verifyRes.score:null, after:afterPhoto};
+  logs.push(l); await dbPut('logs',l);
+  closeModal('verifyModal'); render();
+}
+function renderHistory(){
+  const el = document.getElementById('histList');
+  const ls = logs.slice().sort((a,b)=>a.date<b.date?1:-1);
+  if(!ls.length){el.innerHTML=`<div class="empty">${esc(t('noHist'))}</div>`; return;}
+  el.innerHTML = `<div class="card"><table class="hist">
+    <tr><th>${esc(t('date'))}</th><th></th><th>${esc(t('histScore'))}</th><th></th></tr>
+    ${ls.slice(0,60).map(l=>{
+      const task=taskOf(l.taskId), who=staffOf(l.whoId);
+      const chip = l.status==='verified'?`<span class="chip green">✅ ${l.score!=null?l.score+'%':''}</span>`
+        : l.status==='mismatch'?`<span class="chip red">⚠️ ${l.score!=null?l.score+'%':''}</span>`
+        : `<span class="chip">✓</span>`;
+      return `<tr><td>${esc(l.date)}</td>
+        <td>${esc(task?task.title:'—')}${who?`<br><span class="muted">${esc(t('by'))} ${esc(who.name)}</span>`:''}</td>
+        <td>${chip}</td>
+        <td>${l.after?`<a href="#" onclick="viewLog('${l.id}');return false">${esc(t('viewPhotos'))}</a>`:''}</td></tr>`;
+    }).join('')}
+  </table></div>`;
+}
+function viewLog(id){
+  const l = logs.find(x=>x.id===id); if(!l||!l.after) return;
+  const ar = areaOf(l.areaId), task = taskOf(l.taskId);
+  document.getElementById('hkPhotoTitle').textContent = `${task?task.title:''} · ${l.date}`;
+  document.getElementById('hkPhotoBody').innerHTML = `
+    <div class="duo">
+      <figure><img src="${ar&&ar.master?ar.master:''}"><figcaption>${esc(t('masterCap'))}</figcaption></figure>
+      <figure><img src="${l.after}"><figcaption>${esc(t('afterCap'))} · ${l.score!=null?l.score+'%':''}</figcaption></figure>
+    </div>
+    ${ar?`<button class="btn small ghost" style="margin-top:10px" onclick="promoteMaster('${l.id}')">${esc(t('reMaster'))}</button>`:''}`;
+  openModal('hkPhotoModal');
+}
+async function promoteMaster(logId){
+  const l = logs.find(x=>x.id===logId), ar = l&&areaOf(l.areaId);
+  if(!ar||!l.after) return;
+  ar.master = l.after; ar.masterDate = l.date;
+  await dbPut('areas',ar);
+  closeModal('hkPhotoModal'); render();
+}
+function renderKeep(){renderToday(); renderAreas(); renderTeam(); renderAttend(); renderHistory();}
+
+/* ================================================================
+   DRIVE — vehicles, KM log, fuel bills, repairs
+   ================================================================ */
+const monthNow = () => today().slice(0,7);
+const drivers = () => staff.filter(s=>s.isDriver);
+
+let editVehId=null;
+function openVehForm(id){
+  editVehId = id||null;
+  const v = id?vehOf(id):null;
+  vhName.value = v?.name||''; vhReg.value = v?.reg||'';
+  document.getElementById('btnDelVeh').hidden = !v;
+  openModal('vehModal');
+}
+async function saveVeh(){
+  if(!vhName.value.trim()){vhName.focus(); return;}
+  const v = {id:editVehId||uid(), name:vhName.value.trim(), reg:vhReg.value.trim()};
+  await dbPut('vehicles',v);
+  const i = vehicles.findIndex(x=>x.id===v.id);
+  if(i>=0) vehicles[i]=v; else vehicles.push(v);
+  closeModal('vehModal'); render();
+}
+async function deleteVeh(){
+  if(!editVehId || !confirm(t('confirmDel'))) return;
+  await dbDel('vehicles',editVehId);
+  vehicles = vehicles.filter(x=>x.id!==editVehId);
+  closeModal('vehModal'); render();
+}
+
+function vehSelect(sel){
+  sel.innerHTML = vehicles.map(v=>`<option value="${v.id}">${esc(v.name)}${v.reg?' · '+esc(v.reg):''}</option>`).join('');
+}
+function needVeh(){if(!vehicles.length){alert(t('needVehFirst')); openVehForm(); return true;} return false;}
+
+function openTripForm(){
+  if(needVeh()) return;
+  vehSelect(trVeh);
+  trWho.innerHTML = `<option value="">${esc(t('noWho'))}</option>`+drivers().map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  trDate.value=today(); trWhy.value='';
+  const lastOdo = vehLastOdo(trVeh.value);
+  trStart.value = lastOdo||''; trEnd.value='';
+  trVeh.onchange = ()=>{trStart.value = vehLastOdo(trVeh.value)||'';};
+  openModal('tripModal');
+}
+async function saveTrip(){
+  const s=parseFloat(trStart.value), e=parseFloat(trEnd.value);
+  if(!(s>=0)){trStart.focus(); return;}
+  if(!(e>=s)){alert(t('endGtStart')); trEnd.focus(); return;}
+  const tr = {id:uid(), vehId:trVeh.value, whoId:trWho.value||null, date:trDate.value||today(),
+    startKm:s, endKm:e, km:+(e-s).toFixed(1), why:trWhy.value.trim()};
+  trips.push(tr); await dbPut('trips',tr);
+  closeModal('tripModal'); render();
+}
+function vehLastOdo(vehId){
+  const odos = [...trips.filter(x=>x.vehId===vehId).map(x=>x.endKm),
+                ...fuel.filter(x=>x.vehId===vehId && x.odo).map(x=>x.odo)];
+  return odos.length?Math.max(...odos):null;
+}
+
+let fuelPhoto=null;
+document.getElementById('fuInput').addEventListener('change',async e=>{
+  if(e.target.files[0]){fuelPhoto = await compressImage(e.target.files[0],1400,.75);
+    document.getElementById('fuBox').innerHTML = `<img src="${fuelPhoto}">`;}
+  e.target.value='';
+});
+function openFuelForm(){
+  if(needVeh()) return;
+  vehSelect(fuVeh);
+  fuDate.value=today(); fuLit.value=''; fuAmt.value=''; fuOdo.value=''; fuVendor.value='';
+  fuelPhoto=null; document.getElementById('fuBox').innerHTML='<span>🧾📷</span>';
+  openModal('fuelModal');
+}
+async function saveFuel(){
+  const amt=parseFloat(fuAmt.value);
+  if(!(amt>0)){fuAmt.focus(); return;}
+  const f = {id:uid(), vehId:fuVeh.value, date:fuDate.value||today(),
+    litres:parseFloat(fuLit.value)||null, amount:amt, odo:parseFloat(fuOdo.value)||null,
+    vendor:fuVendor.value.trim(), bill:fuelPhoto};
+  fuel.push(f); await dbPut('fuel',f);
+  closeModal('fuelModal'); render();
+}
+
+let repPhoto=null;
+document.getElementById('rpInput').addEventListener('change',async e=>{
+  if(e.target.files[0]){repPhoto = await compressImage(e.target.files[0],1400,.75);
+    document.getElementById('rpBox').innerHTML = `<img src="${repPhoto}">`;}
+  e.target.value='';
+});
+function openRepForm(){
+  if(needVeh()) return;
+  vehSelect(rpVeh);
+  rpDate.value=today(); rpDesc.value=''; rpAmt.value='';
+  repPhoto=null; document.getElementById('rpBox').innerHTML='<span>🧾📷</span>';
+  openModal('repModal');
+}
+async function saveRep(){
+  if(!rpDesc.value.trim()){rpDesc.focus(); return;}
+  const amt=parseFloat(rpAmt.value);
+  if(!(amt>=0)){rpAmt.focus(); return;}
+  const r = {id:uid(), vehId:rpVeh.value, date:rpDate.value||today(),
+    desc:rpDesc.value.trim(), amount:amt, bill:repPhoto};
+  repairs.push(r); await dbPut('repairs',r);
+  closeModal('repModal'); render();
+}
+function viewBill(kind,id){
+  const rec = (kind==='fuel'?fuel:repairs).find(x=>x.id===id);
+  if(!rec||!rec.bill) return;
+  const v = vehOf(rec.vehId);
+  document.getElementById('hkPhotoTitle').textContent = `${v?v.name:''} · ${rec.date}`;
+  document.getElementById('hkPhotoBody').innerHTML = `<img src="${rec.bill}" style="width:100%;border-radius:10px">`;
+  openModal('hkPhotoModal');
+}
+function renderDrive(){
+  const m = monthNow();
+  const vEl = document.getElementById('vehList');
+  vEl.innerHTML = vehicles.length ? vehicles.map(v=>{
+    const kmM = trips.filter(x=>x.vehId===v.id && x.date.slice(0,7)===m).reduce((s,x)=>s+x.km,0);
+    const fuM = fuel.filter(x=>x.vehId===v.id && x.date.slice(0,7)===m).reduce((s,x)=>s+x.amount,0);
+    const rpM = repairs.filter(x=>x.vehId===v.id && x.date.slice(0,7)===m).reduce((s,x)=>s+x.amount,0);
+    const odo = vehLastOdo(v.id);
+    return `<div class="item" onclick="openVehForm('${v.id}')">
+      <div class="thumb">🚗</div>
+      <div class="grow">
+        <div class="name">${esc(v.name)}</div>
+        <div class="sub">${esc(v.reg||'')}${odo?` · ODO ${odo.toLocaleString('en-IN')} km`:''}</div>
+        <div style="margin-top:3px">
+          <span class="chip blue">${kmM.toLocaleString('en-IN')} km ${esc(t('thisMonthS'))}</span>
+          <span class="chip amber">⛽ ${rup(fuM)}</span>
+          <span class="chip">🔧 ${rup(rpM)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty">${esc(t('noVeh'))}</div>`;
+
+  const tEl = document.getElementById('tripList');
+  const ts = trips.slice().sort((a,b)=>a.date<b.date?1:-1);
+  tEl.innerHTML = ts.length ? `<div class="card"><table class="hist">
+    <tr><th>${esc(t('date'))}</th><th></th><th>km</th></tr>
+    ${ts.slice(0,60).map(x=>{
+      const v=vehOf(x.vehId), w=staffOf(x.whoId);
+      return `<tr><td>${esc(x.date)}</td>
+        <td>${v?esc(v.name):'?'}${w?`<br><span class="muted">👤 ${esc(w.name)}</span>`:''}${x.why?`<br><span class="muted">${esc(x.why)}</span>`:''}</td>
+        <td><b>${x.km.toLocaleString('en-IN')}</b><br><span class="muted">${x.startKm}→${x.endKm}</span></td></tr>`;
+    }).join('')}</table></div>` : `<div class="empty">${esc(t('noTrips'))}</div>`;
+
+  const fEl = document.getElementById('fuelList');
+  const fs = fuel.slice().sort((a,b)=>a.date<b.date?1:-1);
+  fEl.innerHTML = fs.length ? `<div class="card"><table class="hist">
+    <tr><th>${esc(t('date'))}</th><th></th><th>₹</th><th>km/L</th><th></th></tr>
+    ${fs.slice(0,60).map(x=>{
+      const v=vehOf(x.vehId);
+      const prev = fuel.filter(y=>y.vehId===x.vehId && y.odo && x.odo && y.odo<x.odo)
+        .sort((a,b)=>b.odo-a.odo)[0];
+      const kmpl = (prev && x.litres) ? ((x.odo-prev.odo)/x.litres).toFixed(1) : '—';
+      return `<tr><td>${esc(x.date)}</td>
+        <td>${v?esc(v.name):'?'}<br><span class="muted">${x.litres?x.litres+' L · ':''}${esc(x.vendor||'')}</span></td>
+        <td>${rup(x.amount)}</td><td>${kmpl}</td>
+        <td>${x.bill?`<a href="#" onclick="viewBill('fuel','${x.id}');return false">🧾</a>`:''}</td></tr>`;
+    }).join('')}</table></div>` : `<div class="empty">${esc(t('noFuel'))}</div>`;
+
+  const rEl = document.getElementById('repList');
+  const rs = repairs.slice().sort((a,b)=>a.date<b.date?1:-1);
+  rEl.innerHTML = rs.length ? `<div class="card"><table class="hist">
+    <tr><th>${esc(t('date'))}</th><th></th><th>₹</th><th></th></tr>
+    ${rs.slice(0,60).map(x=>{
+      const v=vehOf(x.vehId);
+      return `<tr><td>${esc(x.date)}</td>
+        <td>${v?esc(v.name):'?'}<br><span class="muted">${esc(x.desc)}</span></td>
+        <td>${rup(x.amount)}</td>
+        <td>${x.bill?`<a href="#" onclick="viewBill('rep','${x.id}');return false">🧾</a>`:''}</td></tr>`;
+    }).join('')}</table></div>` : `<div class="empty">${esc(t('noReps'))}</div>`;
+}
+
+/* ---------------- first-run language setup ---------------- */
+function pickLang(l){
+  lang = l;
+  localStorage.setItem('hs-lang',l);
+  localStorage.setItem('hs-setup','1');
+  langSel.value = l;
+  document.getElementById('welcome').style.display='none';
+  applyLang(); render();
+}
+function showWelcome(){
+  if(!localStorage.getItem('hs-setup')) document.getElementById('welcome').style.display='flex';
 }
 
 /* ---------------- app lock: password (PBKDF2) + device biometrics (WebAuthn) ----------------
@@ -1232,8 +2271,8 @@ async function bioEnroll(){
   try{
     const cred = await navigator.credentials.create({publicKey:{
       challenge: crypto.getRandomValues(new Uint8Array(32)),
-      rp:{name:'Home Stock'},
-      user:{id:crypto.getRandomValues(new Uint8Array(16)), name:'homestock', displayName:'Home Stock'},
+      rp:{name:'HouseKeeper'},
+      user:{id:crypto.getRandomValues(new Uint8Array(16)), name:'housekeeper', displayName:'HouseKeeper'},
       pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
       authenticatorSelection:{authenticatorAttachment:'platform', userVerification:'required'},
       timeout:60000}});
@@ -1265,7 +2304,7 @@ async function removeLock(){
 }
 async function forgotReset(){
   if(!confirm(t('forgotWarn'))) return;
-  await dbClear('items'); await dbClear('purchases'); await dbClear('usage');
+  for(const k in BK_STORES) await dbClear(k);
   localStorage.clear(); location.reload();
 }
 function renderLockCard(){
@@ -1284,11 +2323,12 @@ function renderLockCard(){
 }
 
 /* ---------------- main render + boot ---------------- */
-function render(){renderInventory(); renderPurchases(); renderAlerts(); renderInsights();}
+function render(){renderInventory(); renderPurchases(); renderAlerts(); renderInsights(); renderKeep(); renderDrive();}
 (async function(){
   await openDB();
-  [items,purchases,usage] = await Promise.all([dbAll('items'),dbAll('purchases'),dbAll('usage')]);
-  applyLang(); render(); renderLockCard(); showLock(); notifCheck();
+  [items,purchases,usage,staff,areas,tasks,logs,attend,vehicles,trips,fuel,repairs] =
+    await Promise.all(['items','purchases','usage','staff','areas','tasks','logs','attend','vehicles','trips','fuel','repairs'].map(dbAll));
+  applyLang(); render(); renderLockCard(); showWelcome(); showLock(); notifCheck();
   setInterval(notifCheck, 60*60*1000);   // re-check hourly while the app stays open
 })();
 </script>

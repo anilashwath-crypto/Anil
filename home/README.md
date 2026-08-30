@@ -1,13 +1,21 @@
-# Home Stock — household inventory tracker
+# HouseKeeper — The House Of Ommi
 
-Mobile-first, offline-first web app (`home/index.html`, single file, no build step)
-for tracking everything the house consumes — kitchen groceries, toiletries and
-cleaning supplies.
+**Designed, Initiated & Developed by The House Of Ommi.**
+
+One mobile-first, offline-first app (`home/index.html`, single file, no build
+step) for running the whole household: kitchen/toiletries inventory,
+housekeeping schedules with photo-verified placement, staff records with
+attendance, and the family vehicles.
 
 **Live (once Pages picks up the branch):** https://anilashwath-crypto.github.io/Anil/home/
 
-## What it does
+On first open the app asks each user to pick their language — English, ಕನ್ನಡ or
+हिंदी — and the entire UI runs in that language from then on (changeable any
+time from the header).
 
+## Modules (bottom tabs)
+
+### 🧺 Stock · 🧾 Purchases · ⏰ Alerts · 🤖 Insights
 | Feature | How |
 |---|---|
 | Opening stock | Add each product once with its starting quantity and unit |
@@ -17,56 +25,59 @@ cleaning supplies.
 | Expiry reminders | Alerts tab + phone notification (once a day when the app is opened) for anything expired or expiring within 7 days; 30-day early-warning list |
 | Price tracking | Every purchase logs date, quantity, ₹/unit, store/vendor |
 | Invoices | Photograph the bill with each purchase; browsable per month and per item |
-| Consumption / live stock | Weighed goods (kg/g/L/ml): tap **⚖ Weigh**, put the packet on a digital kitchen scale and enter the reading — tare (empty-container weight) is subtracted, live stock is set exactly, the consumption delta is logged, and you can attach a photo of the scale display. Countable items (pcs/packets/bottles) use the “− Use” button |
-| Insights (AI-style analysis) | Runs on-device from your own entries: spend by category, monthly spend trend, price-watch (first vs latest ₹/unit), money lost to expired stock, and verdicts — **useful** (fully consumed, price stable), **needs a change** (price up ≥12% → compare vendors/brands), **avoid / buy smaller** (expired with stock left), **review** (flagged ingredients) |
-| App lock (login) | Optional password/PIN gate on every open (salted PBKDF2 hash — the password itself is never stored) plus **face/fingerprint unlock** via WebAuthn, which uses the phone's own screen-lock biometrics (no camera model, no server). Set it up under **More → App lock**. A "Forgot?" reset erases all app data — so nobody can bypass the lock and read your entries. Note: this gates access to the app; the data on the phone is not additionally encrypted |
-| Trilingual | English / ಕನ್ನಡ / हिंदी, same convention as the farm dashboard |
-| Backup | Export/import a single JSON file (photos included) to move phones or keep a copy |
+| Consumption / live stock | Weighed goods (kg/g/L/ml): tap **⚖ Weigh**, put the packet on a digital kitchen scale and enter the reading — tare is subtracted, live stock is set exactly, the delta is logged, optional photo of the scale display. Countable items use “− Use” |
+| Insights | On-device: spend by category, monthly trend, price-watch (first vs latest ₹/unit), money lost to expired stock, and useful / needs-a-change / avoid verdicts |
 
-## Module 2 — Home Keeper (`housekeeping.html`)
-
-Housekeeping companion app, linked from **More → Housekeeping module** (and back
-via the 🧺 button in its header). Same conventions; data in its own IndexedDB.
-
-- **Team** — house staff / family members with roles.
-- **Schedules & assignments** — tasks per area, assigned to a person, repeating
-  daily / on chosen weekdays / one-time; the **Today** tab shows what's due,
-  who does it, and what's still open.
-- **Master placement photos** — each area (showcase, shelf, mantel…) stores a
-  photo of the correct arrangement of its artefacts/objects.
-- **Photo-verified placement** — after cleaning, the worker taps *Done — verify
-  placement* and photographs the area. The app compares it with the master
-  on-device (grayscale + brightness-normalised region comparison, so lighting
-  changes matter less), shows a match %, and draws **red boxes on the regions
-  that differ** — both where an object was and where it ended up. A person then
-  confirms *Placed correctly* or *Needs re-doing*; each check is logged in
-  History with both photos. An approved after-photo can be promoted to become
+### 🧹 Keeping (housekeeping)
+- **Team** — staff/family with role, phone, **Aadhaar number (shown masked:
+  `XXXX XXXX 1234`) and an Aadhaar/ID card photo** for household staff
+  records, plus an *is a driver* flag. ID details stay on this phone only —
+  collect them with the person's consent.
+- **Schedules & assignments** — tasks per area, assigned to a person, daily /
+  chosen weekdays / one-time; the **Today** sub-tab shows what's due and open.
+- **Attendance** — each person marks **IN** when work starts and **OUT** when
+  leaving; a **selfie is captured every time** as photo proof of who marked it,
+  with the timestamp. A register shows recent days, with the day's selfies one
+  tap away. (True face-*matching* needs an ML model — this is the audit-proof
+  photo version; upgradeable later.)
+- **Master placement photos & verification** — each area stores a master photo
+  of the correct artefact arrangement; after cleaning, the after-photo is
+  compared on-device (brightness-normalised region diff), scored, and
+  mismatched regions get **red boxes** — a person confirms *Placed correctly*
+  or *Needs re-doing*. History logs every check; an approved photo can become
   the new master.
-- Honest scope: this is a visual-difference check plus human confirmation — it
-  reliably flags *what moved*; it does not "recognise" individual objects.
-  Best results: take master and after photos from the same spot and angle.
+
+### 🚗 Drive (drivers & vehicles)
+- **Vehicles** — name + registration; card shows this month's KM run, fuel
+  spend, repair spend, and the latest odometer reading.
+- **KM log** — per day: vehicle, driver (staff flagged as drivers), start/end
+  odometer (start pre-filled from the last known reading), purpose/route.
+- **Fuel** — date, litres, amount, odometer, station, **bill photo**; the list
+  computes **km/L between fills** automatically.
+- **Repairs** — work done, amount, **bill photo**.
+- Driver attendance uses the same selfie IN/OUT in Keeping → Attendance.
+
+## Login (app lock)
+
+Optional password/PIN gate on every open (salted PBKDF2 hash — the password
+itself is never stored) plus **face/fingerprint unlock** via WebAuthn, using
+the phone's own screen-lock biometrics. Set up under **More → App lock**.
+"Forgot?" erases all app data so the lock cannot be bypassed. Note: this gates
+access to the app; data on the phone is not additionally encrypted.
 
 ## Data & privacy
 
-All data lives in the phone's browser storage (IndexedDB) — nothing is uploaded
-anywhere. Export a backup from **More → Export backup** now and then; clearing
-the browser's site data deletes the inventory.
+All data — inventory, photos, invoices, staff IDs, attendance selfies, vehicle
+bills — lives in the phone's browser storage (IndexedDB). Nothing is uploaded
+anywhere. **More → Export backup** writes everything (all modules) to one JSON
+file; import restores it on a new phone. Clearing the browser's site data
+deletes everything, so export now and then.
 
 ## Using it on the phone
 
-1. Open the page in Chrome on the phone and choose **Add to Home screen** — it
-   then opens full-screen like an app and works offline.
-2. Tap **Alerts → Enable reminders** once to allow notifications.
-3. Open the app daily (or whenever you cook/shop); the expiry notification
-   fires at most once per day.
-
-> Browser pages can't ring the phone while fully closed (that needs a push
-> server); the reminder fires whenever the app is opened or left open. For a
-> guaranteed daily nudge, add a recurring 8 am phone alarm named "Check Home
-> Stock" — the Alerts tab always has the current list.
-
-## Try it
-
-**More → Load sample data** fills a demo pantry (including an expired item and
-a price rise) so every tab has something to show. Delete the sample items or
-just export/import over them when starting real entry.
+1. Open the page in Chrome and **Add to Home screen** — it opens full-screen
+   and works offline.
+2. Pick your language on first run; set the app lock under More.
+3. **Alerts → Enable reminders** once for expiry notifications.
+4. **More → Load sample data** fills every module with a demo household to
+   explore before real entry.

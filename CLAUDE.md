@@ -9,16 +9,18 @@ dairy + Boer goats + Giriraja poultry), 100% organic/ZBNF, offline-first edge ga
 with LoRa sensors, GSM/SMS fallback, and solar-backed controls.
 
 - `index.html` — the app (see `ARCHITECTURE.md` for structure and function map)
-- `home/index.html` — **Home Stock**, a second single-file app: mobile household
-  inventory for kitchen groceries/toiletries (opening stock, packet photos,
-  mfg/expiry dates + reminders, ingredient flags, price/invoice tracking,
-  on-device insights). Same conventions (trilingual `L` dict, theme tokens,
-  no build step); data in IndexedDB on the phone. Docs in `home/README.md`.
+- `home/index.html` — **HouseKeeper** ("Designed, Initiated & Developed by The
+  House Of Ommi"), a single-file household suite: kitchen/toiletries inventory
+  (packet photos, mfg/expiry + reminders, ingredient flags, price/invoice
+  tracking, weigh-to-update live stock, insights), housekeeping (staff with
+  masked-Aadhaar ID records, schedules/assignments, selfie-proof IN/OUT
+  attendance, master placement photos + after-clean region-diff verification),
+  and a Drive module (vehicles, KM log, fuel bills with km/L, repairs). First-
+  run language picker (EN/KN/HI), app lock (PBKDF2 password + WebAuthn
+  biometrics), two IndexedDB DBs (homestock v1, homekeeper v2), full JSON
+  backup. Same conventions as the dashboard (trilingual `L` dict, theme
+  tokens, no build step). Docs in `home/README.md`.
   Branch: `claude/household-inventory-tracker-qje7gi`.
-- `home/housekeeping.html` — **Home Keeper**, module 2 of the home suite:
-  housekeeping schedules/assignments for staff, master photos of artefact
-  placement per area, and after-clean photo verification (on-device region
-  diff with red mismatch boxes + human confirm). Cross-linked with Home Stock.
 - `BOM.md` / `Smart_Farm_DIY_BOM.xlsx` — DIY electronics bill of materials (~₹1.67 lakh + 10%)
 - Working branch: `claude/farm-monitoring-dashboard-iorey1`
 - Published artifact: https://claude.ai/code/artifact/9d7580d8-d8bd-4c5d-b23d-61c88dc8a27d
