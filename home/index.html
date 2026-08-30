@@ -318,6 +318,33 @@
   </div>
 </div>
 
+<!-- ============ WEIGH MODAL ============ -->
+<div class="modal" id="weighModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('weighModal')">←</button>
+    <h2 data-t="weighTitle">Weigh &amp; update stock</h2>
+    <button class="btn small" onclick="saveWeigh()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <div class="card"><span class="big-ico">⚖️</span>
+      <p class="muted" style="text-align:center; margin:4px 0" id="weighItemName"></p>
+      <p class="muted" style="margin:6px 0" data-t="weighHelp">Place the packet on your digital kitchen scale and enter the reading — live stock is worked out automatically (1 g ≈ 1 ml for liquids).</p>
+    </div>
+    <div class="f2">
+      <label class="f"><span data-t="grossW">Scale reading *</span><input id="wGross" type="number" step="any" min="0" inputmode="decimal"></label>
+      <label class="f"><span data-t="scaleUnit">Scale unit</span>
+        <select id="wUnit"><option value="g">g</option><option value="kg">kg</option></select></label>
+    </div>
+    <label class="f"><span data-t="tareW">Empty container / packet weight (g)</span><input id="wTare" type="number" step="any" min="0" inputmode="decimal"></label>
+    <div class="card" id="weighPreview"></div>
+    <span class="muted" data-t="scalePhoto">📷 Photo of the scale display (optional)</span>
+    <div class="photobox" id="wBox" style="margin-top:6px; min-height:80px" onclick="document.getElementById('wInput').click()">
+      <span id="wHint">⚖️📷</span>
+    </div>
+    <input id="wInput" type="file" accept="image/*" capture="environment" hidden>
+  </div>
+</div>
+
 <!-- ============ INVOICE VIEW MODAL ============ -->
 <div class="modal" id="invViewModal">
   <div class="mhead">
@@ -355,7 +382,7 @@ en:{appName:'Home Stock',tagline:'kitchen & household tracker',search:'Search it
   howTitle:'How to use',
   how:['Add every product once with its opening stock, packet photo, mfg/expiry dates and the ingredients printed on the label.',
        'Each time you buy, log the purchase with price and the invoice photo — stock and price history update automatically.',
-       'Tap “Use” on an item whenever you open/consume it, so stock stays true.',
+       'For weighed goods (kg/g/L/ml), tap “⚖ Weigh”, put the packet on your digital kitchen scale and enter the reading (photo optional) — live stock is set exactly. Countable items use the “− Use” button.',
        'Check Alerts daily: never use anything marked EXPIRED.',
        'Insights analyses prices, wastage and ingredients — what is useful, what needs a change, what to avoid.'],
   expired:'EXPIRED',expToday:'expires today',expIn:d=>`expires in ${d}d`,noExp:'no expiry set',
@@ -376,6 +403,12 @@ en:{appName:'Home Stock',tagline:'kitchen & household tracker',search:'Search it
   vWasted:n=>`🚫 Avoid / buy smaller: ${n} — expired with stock left (money wasted).`,
   vFlag:(n,f)=>`⚠️ Review: ${n} — label lists ${f}. Consider a cleaner alternative.`,
   wastedVal:v=>`~₹${v} lost to expired stock so far`,
+  weigh:'⚖ Weigh',weighTitle:'Weigh & update stock',
+  weighHelp:'Place the packet on your digital kitchen scale and enter the reading — live stock is worked out automatically (1 g ≈ 1 ml for liquids).',
+  grossW:'Scale reading *',scaleUnit:'Scale unit',tareW:'Empty container / packet weight (g)',
+  netNow:'Net contents now',consumedSince:'Used since last update',
+  scalePhoto:'📷 Photo of the scale display (optional)',
+  weighedTo:(n,u)=>`⚖ weighed → ${n} ${u}`,viewPhoto:'photo 📷',
   mfg:'Mfg',exp:'Expiry',bought:'Purchase history',usage:'Usage log',noPhoto:'no photo',
   date:'Date',price:'₹/unit',qtyS:'Qty',store:'Store',viewInv:'bill 🧾',used:'used',
   aiNote:'Analysis runs on this phone from your own entries — prices, expiry outcomes and label ingredients. The more you log, the sharper it gets.'},
@@ -398,7 +431,7 @@ kn:{appName:'ಹೋಮ್ ಸ್ಟಾಕ್',tagline:'ಅಡುಗೆಮನೆ 
   howTitle:'ಬಳಸುವ ವಿಧಾನ',
   how:['ಪ್ರತಿ ವಸ್ತುವನ್ನು ಒಮ್ಮೆ ಸೇರಿಸಿ — ಆರಂಭಿಕ ದಾಸ್ತಾನು, ಪ್ಯಾಕೆಟ್ ಫೋಟೋ, ತಯಾರಿಕೆ/ಅವಧಿ ದಿನಾಂಕ, ಪದಾರ್ಥಗಳು.',
        'ಪ್ರತಿ ಖರೀದಿಯನ್ನು ಬೆಲೆ ಮತ್ತು ಬಿಲ್ ಫೋಟೋ ಸಹಿತ ದಾಖಲಿಸಿ — ದಾಸ್ತಾನು ತಾನಾಗಿ ಹೆಚ್ಚುತ್ತದೆ.',
-       'ಬಳಸಿದಾಗ “ಬಳಕೆ” ಒತ್ತಿ — ದಾಸ್ತಾನು ಸರಿಯಾಗಿರುತ್ತದೆ.',
+       'ತೂಕದ ವಸ್ತುಗಳಿಗೆ (kg/g/L/ml) “⚖ ತೂಕ” ಒತ್ತಿ, ಪ್ಯಾಕೆಟ್ ಅನ್ನು ಡಿಜಿಟಲ್ ತಕ್ಕಡಿಯ ಮೇಲಿಟ್ಟು ಓದುವಿಕೆ ನಮೂದಿಸಿ (ಫೋಟೋ ಐಚ್ಛಿಕ) — ಲೈವ್ ದಾಸ್ತಾನು ನಿಖರವಾಗಿ ಸೆಟ್ ಆಗುತ್ತದೆ. ಎಣಿಕೆ ವಸ್ತುಗಳಿಗೆ “− ಬಳಕೆ” ಒತ್ತಿ.',
        'ಎಚ್ಚರಿಕೆ ಟ್ಯಾಬ್ ದಿನಾ ನೋಡಿ: ಅವಧಿ ಮುಗಿದದ್ದನ್ನು ಬಳಸಬೇಡಿ.',
        'ವಿಶ್ಲೇಷಣೆ — ಬೆಲೆ, ವ್ಯರ್ಥ, ಪದಾರ್ಥ — ಯಾವುದು ಒಳ್ಳೆಯದು, ಯಾವುದು ಬದಲಿಸಬೇಕು ಎಂದು ತೋರಿಸುತ್ತದೆ.'],
   expired:'ಅವಧಿ ಮುಗಿದಿದೆ',expToday:'ಇಂದು ಅವಧಿ ಮುಗಿಯುತ್ತದೆ',expIn:d=>`${d} ದಿನದಲ್ಲಿ ಅವಧಿ ಮುಗಿಯುತ್ತದೆ`,noExp:'ಅವಧಿ ದಿನಾಂಕ ಇಲ್ಲ',
@@ -419,6 +452,12 @@ kn:{appName:'ಹೋಮ್ ಸ್ಟಾಕ್',tagline:'ಅಡುಗೆಮನೆ 
   vWasted:n=>`🚫 ತಪ್ಪಿಸಿ / ಚಿಕ್ಕ ಪ್ಯಾಕ್: ${n} — ದಾಸ್ತಾನು ಇದ್ದೂ ಅವಧಿ ಮುಗಿಯಿತು (ಹಣ ವ್ಯರ್ಥ).`,
   vFlag:(n,f)=>`⚠️ ಪರಿಶೀಲಿಸಿ: ${n} — ಲೇಬಲ್‌ನಲ್ಲಿ ${f} ಇದೆ. ಉತ್ತಮ ಪರ್ಯಾಯ ನೋಡಿ.`,
   wastedVal:v=>`ಅವಧಿ ಮುಗಿದ ದಾಸ್ತಾನಿನಿಂದ ~₹${v} ನಷ್ಟ`,
+  weigh:'⚖ ತೂಕ',weighTitle:'ತೂಕ ಮಾಡಿ ದಾಸ್ತಾನು ನವೀಕರಿಸಿ',
+  weighHelp:'ಪ್ಯಾಕೆಟ್ ಅನ್ನು ಡಿಜಿಟಲ್ ಅಡುಗೆ ತಕ್ಕಡಿಯ ಮೇಲಿಟ್ಟು ಓದುವಿಕೆ ನಮೂದಿಸಿ — ಲೈವ್ ದಾಸ್ತಾನು ತಾನಾಗಿ ಲೆಕ್ಕವಾಗುತ್ತದೆ (ದ್ರವಗಳಿಗೆ 1 g ≈ 1 ml).',
+  grossW:'ತಕ್ಕಡಿ ಓದುವಿಕೆ *',scaleUnit:'ತಕ್ಕಡಿ ಘಟಕ',tareW:'ಖಾಲಿ ಡಬ್ಬ/ಪ್ಯಾಕೆಟ್ ತೂಕ (g)',
+  netNow:'ಈಗಿನ ನಿವ್ವಳ ಪ್ರಮಾಣ',consumedSince:'ಕಳೆದ ನವೀಕರಣದಿಂದ ಬಳಕೆ',
+  scalePhoto:'📷 ತಕ್ಕಡಿ ಪ್ರದರ್ಶನದ ಫೋಟೋ (ಐಚ್ಛಿಕ)',
+  weighedTo:(n,u)=>`⚖ ತೂಕದಂತೆ → ${n} ${u}`,viewPhoto:'ಫೋಟೋ 📷',
   mfg:'ತಯಾರಿಕೆ',exp:'ಅವಧಿ',bought:'ಖರೀದಿ ಇತಿಹಾಸ',usage:'ಬಳಕೆ ದಾಖಲೆ',noPhoto:'ಫೋಟೋ ಇಲ್ಲ',
   date:'ದಿನಾಂಕ',price:'₹/ಘಟಕ',qtyS:'ಪ್ರಮಾಣ',store:'ಅಂಗಡಿ',viewInv:'ಬಿಲ್ 🧾',used:'ಬಳಸಿದ್ದು',
   aiNote:'ವಿಶ್ಲೇಷಣೆ ಈ ಫೋನ್‌ನಲ್ಲೇ ನಿಮ್ಮ ದಾಖಲೆಗಳಿಂದ ನಡೆಯುತ್ತದೆ. ಹೆಚ್ಚು ದಾಖಲಿಸಿದಷ್ಟೂ ನಿಖರವಾಗುತ್ತದೆ.'},
@@ -441,7 +480,7 @@ hi:{appName:'होम स्टॉक',tagline:'रसोई और घरे�
   howTitle:'उपयोग कैसे करें',
   how:['हर वस्तु एक बार जोड़ें — ओपनिंग स्टॉक, पैकेट फ़ोटो, निर्माण/एक्सपायरी तिथि, सामग्री.',
        'हर ख़रीद कीमत और बिल फ़ोटो के साथ दर्ज करें — स्टॉक और कीमत इतिहास अपने आप अपडेट होगा.',
-       'इस्तेमाल पर “उपयोग” दबाएँ — स्टॉक सही रहेगा.',
+       'तौल वाली चीज़ों (kg/g/L/ml) के लिए “⚖ तौलें” दबाएँ, पैकेट को डिजिटल तराज़ू पर रखें और रीडिंग दर्ज करें (फ़ोटो वैकल्पिक) — लाइव स्टॉक सटीक सेट होगा. गिनती वाली चीज़ों के लिए “− उपयोग” दबाएँ.',
        'अलर्ट रोज़ देखें: एक्सपायर चीज़ कभी इस्तेमाल न करें.',
        'विश्लेषण — कीमत, बर्बादी, सामग्री — क्या ठीक है, क्या बदलें, क्या छोड़ें बताता है.'],
   expired:'एक्सपायर्ड',expToday:'आज एक्सपायर',expIn:d=>`${d} दिन में एक्सपायर`,noExp:'एक्सपायरी नहीं भरी',
@@ -462,6 +501,12 @@ hi:{appName:'होम स्टॉक',tagline:'रसोई और घरे�
   vWasted:n=>`🚫 छोड़ें / छोटा पैक: ${n} — स्टॉक रहते एक्सपायर (पैसा बर्बाद).`,
   vFlag:(n,f)=>`⚠️ जाँचें: ${n} — लेबल में ${f} है. बेहतर विकल्प देखें.`,
   wastedVal:v=>`एक्सपायर्ड स्टॉक से अब तक ~₹${v} का नुकसान`,
+  weigh:'⚖ तौलें',weighTitle:'तौलकर स्टॉक अपडेट करें',
+  weighHelp:'पैकेट को डिजिटल किचन तराज़ू पर रखें और रीडिंग दर्ज करें — लाइव स्टॉक अपने आप निकल आएगा (तरल के लिए 1 g ≈ 1 ml).',
+  grossW:'तराज़ू की रीडिंग *',scaleUnit:'तराज़ू इकाई',tareW:'खाली डिब्बे/पैकेट का वज़न (g)',
+  netNow:'अभी की शुद्ध मात्रा',consumedSince:'पिछले अपडेट से उपयोग',
+  scalePhoto:'📷 तराज़ू डिस्प्ले की फ़ोटो (वैकल्पिक)',
+  weighedTo:(n,u)=>`⚖ तौल से → ${n} ${u}`,viewPhoto:'फ़ोटो 📷',
   mfg:'निर्माण',exp:'एक्सपायरी',bought:'ख़रीद इतिहास',usage:'उपयोग लॉग',noPhoto:'फ़ोटो नहीं',
   date:'तिथि',price:'₹/इकाई',qtyS:'मात्रा',store:'दुकान',viewInv:'बिल 🧾',used:'उपयोग',
   aiNote:'विश्लेषण इसी फ़ोन पर आपकी प्रविष्टियों से चलता है. जितना अधिक दर्ज करेंगे, उतना सटीक होगा.'}
@@ -624,7 +669,7 @@ function renderInventory(){
         </div>
       </div>
       <div style="display:flex; flex-direction:column; gap:6px" onclick="event.stopPropagation()">
-        <button class="btn small ghost" onclick="useItem('${it.id}')">${esc(t('use'))}</button>
+        <button class="btn small ghost" onclick="useItem('${it.id}')">${esc(isWeighable(it)?t('weigh'):t('use'))}</button>
         <button class="btn small ghost" onclick="openPurchaseForm('${it.id}')">${esc(t('restock'))}</button>
       </div>
     </div>`;
@@ -705,7 +750,9 @@ function openDetail(id){
         <tr><th>${esc(t('store'))}</th><td>${esc(it.vendor||'—')}</td></tr>
       </table>
       <div class="row" style="margin-top:10px; gap:8px">
-        <button class="btn small grow" onclick="useItem('${it.id}');openDetail('${it.id}')">${esc(t('use'))}</button>
+        ${isWeighable(it)
+          ? `<button class="btn small grow" onclick="openWeigh('${it.id}')">${esc(t('weigh'))}</button>`
+          : `<button class="btn small grow" onclick="useItem('${it.id}');openDetail('${it.id}')">${esc(t('use'))}</button>`}
         <button class="btn small ghost grow" onclick="closeModal('detailModal');openPurchaseForm('${it.id}')">${esc(t('restock'))}</button>
       </div>
     </div>
@@ -720,7 +767,11 @@ function openDetail(id){
       :`<p class="muted">${esc(t('noBuys'))}</p>`}
     </div>
     ${us.length?`<div class="card"><h3>${esc(t('usage'))}</h3><table class="hist">
-      ${us.slice(0,10).map(u=>`<tr><td>${esc(u.date)}</td><td>−${fmt(u.qty)} ${esc(it.unit)} ${esc(t('used'))}</td></tr>`).join('')}</table></div>`:''}
+      ${us.slice(0,10).map(u=>`<tr><td>${esc(u.date)}</td>
+        <td>${u.type==='weigh'
+          ? esc(t('weighedTo')(fmt(u.net),it.unit))+(u.qty>0?` (−${fmt(u.qty)})`:'')
+          : `−${fmt(u.qty)} ${esc(it.unit)} ${esc(t('used'))}`}</td>
+        <td>${u.photo?`<a href="#" onclick="viewUsagePhoto('${u.id}');return false">${esc(t('viewPhoto'))}</a>`:''}</td></tr>`).join('')}</table></div>`:''}
   `;
   openModal('detailModal');
 }
@@ -732,12 +783,70 @@ function ingFlagsOf(it){
 }
 async function useItem(id){
   const it = byId(id); if(!it) return;
+  if(isWeighable(it)){openWeigh(id); return;}   // measured items are updated by weighing
   const q = parseFloat(prompt(t('useQty'),'1'));
   if(!(q>0)) return;
   it.stock = Math.max(0, +(it.stock-q).toFixed(3));
   await dbPut('items',it);
   const u = {id:uid(), itemId:id, date:today(), qty:q};
   usage.push(u); await dbPut('usage',u);
+  render();
+}
+
+/* ---------------- weigh-to-update: live stock from a digital kitchen scale ---------------- */
+const G_PER_UNIT = {kg:1000, g:1, L:1000, ml:1};   // 1 g ≈ 1 ml for household liquids
+const isWeighable = it => it.unit in G_PER_UNIT;
+let weighingId=null, weighPhoto=null;
+
+document.getElementById('wInput').addEventListener('change',async e=>{
+  if(e.target.files[0]){weighPhoto = await compressImage(e.target.files[0],800,.65); paintWeighPhoto();}
+  e.target.value='';
+});
+function paintWeighPhoto(){
+  const box = document.getElementById('wBox');
+  box.innerHTML = weighPhoto
+    ? `<img src="${weighPhoto}" alt=""><button class="clearp" onclick="event.stopPropagation();weighPhoto=null;paintWeighPhoto()">✕</button>`
+    : `<span id="wHint">⚖️📷</span>`;
+}
+function weighCalc(){
+  const it = byId(weighingId); if(!it) return null;
+  const gross = parseFloat(wGross.value);
+  if(!(gross>=0)) return null;
+  const grams = gross * (wUnit.value==='kg'?1000:1);
+  const tare = Math.max(0, parseFloat(wTare.value)||0);
+  const newStock = +(Math.max(0, grams - tare) / G_PER_UNIT[it.unit]).toFixed(3);
+  const consumed = +Math.max(0, it.stock - newStock).toFixed(3);
+  return {it, newStock, consumed, tare};
+}
+function updateWeighPreview(){
+  const r = weighCalc();
+  document.getElementById('weighPreview').innerHTML = r
+    ? `<table class="hist">
+        <tr><th>${esc(t('netNow'))}</th><td><b>${fmt(r.newStock)} ${esc(r.it.unit)}</b></td></tr>
+        <tr><th>${esc(t('consumedSince'))}</th><td>${fmt(r.consumed)} ${esc(r.it.unit)}</td></tr>
+       </table>`
+    : `<span class="muted">—</span>`;
+}
+['wGross','wUnit','wTare'].forEach(id=>document.getElementById(id).addEventListener('input',updateWeighPreview));
+function openWeigh(id){
+  const it = byId(id); if(!it) return;
+  weighingId = id; weighPhoto = null; paintWeighPhoto();
+  document.getElementById('weighItemName').textContent = `${it.name} — ${t('stock')}: ${fmt(it.stock)} ${it.unit}`;
+  wGross.value=''; wUnit.value='g'; wTare.value = it.tare??'';
+  updateWeighPreview();
+  openModal('weighModal');
+}
+async function saveWeigh(){
+  const r = weighCalc();
+  if(!r){wGross.focus(); return;}
+  r.it.stock = r.newStock;
+  r.it.tare = r.tare;
+  await dbPut('items',r.it);
+  const u = {id:uid(), itemId:r.it.id, date:today(), qty:r.consumed,
+    type:'weigh', net:r.newStock, photo:weighPhoto};
+  usage.push(u); await dbPut('usage',u);
+  closeModal('weighModal');
+  if(document.getElementById('detailModal').classList.contains('open')) openDetail(r.it.id);
   render();
 }
 
@@ -799,6 +908,14 @@ function renderPurchases(){
         <td>${p.invoice?`<a href="#" onclick="viewInvoice('${p.id}');return false">🧾</a>`:''}</td></tr>`;}).join('')}
       </table></div>`;
   }).join('');
+}
+function viewUsagePhoto(uidv){
+  const u = usage.find(x=>x.id===uidv); if(!u||!u.photo) return;
+  const it = byId(u.itemId);
+  document.getElementById('invViewBody').innerHTML =
+    `<p class="muted">${esc(it?it.name:'')} · ${esc(u.date)} · ${esc(t('weighedTo')(fmt(u.net),it?it.unit:''))}</p>
+     <img src="${u.photo}" style="width:100%;border-radius:10px" alt="scale">`;
+  openModal('invViewModal');
 }
 function viewInvoice(pid){
   const p = purchases.find(x=>x.id===pid); if(!p||!p.invoice) return;

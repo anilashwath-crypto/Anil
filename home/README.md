@@ -17,7 +17,7 @@ cleaning supplies.
 | Expiry reminders | Alerts tab + phone notification (once a day when the app is opened) for anything expired or expiring within 7 days; 30-day early-warning list |
 | Price tracking | Every purchase logs date, quantity, ₹/unit, store/vendor |
 | Invoices | Photograph the bill with each purchase; browsable per month and per item |
-| Consumption | “− Use” button keeps live stock true and feeds the usage log |
+| Consumption / live stock | Weighed goods (kg/g/L/ml): tap **⚖ Weigh**, put the packet on a digital kitchen scale and enter the reading — tare (empty-container weight) is subtracted, live stock is set exactly, the consumption delta is logged, and you can attach a photo of the scale display. Countable items (pcs/packets/bottles) use the “− Use” button |
 | Insights (AI-style analysis) | Runs on-device from your own entries: spend by category, monthly spend trend, price-watch (first vs latest ₹/unit), money lost to expired stock, and verdicts — **useful** (fully consumed, price stable), **needs a change** (price up ≥12% → compare vendors/brands), **avoid / buy smaller** (expired with stock left), **review** (flagged ingredients) |
 | Trilingual | English / ಕನ್ನಡ / हिंदी, same convention as the farm dashboard |
 | Backup | Export/import a single JSON file (photos included) to move phones or keep a copy |
