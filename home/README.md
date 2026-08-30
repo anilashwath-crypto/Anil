@@ -19,6 +19,7 @@ cleaning supplies.
 | Invoices | Photograph the bill with each purchase; browsable per month and per item |
 | Consumption / live stock | Weighed goods (kg/g/L/ml): tap **⚖ Weigh**, put the packet on a digital kitchen scale and enter the reading — tare (empty-container weight) is subtracted, live stock is set exactly, the consumption delta is logged, and you can attach a photo of the scale display. Countable items (pcs/packets/bottles) use the “− Use” button |
 | Insights (AI-style analysis) | Runs on-device from your own entries: spend by category, monthly spend trend, price-watch (first vs latest ₹/unit), money lost to expired stock, and verdicts — **useful** (fully consumed, price stable), **needs a change** (price up ≥12% → compare vendors/brands), **avoid / buy smaller** (expired with stock left), **review** (flagged ingredients) |
+| App lock (login) | Optional password/PIN gate on every open (salted PBKDF2 hash — the password itself is never stored) plus **face/fingerprint unlock** via WebAuthn, which uses the phone's own screen-lock biometrics (no camera model, no server). Set it up under **More → App lock**. A "Forgot?" reset erases all app data — so nobody can bypass the lock and read your entries. Note: this gates access to the app; the data on the phone is not additionally encrypted |
 | Trilingual | English / ಕನ್ನಡ / हिंदी, same convention as the farm dashboard |
 | Backup | Export/import a single JSON file (photos included) to move phones or keep a copy |
 

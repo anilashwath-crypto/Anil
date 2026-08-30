@@ -162,6 +162,17 @@
   .verdict.bad{border-color:var(--red)}
   .big-ico{font-size:34px; text-align:center; display:block; margin:6px 0 2px}
   a{color:var(--blue)}
+  /* app lock */
+  #lockScreen{position:fixed; inset:0; z-index:100; background:var(--bg); display:none;
+    align-items:center; justify-content:center; text-align:center; padding:24px}
+  #lockScreen.on{display:flex}
+  .lockbox{max-width:300px; width:100%}
+  .lockbox .lockico{font-size:52px}
+  .lockbox h2{margin:8px 0 16px; font-size:18px}
+  .lockbox input{width:100%; border:1px solid var(--line); background:var(--card); color:var(--ink);
+    border-radius:11px; padding:12px; font-size:16px; text-align:center; margin:0 0 10px}
+  .lockbox .btn{width:100%; margin-bottom:8px}
+  #lockMsg{color:var(--red); font-size:13px; min-height:18px; margin:4px 0}
 </style>
 </head>
 <body>
@@ -221,6 +232,11 @@
         <input id="importFile" type="file" accept="application/json" hidden onchange="importData(this.files[0])">
         <button class="btn small ghost" onclick="loadSample()" data-t="sampleData">Load sample data</button>
       </div>
+    </div>
+    <div class="card">
+      <h3 data-t="lockCard">App lock (login)</h3>
+      <p class="muted" data-t="lockHint">Protects the app with a password/PIN and — where the phone supports it — face or fingerprint unlock, using the phone's own screen-lock biometrics. This blocks casual access to the app; the data itself stays on this phone.</p>
+      <div id="lockCardBody"></div>
     </div>
     <div class="card">
       <h3 data-t="howTitle">How to use</h3>
@@ -354,6 +370,34 @@
   <div class="mbody" id="invViewBody"></div>
 </div>
 
+<!-- ============ LOCK SCREEN ============ -->
+<div id="lockScreen">
+  <div class="lockbox">
+    <span class="lockico">🧺🔒</span>
+    <h2 data-t="lockTitle">Home Stock is locked</h2>
+    <input id="lockPw" type="password" data-tp="unlockPw" placeholder="Password / PIN" autocomplete="current-password">
+    <div id="lockMsg"></div>
+    <button class="btn" onclick="tryPwUnlock()" data-t="unlock">Unlock</button>
+    <button class="btn ghost" id="bioBtn" onclick="bioUnlock()" data-t="faceUnlock">👤 Face / fingerprint</button>
+    <p><a href="#" onclick="forgotReset();return false" class="muted" data-t="forgot">Forgot? Reset app (erases data)</a></p>
+  </div>
+</div>
+
+<!-- ============ LOCK SETUP MODAL ============ -->
+<div class="modal" id="lockModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('lockModal')">←</button>
+    <h2 data-t="lockCard2">App lock</h2>
+    <button class="btn small" onclick="saveLockSetup()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <div id="lkCurWrap"><label class="f"><span data-t="curPw">Current password</span><input id="lkCur" type="password" autocomplete="current-password"></label></div>
+    <label class="f"><span data-t="newPw">New password / PIN (min 4 characters)</span><input id="lkNew" type="password" autocomplete="new-password"></label>
+    <label class="f"><span data-t="confirmPw">Re-enter new password</span><input id="lkNew2" type="password" autocomplete="new-password"></label>
+    <button class="btn danger small" id="btnRemoveLock" hidden onclick="removeLock()" data-t="removeLock">Remove lock</button>
+  </div>
+</div>
+
 <script>
 'use strict';
 /* =====================================================================
@@ -403,6 +447,19 @@ en:{appName:'Home Stock',tagline:'kitchen & household tracker',search:'Search it
   vWasted:n=>`🚫 Avoid / buy smaller: ${n} — expired with stock left (money wasted).`,
   vFlag:(n,f)=>`⚠️ Review: ${n} — label lists ${f}. Consider a cleaner alternative.`,
   wastedVal:v=>`~₹${v} lost to expired stock so far`,
+  lockTitle:'Home Stock is locked',unlockPw:'Password / PIN',unlock:'Unlock',
+  faceUnlock:'👤 Face / fingerprint',wrongPw:'Wrong password',
+  forgot:'Forgot? Reset app (erases data)',
+  forgotWarn:'This erases ALL app data on this phone — items, photos, invoices, history. Continue?',
+  lockCard:'App lock (login)',lockCard2:'App lock',
+  lockHint:'Protects the app with a password/PIN and — where the phone supports it — face or fingerprint unlock, using the phone\'s own screen-lock biometrics. This blocks casual access to the app; the data itself stays on this phone.',
+  setPw:'Set password',changePw:'Change password',removeLock:'Remove lock',
+  curPw:'Current password',newPw:'New password / PIN (min 4 characters)',confirmPw:'Re-enter new password',
+  pwMismatch:'Passwords do not match',pwShort:'Minimum 4 characters',
+  bioEnable:'👤 Enable face/fingerprint',bioDisable:'Disable face/fingerprint',
+  bioNA:'Face/fingerprint unlock is not available in this browser — the password still protects the app.',
+  bioFail:'Biometric check failed — use the password',
+  lockOnChip:'🔒 Lock on',bioOnChip:'👤 Face/fingerprint on',lockOffChip:'Lock is off',
   weigh:'⚖ Weigh',weighTitle:'Weigh & update stock',
   weighHelp:'Place the packet on your digital kitchen scale and enter the reading — live stock is worked out automatically (1 g ≈ 1 ml for liquids).',
   grossW:'Scale reading *',scaleUnit:'Scale unit',tareW:'Empty container / packet weight (g)',
@@ -452,6 +509,19 @@ kn:{appName:'ಹೋಮ್ ಸ್ಟಾಕ್',tagline:'ಅಡುಗೆಮನೆ 
   vWasted:n=>`🚫 ತಪ್ಪಿಸಿ / ಚಿಕ್ಕ ಪ್ಯಾಕ್: ${n} — ದಾಸ್ತಾನು ಇದ್ದೂ ಅವಧಿ ಮುಗಿಯಿತು (ಹಣ ವ್ಯರ್ಥ).`,
   vFlag:(n,f)=>`⚠️ ಪರಿಶೀಲಿಸಿ: ${n} — ಲೇಬಲ್‌ನಲ್ಲಿ ${f} ಇದೆ. ಉತ್ತಮ ಪರ್ಯಾಯ ನೋಡಿ.`,
   wastedVal:v=>`ಅವಧಿ ಮುಗಿದ ದಾಸ್ತಾನಿನಿಂದ ~₹${v} ನಷ್ಟ`,
+  lockTitle:'ಹೋಮ್ ಸ್ಟಾಕ್ ಲಾಕ್ ಆಗಿದೆ',unlockPw:'ಪಾಸ್‌ವರ್ಡ್ / ಪಿನ್',unlock:'ಅನ್‌ಲಾಕ್',
+  faceUnlock:'👤 ಮುಖ / ಬೆರಳಚ್ಚು',wrongPw:'ತಪ್ಪು ಪಾಸ್‌ವರ್ಡ್',
+  forgot:'ಮರೆತಿರಾ? ಆ್ಯಪ್ ರೀಸೆಟ್ (ಡೇಟಾ ಅಳಿಯುತ್ತದೆ)',
+  forgotWarn:'ಇದು ಈ ಫೋನ್‌ನ ಎಲ್ಲಾ ಆ್ಯಪ್ ಡೇಟಾ ಅಳಿಸುತ್ತದೆ — ವಸ್ತು, ಫೋಟೋ, ಬಿಲ್, ಇತಿಹಾಸ. ಮುಂದುವರಿಸಬೇಕೆ?',
+  lockCard:'ಆ್ಯಪ್ ಲಾಕ್ (ಲಾಗಿನ್)',lockCard2:'ಆ್ಯಪ್ ಲಾಕ್',
+  lockHint:'ಪಾಸ್‌ವರ್ಡ್/ಪಿನ್ ಮತ್ತು (ಫೋನ್ ಬೆಂಬಲಿಸಿದರೆ) ಮುಖ/ಬೆರಳಚ್ಚು ಅನ್‌ಲಾಕ್‌ನಿಂದ ಆ್ಯಪ್ ರಕ್ಷಿಸುತ್ತದೆ — ಫೋನ್‌ನ ಸ್ಕ್ರೀನ್-ಲಾಕ್ ಬಯೋಮೆಟ್ರಿಕ್ಸ್ ಬಳಸುತ್ತದೆ. ಇದು ಸಾಮಾನ್ಯ ಪ್ರವೇಶ ತಡೆ; ಡೇಟಾ ಫೋನ್‌ನಲ್ಲೇ ಇರುತ್ತದೆ.',
+  setPw:'ಪಾಸ್‌ವರ್ಡ್ ಹೊಂದಿಸಿ',changePw:'ಪಾಸ್‌ವರ್ಡ್ ಬದಲಿಸಿ',removeLock:'ಲಾಕ್ ತೆಗೆಯಿರಿ',
+  curPw:'ಈಗಿನ ಪಾಸ್‌ವರ್ಡ್',newPw:'ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ / ಪಿನ್ (ಕನಿಷ್ಠ 4 ಅಕ್ಷರ)',confirmPw:'ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ ಮತ್ತೊಮ್ಮೆ',
+  pwMismatch:'ಪಾಸ್‌ವರ್ಡ್ ಹೊಂದಿಕೆಯಾಗುತ್ತಿಲ್ಲ',pwShort:'ಕನಿಷ್ಠ 4 ಅಕ್ಷರ',
+  bioEnable:'👤 ಮುಖ/ಬೆರಳಚ್ಚು ಆನ್ ಮಾಡಿ',bioDisable:'ಮುಖ/ಬೆರಳಚ್ಚು ಆಫ್',
+  bioNA:'ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಮುಖ/ಬೆರಳಚ್ಚು ಅನ್‌ಲಾಕ್ ಲಭ್ಯವಿಲ್ಲ — ಪಾಸ್‌ವರ್ಡ್ ಆ್ಯಪ್ ರಕ್ಷಿಸುತ್ತದೆ.',
+  bioFail:'ಬಯೋಮೆಟ್ರಿಕ್ ವಿಫಲ — ಪಾಸ್‌ವರ್ಡ್ ಬಳಸಿ',
+  lockOnChip:'🔒 ಲಾಕ್ ಆನ್',bioOnChip:'👤 ಮುಖ/ಬೆರಳಚ್ಚು ಆನ್',lockOffChip:'ಲಾಕ್ ಆಫ್ ಇದೆ',
   weigh:'⚖ ತೂಕ',weighTitle:'ತೂಕ ಮಾಡಿ ದಾಸ್ತಾನು ನವೀಕರಿಸಿ',
   weighHelp:'ಪ್ಯಾಕೆಟ್ ಅನ್ನು ಡಿಜಿಟಲ್ ಅಡುಗೆ ತಕ್ಕಡಿಯ ಮೇಲಿಟ್ಟು ಓದುವಿಕೆ ನಮೂದಿಸಿ — ಲೈವ್ ದಾಸ್ತಾನು ತಾನಾಗಿ ಲೆಕ್ಕವಾಗುತ್ತದೆ (ದ್ರವಗಳಿಗೆ 1 g ≈ 1 ml).',
   grossW:'ತಕ್ಕಡಿ ಓದುವಿಕೆ *',scaleUnit:'ತಕ್ಕಡಿ ಘಟಕ',tareW:'ಖಾಲಿ ಡಬ್ಬ/ಪ್ಯಾಕೆಟ್ ತೂಕ (g)',
@@ -501,6 +571,19 @@ hi:{appName:'होम स्टॉक',tagline:'रसोई और घरे�
   vWasted:n=>`🚫 छोड़ें / छोटा पैक: ${n} — स्टॉक रहते एक्सपायर (पैसा बर्बाद).`,
   vFlag:(n,f)=>`⚠️ जाँचें: ${n} — लेबल में ${f} है. बेहतर विकल्प देखें.`,
   wastedVal:v=>`एक्सपायर्ड स्टॉक से अब तक ~₹${v} का नुकसान`,
+  lockTitle:'होम स्टॉक लॉक है',unlockPw:'पासवर्ड / पिन',unlock:'अनलॉक',
+  faceUnlock:'👤 चेहरा / फ़िंगरप्रिंट',wrongPw:'गलत पासवर्ड',
+  forgot:'भूल गए? ऐप रीसेट (डेटा मिट जाएगा)',
+  forgotWarn:'इससे इस फ़ोन का सारा ऐप डेटा मिट जाएगा — वस्तुएँ, फ़ोटो, बिल, इतिहास. जारी रखें?',
+  lockCard:'ऐप लॉक (लॉगिन)',lockCard2:'ऐप लॉक',
+  lockHint:'पासवर्ड/पिन और (फ़ोन समर्थित हो तो) चेहरा/फ़िंगरप्रिंट अनलॉक से ऐप सुरक्षित करता है — फ़ोन के स्क्रीन-लॉक बायोमेट्रिक्स से. यह सामान्य पहुँच रोकता है; डेटा फ़ोन में ही रहता है.',
+  setPw:'पासवर्ड सेट करें',changePw:'पासवर्ड बदलें',removeLock:'लॉक हटाएँ',
+  curPw:'वर्तमान पासवर्ड',newPw:'नया पासवर्ड / पिन (कम से कम 4 अक्षर)',confirmPw:'नया पासवर्ड दोबारा',
+  pwMismatch:'पासवर्ड मेल नहीं खाते',pwShort:'कम से कम 4 अक्षर',
+  bioEnable:'👤 चेहरा/फ़िंगरप्रिंट चालू करें',bioDisable:'चेहरा/फ़िंगरप्रिंट बंद',
+  bioNA:'इस ब्राउज़र में चेहरा/फ़िंगरप्रिंट अनलॉक उपलब्ध नहीं — पासवर्ड ऐप को सुरक्षित रखता है.',
+  bioFail:'बायोमेट्रिक विफल — पासवर्ड इस्तेमाल करें',
+  lockOnChip:'🔒 लॉक चालू',bioOnChip:'👤 चेहरा/फ़िंगरप्रिंट चालू',lockOffChip:'लॉक बंद है',
   weigh:'⚖ तौलें',weighTitle:'तौलकर स्टॉक अपडेट करें',
   weighHelp:'पैकेट को डिजिटल किचन तराज़ू पर रखें और रीडिंग दर्ज करें — लाइव स्टॉक अपने आप निकल आएगा (तरल के लिए 1 g ≈ 1 ml).',
   grossW:'तराज़ू की रीडिंग *',scaleUnit:'तराज़ू इकाई',tareW:'खाली डिब्बे/पैकेट का वज़न (g)',
@@ -639,6 +722,7 @@ function applyLang(){
   document.getElementById('howList').innerHTML = t('how').map(s=>`<li>${esc(s)}</li>`).join('');
   document.getElementById('notifBtn').textContent =
     ('Notification' in window && Notification.permission==='granted') ? t('notifOn') : t('enableNotif');
+  renderLockCard();
 }
 
 /* ---------------- render: inventory ---------------- */
@@ -1091,12 +1175,109 @@ async function loadSample(){
   render();
 }
 
+/* ---------------- app lock: password (PBKDF2) + device biometrics (WebAuthn) ----------------
+   The password is never stored — only a salted PBKDF2-SHA256 hash in localStorage.
+   "Face/fingerprint" uses the phone's own screen-lock biometrics via WebAuthn
+   (platform authenticator, userVerification required); no camera model, no server.
+   This is an access gate for the app on this phone, not encryption of the data. */
+const lockCfg = () => JSON.parse(localStorage.getItem('hs-lock')||'null');
+const b64buf = a => btoa(String.fromCharCode(...new Uint8Array(a)));
+const unb64 = s => Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function pwHash(pw,saltB64){
+  const salt = saltB64 ? unb64(saltB64) : crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},key,256);
+  return {salt:b64buf(salt), hash:b64buf(bits)};
+}
+function showLock(){
+  if(!lockCfg()) return;
+  document.getElementById('bioBtn').hidden = !localStorage.getItem('hs-bio');
+  document.getElementById('lockScreen').classList.add('on');
+}
+function unlockApp(){
+  document.getElementById('lockScreen').classList.remove('on');
+  document.getElementById('lockPw').value=''; lockErr('');
+}
+function lockErr(m){document.getElementById('lockMsg').textContent=m;}
+async function tryPwUnlock(){
+  const cfg = lockCfg(); if(!cfg) return unlockApp();
+  const {hash} = await pwHash(document.getElementById('lockPw').value, cfg.salt);
+  if(hash===cfg.hash) unlockApp(); else lockErr(t('wrongPw'));
+}
+document.getElementById('lockPw').addEventListener('keydown',e=>{if(e.key==='Enter')tryPwUnlock();});
+async function bioUnlock(){
+  try{
+    const idB64 = localStorage.getItem('hs-bio'); if(!idB64) return;
+    await navigator.credentials.get({publicKey:{
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials:[{type:'public-key', id:unb64(idB64).buffer, transports:['internal']}],
+      userVerification:'required', timeout:60000}});
+    unlockApp();
+  }catch(e){lockErr(t('bioFail'));}
+}
+async function bioEnroll(){
+  if(!lockCfg()){openLockSetup(); return;}          // password first, biometrics on top
+  if(!window.PublicKeyCredential){alert(t('bioNA')); return;}
+  try{
+    const cred = await navigator.credentials.create({publicKey:{
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rp:{name:'Home Stock'},
+      user:{id:crypto.getRandomValues(new Uint8Array(16)), name:'homestock', displayName:'Home Stock'},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform', userVerification:'required'},
+      timeout:60000}});
+    localStorage.setItem('hs-bio', b64buf(cred.rawId));
+  }catch(e){alert(t('bioNA'));}
+  renderLockCard();
+}
+function bioRemove(){localStorage.removeItem('hs-bio'); renderLockCard();}
+function openLockSetup(){
+  lkCur.value=lkNew.value=lkNew2.value='';
+  document.getElementById('lkCurWrap').hidden = !lockCfg();
+  document.getElementById('btnRemoveLock').hidden = !lockCfg();
+  openModal('lockModal');
+}
+async function saveLockSetup(){
+  const cfg = lockCfg();
+  if(cfg){const {hash}=await pwHash(lkCur.value,cfg.salt); if(hash!==cfg.hash){alert(t('wrongPw')); return;}}
+  if(lkNew.value.length<4){alert(t('pwShort')); return;}
+  if(lkNew.value!==lkNew2.value){alert(t('pwMismatch')); return;}
+  localStorage.setItem('hs-lock', JSON.stringify(await pwHash(lkNew.value)));
+  closeModal('lockModal'); renderLockCard();
+}
+async function removeLock(){
+  const cfg = lockCfg(); if(!cfg) return;
+  const {hash} = await pwHash(lkCur.value, cfg.salt);
+  if(hash!==cfg.hash){alert(t('wrongPw')); return;}
+  localStorage.removeItem('hs-lock'); localStorage.removeItem('hs-bio');
+  closeModal('lockModal'); renderLockCard();
+}
+async function forgotReset(){
+  if(!confirm(t('forgotWarn'))) return;
+  await dbClear('items'); await dbClear('purchases'); await dbClear('usage');
+  localStorage.clear(); location.reload();
+}
+function renderLockCard(){
+  const has = !!lockCfg(), bio = !!localStorage.getItem('hs-bio');
+  document.getElementById('lockCardBody').innerHTML = `
+    <div style="margin-bottom:8px">
+      ${has?`<span class="chip green">${esc(t('lockOnChip'))}</span>`:`<span class="chip">${esc(t('lockOffChip'))}</span>`}
+      ${bio?`<span class="chip blue">${esc(t('bioOnChip'))}</span>`:''}
+    </div>
+    <div class="row" style="flex-wrap:wrap; gap:8px">
+      <button class="btn small ghost" onclick="openLockSetup()">${esc(has?t('changePw'):t('setPw'))}</button>
+      ${has?(bio
+        ?`<button class="btn small ghost" onclick="bioRemove()">${esc(t('bioDisable'))}</button>`
+        :`<button class="btn small ghost" onclick="bioEnroll()">${esc(t('bioEnable'))}</button>`):''}
+    </div>`;
+}
+
 /* ---------------- main render + boot ---------------- */
 function render(){renderInventory(); renderPurchases(); renderAlerts(); renderInsights();}
 (async function(){
   await openDB();
   [items,purchases,usage] = await Promise.all([dbAll('items'),dbAll('purchases'),dbAll('usage')]);
-  applyLang(); render(); notifCheck();
+  applyLang(); render(); renderLockCard(); showLock(); notifCheck();
   setInterval(notifCheck, 60*60*1000);   // re-check hourly while the app stays open
 })();
 </script>
