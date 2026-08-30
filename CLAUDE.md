@@ -15,6 +15,10 @@ with LoRa sensors, GSM/SMS fallback, and solar-backed controls.
   on-device insights). Same conventions (trilingual `L` dict, theme tokens,
   no build step); data in IndexedDB on the phone. Docs in `home/README.md`.
   Branch: `claude/household-inventory-tracker-qje7gi`.
+- `home/housekeeping.html` — **Home Keeper**, module 2 of the home suite:
+  housekeeping schedules/assignments for staff, master photos of artefact
+  placement per area, and after-clean photo verification (on-device region
+  diff with red mismatch boxes + human confirm). Cross-linked with Home Stock.
 - `BOM.md` / `Smart_Farm_DIY_BOM.xlsx` — DIY electronics bill of materials (~₹1.67 lakh + 10%)
 - Working branch: `claude/farm-monitoring-dashboard-iorey1`
 - Published artifact: https://claude.ai/code/artifact/9d7580d8-d8bd-4c5d-b23d-61c88dc8a27d

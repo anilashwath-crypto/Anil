@@ -23,6 +23,29 @@ cleaning supplies.
 | Trilingual | English / ಕನ್ನಡ / हिंदी, same convention as the farm dashboard |
 | Backup | Export/import a single JSON file (photos included) to move phones or keep a copy |
 
+## Module 2 — Home Keeper (`housekeeping.html`)
+
+Housekeeping companion app, linked from **More → Housekeeping module** (and back
+via the 🧺 button in its header). Same conventions; data in its own IndexedDB.
+
+- **Team** — house staff / family members with roles.
+- **Schedules & assignments** — tasks per area, assigned to a person, repeating
+  daily / on chosen weekdays / one-time; the **Today** tab shows what's due,
+  who does it, and what's still open.
+- **Master placement photos** — each area (showcase, shelf, mantel…) stores a
+  photo of the correct arrangement of its artefacts/objects.
+- **Photo-verified placement** — after cleaning, the worker taps *Done — verify
+  placement* and photographs the area. The app compares it with the master
+  on-device (grayscale + brightness-normalised region comparison, so lighting
+  changes matter less), shows a match %, and draws **red boxes on the regions
+  that differ** — both where an object was and where it ended up. A person then
+  confirms *Placed correctly* or *Needs re-doing*; each check is logged in
+  History with both photos. An approved after-photo can be promoted to become
+  the new master.
+- Honest scope: this is a visual-difference check plus human confirmation — it
+  reliably flags *what moved*; it does not "recognise" individual objects.
+  Best results: take master and after photos from the same spot and angle.
+
 ## Data & privacy
 
 All data lives in the phone's browser storage (IndexedDB) — nothing is uploaded

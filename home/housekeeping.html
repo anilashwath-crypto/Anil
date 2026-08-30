@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f4ef">
+<title>Home Keeper — Housekeeping</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --ink:#1f2a1f; --muted:#6b7280; --line:#e5e1d8;
+    --accent:#2e7d32; --accent-soft:#e6f2e6; --amber:#b45309; --amber-soft:#fdf0dd;
+    --red:#b91c1c; --red-soft:#fde8e8; --blue:#1d4ed8; --blue-soft:#e5edff;
+    --chip:#eef2e9; --shadow:0 1px 3px rgba(0,0,0,.08);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#141613; --card:#1e211c; --ink:#e8e6df; --muted:#9aa094; --line:#2c302a;
+      --accent:#7cc47f; --accent-soft:#23331f; --amber:#f0b35e; --amber-soft:#3a2c14;
+      --red:#f08a8a; --red-soft:#3a1c1c; --blue:#8fb0ff; --blue-soft:#1c2740;
+      --chip:#262b23; --shadow:0 1px 3px rgba(0,0,0,.5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141613; --card:#1e211c; --ink:#e8e6df; --muted:#9aa094; --line:#2c302a;
+    --accent:#7cc47f; --accent-soft:#23331f; --amber:#f0b35e; --amber-soft:#3a2c14;
+    --red:#f08a8a; --red-soft:#3a1c1c; --blue:#8fb0ff; --blue-soft:#1c2740;
+    --chip:#262b23; --shadow:0 1px 3px rgba(0,0,0,.5);
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Kannada","Noto Sans Devanagari",sans-serif;
+    padding-bottom:calc(64px + env(safe-area-inset-bottom));
+  }
+  header{
+    position:sticky; top:0; z-index:20; background:var(--bg);
+    display:flex; align-items:center; gap:8px; padding:10px 14px 8px;
+    border-bottom:1px solid var(--line);
+  }
+  header h1{font-size:18px; margin:0; flex:1; display:flex; align-items:center; gap:8px}
+  header h1 small{font-size:11px; color:var(--muted); font-weight:400}
+  .iconbtn{border:1px solid var(--line); background:var(--card); color:var(--ink);
+    border-radius:10px; padding:6px 10px; font-size:14px; cursor:pointer}
+  select.iconbtn{appearance:none}
+  main{padding:12px 14px; max-width:640px; margin:0 auto}
+  .tabpage{display:none}
+  .tabpage.active{display:block}
+  nav{position:fixed; bottom:0; left:0; right:0; z-index:30; display:flex;
+    background:var(--card); border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1; background:none; border:0; color:var(--muted); font-size:10.5px;
+    padding:7px 2px 6px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px}
+  nav button .ico{font-size:19px; line-height:1}
+  nav button.active{color:var(--accent); font-weight:600}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow); padding:12px; margin-bottom:10px}
+  .card h3{margin:0 0 8px; font-size:14px}
+  .muted{color:var(--muted); font-size:12.5px}
+  .row{display:flex; gap:8px; align-items:center}
+  .grow{flex:1}
+  .chip{display:inline-block; background:var(--chip); border-radius:999px; padding:2px 9px; font-size:11.5px; margin:1px 2px 1px 0}
+  .chip.red{background:var(--red-soft); color:var(--red)}
+  .chip.amber{background:var(--amber-soft); color:var(--amber)}
+  .chip.green{background:var(--accent-soft); color:var(--accent)}
+  .chip.blue{background:var(--blue-soft); color:var(--blue)}
+  .btn{border:0; border-radius:11px; padding:10px 14px; font-size:14px; font-weight:600; cursor:pointer;
+    background:var(--accent); color:#fff}
+  .btn.ghost{background:var(--chip); color:var(--ink)}
+  .btn.danger{background:var(--red-soft); color:var(--red)}
+  .btn.small{padding:6px 10px; font-size:12.5px; border-radius:9px}
+  .item{display:flex; gap:10px; background:var(--card); border:1px solid var(--line);
+    border-radius:14px; padding:10px; margin-bottom:8px; box-shadow:var(--shadow); align-items:center}
+  .thumb{width:56px; height:56px; border-radius:10px; background:var(--chip); flex:none;
+    display:flex; align-items:center; justify-content:center; font-size:24px; overflow:hidden}
+  .thumb img{width:100%; height:100%; object-fit:cover}
+  .item .name{font-weight:600; font-size:14.5px}
+  .item .sub{font-size:12px; color:var(--muted); margin-top:1px}
+  .fab{position:fixed; right:16px; bottom:calc(76px + env(safe-area-inset-bottom)); z-index:25;
+    width:54px; height:54px; border-radius:50%; border:0; background:var(--accent); color:#fff;
+    font-size:28px; line-height:1; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.25)}
+  .modal{position:fixed; inset:0; z-index:40; background:var(--bg); display:none; overflow-y:auto; padding:0 0 40px}
+  .modal.open{display:block}
+  .modal .mhead{position:sticky; top:0; background:var(--bg); z-index:5; display:flex; align-items:center;
+    gap:10px; padding:12px 14px; border-bottom:1px solid var(--line)}
+  .modal .mhead h2{margin:0; font-size:16px; flex:1}
+  .modal .mbody{padding:14px; max-width:640px; margin:0 auto}
+  label.f{display:block; margin-bottom:11px}
+  label.f span{display:block; font-size:12px; color:var(--muted); margin-bottom:4px}
+  label.f input,label.f select,label.f textarea{width:100%; border:1px solid var(--line);
+    background:var(--card); color:var(--ink); border-radius:11px; padding:10px 12px; font-size:15px; font-family:inherit}
+  .f2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .photobox{border:1.5px dashed var(--line); border-radius:12px; min-height:100px; display:flex;
+    align-items:center; justify-content:center; text-align:center; cursor:pointer; color:var(--muted);
+    font-size:13px; overflow:hidden; background:var(--card); position:relative}
+  .photobox img{width:100%; max-height:280px; object-fit:contain; display:block}
+  .photobox .clearp{position:absolute; top:6px; right:6px; background:rgba(0,0,0,.55); color:#fff;
+    border:0; border-radius:8px; padding:3px 8px; font-size:12px; cursor:pointer}
+  .dowbar{display:flex; gap:5px; flex-wrap:wrap; margin:4px 0 12px}
+  .dowbar button{border:1px solid var(--line); background:var(--card); color:var(--muted);
+    border-radius:9px; padding:6px 0; width:42px; font-size:12px; cursor:pointer}
+  .dowbar button.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600}
+  .empty{color:var(--muted); text-align:center; padding:26px 10px; font-size:13.5px}
+  .scorebar{height:14px; background:var(--chip); border-radius:7px; overflow:hidden; margin:6px 0}
+  .scorebar .fill{height:100%; border-radius:7px}
+  .duo{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .duo figure{margin:0}
+  .duo img,.duo canvas{width:100%; border-radius:10px; display:block; background:var(--chip)}
+  .duo figcaption{font-size:11px; color:var(--muted); text-align:center; margin-top:3px}
+  table.hist{width:100%; border-collapse:collapse; font-size:12.5px}
+  table.hist td,table.hist th{padding:5px 4px; border-bottom:1px solid var(--line); text-align:left}
+  table.hist th{color:var(--muted); font-weight:500; font-size:11px}
+  a{color:var(--blue)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧹 <span data-t="appName">Home Keeper</span><small data-t="tagline">housekeeping &amp; placement</small></h1>
+  <a class="iconbtn" href="index.html" title="Home Stock">🧺</a>
+  <select id="langSel" class="iconbtn" aria-label="Language">
+    <option value="en">EN</option><option value="kn">ಕನ್ನಡ</option><option value="hi">हिंदी</option>
+  </select>
+  <button id="themeBtn" class="iconbtn" aria-label="Theme">🌙</button>
+</header>
+
+<main>
+  <section id="page-today" class="tabpage active">
+    <h3 id="todayHead" style="margin:2px 0 10px"></h3>
+    <div id="todayList"></div>
+  </section>
+
+  <section id="page-areas" class="tabpage">
+    <p class="muted" data-t="areasHint">Each area (showcase, shelf, mantel…) keeps a master photo of how its objects are arranged. After cleaning, the after-photo is checked against this master.</p>
+    <div id="areaList"></div>
+  </section>
+
+  <section id="page-team" class="tabpage">
+    <div id="teamList"></div>
+  </section>
+
+  <section id="page-history" class="tabpage">
+    <div id="histList"></div>
+  </section>
+</main>
+
+<button class="fab" id="fabAdd">＋</button>
+
+<nav>
+  <button data-page="today" class="active"><span class="ico">📋</span><span data-t="tabToday">Today</span></button>
+  <button data-page="areas"><span class="ico">🖼️</span><span data-t="tabAreas">Areas</span></button>
+  <button data-page="team"><span class="ico">👥</span><span data-t="tabTeam">Team</span></button>
+  <button data-page="history"><span class="ico">📜</span><span data-t="tabHistory">History</span></button>
+</nav>
+
+<!-- ============ TASK FORM ============ -->
+<div class="modal" id="taskModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('taskModal')">←</button>
+    <h2 data-t="addTask">Schedule a task</h2>
+    <button class="btn small" onclick="saveTask()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <label class="f"><span data-t="taskTitle">Task *</span><input id="tkTitle" placeholder="e.g. Dust & rearrange showcase"></label>
+    <div class="f2">
+      <label class="f"><span data-t="area">Area</span><select id="tkArea"></select></label>
+      <label class="f"><span data-t="assignee">Assigned to</span><select id="tkWho"></select></label>
+    </div>
+    <label class="f"><span data-t="freq">Repeat</span>
+      <select id="tkFreq" onchange="freqUI()">
+        <option value="daily" data-t="everyday">Every day</option>
+        <option value="weekly" data-t="weeklyOn">Weekly (choose days)</option>
+        <option value="once" data-t="once">One time</option>
+      </select></label>
+    <div id="dowWrap" hidden><span class="muted" data-t="chooseDays">Days of the week</span><div class="dowbar" id="dowBar"></div></div>
+    <label class="f" id="onceWrap" hidden><span data-t="date">Date</span><input id="tkDate" type="date"></label>
+    <button class="btn danger small" id="btnDelTask" hidden onclick="deleteTask()" data-t="delete">Delete</button>
+  </div>
+</div>
+
+<!-- ============ AREA FORM ============ -->
+<div class="modal" id="areaModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('areaModal')">←</button>
+    <h2 data-t="addArea">Area & master photo</h2>
+    <button class="btn small" onclick="saveArea()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <label class="f"><span data-t="areaName">Area name *</span><input id="arName" placeholder="e.g. Living-room showcase"></label>
+    <span class="muted" data-t="masterHint">Master photo — arrange everything exactly right, then photograph it. This is the reference the after-clean photo is checked against.</span>
+    <div class="photobox" id="arBox" style="margin-top:6px" onclick="document.getElementById('arInput').click()">
+      <span data-t="snapMaster">📷 Tap to photograph the master arrangement</span>
+    </div>
+    <input id="arInput" type="file" accept="image/*" capture="environment" hidden>
+    <p class="muted" id="arMasterDate"></p>
+    <label class="f" style="margin-top:8px"><span data-t="notes">Notes (fragile items, order…)</span><textarea id="arNotes" rows="2"></textarea></label>
+    <button class="btn danger small" id="btnDelArea" hidden onclick="deleteArea()" data-t="delete">Delete</button>
+  </div>
+</div>
+
+<!-- ============ STAFF FORM ============ -->
+<div class="modal" id="staffModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('staffModal')">←</button>
+    <h2 data-t="addStaff">Team member</h2>
+    <button class="btn small" onclick="saveStaff()" data-t="save">Save</button>
+  </div>
+  <div class="mbody">
+    <label class="f"><span data-t="staffName">Name *</span><input id="stName"></label>
+    <label class="f"><span data-t="role">Role</span><input id="stRole" placeholder="e.g. Housekeeping, Cook, Family"></label>
+    <button class="btn danger small" id="btnDelStaff" hidden onclick="deleteStaff()" data-t="delete">Delete</button>
+  </div>
+</div>
+
+<!-- ============ VERIFY ============ -->
+<div class="modal" id="verifyModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('verifyModal')">←</button>
+    <h2 data-t="verifyTitle">Placement check</h2><span></span>
+  </div>
+  <div class="mbody">
+    <p class="muted" id="vfTask"></p>
+    <div class="duo">
+      <figure><img id="vfMaster" alt="master"><figcaption data-t="masterCap">Master</figcaption></figure>
+      <figure>
+        <div class="photobox" id="vfBox" style="min-height:80px" onclick="document.getElementById('vfInput').click()">
+          <span data-t="snapAfter">📷 After-clean photo</span>
+        </div>
+        <figcaption data-t="afterCap">After cleaning</figcaption>
+      </figure>
+    </div>
+    <input id="vfInput" type="file" accept="image/*" capture="environment" hidden>
+    <div id="vfResult"></div>
+  </div>
+</div>
+
+<!-- ============ PHOTO VIEW ============ -->
+<div class="modal" id="photoModal">
+  <div class="mhead">
+    <button class="iconbtn" onclick="closeModal('photoModal')">←</button>
+    <h2 id="photoTitle"></h2><span></span>
+  </div>
+  <div class="mbody" id="photoBody"></div>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Home Keeper — housekeeping schedules, assignments, and photo-verified
+   object placement. Companion to Home Stock (index.html); same
+   conventions: single file, trilingual, offline, IndexedDB.
+   Placement check = on-device visual comparison (brightness-normalised
+   region difference with mismatch boxes) + human confirmation — it
+   flags what moved, the person confirms.
+   ===================================================================== */
+
+const L = {
+en:{appName:'Home Keeper',tagline:'housekeeping & placement',
+  tabToday:'Today',tabAreas:'Areas',tabTeam:'Team',tabHistory:'History',
+  todayHead:d=>`📋 Schedule — ${d}`,save:'Save',delete:'Delete',edit:'Edit',
+  addTask:'Schedule a task',taskTitle:'Task *',area:'Area',assignee:'Assigned to',
+  freq:'Repeat',everyday:'Every day',weeklyOn:'Weekly (choose days)',once:'One time',
+  chooseDays:'Days of the week',date:'Date',noArea:'— no area —',noWho:'— unassigned —',
+  addArea:'Area & master photo',areaName:'Area name *',notes:'Notes (fragile items, order…)',
+  areasHint:'Each area (showcase, shelf, mantel…) keeps a master photo of how its objects are arranged. After cleaning, the after-photo is checked against this master.',
+  masterHint:'Master photo — arrange everything exactly right, then photograph it. This is the reference the after-clean photo is checked against.',
+  snapMaster:'📷 Tap to photograph the master arrangement',
+  masterSet:d=>`Master photo taken ${d}`,noMaster:'No master photo yet',
+  addStaff:'Team member',staffName:'Name *',role:'Role',
+  verifyTitle:'Placement check',masterCap:'Master',afterCap:'After cleaning',
+  snapAfter:'📷 After-clean photo',
+  match:'Placement match',flagged:n=>`${n} area(s) look different — check the red boxes`,
+  verdictOk:'✅ Looks correctly placed',verdictCheck:'⚠️ Some objects may have moved — compare the red boxes with the master',
+  confirmOk:'✓ Placed correctly',confirmRedo:'✗ Needs re-doing',
+  done:'Done ✓',doneVerify:'📷 Done — verify placement',markDone:'Mark done',
+  verified:'verified',mismatch:'re-do flagged',plainDone:'done',
+  noTasksToday:'Nothing scheduled today. Tap ＋ to schedule a task.',
+  noAreas:'No areas yet. Tap ＋ to add an area and its master photo.',
+  noStaff:'No team members yet. Tap ＋ to add one.',
+  noHist:'No history yet — completed tasks appear here with their placement checks.',
+  needMasterFirst:'Add a master photo for this area first (Areas tab).',
+  confirmDel:'Delete this and its history?',allDone:'🎉 All of today\'s tasks are done.',
+  by:'by',viewPhotos:'photos 🖼️',reMaster:'Make this the new master',
+  histScore:'match',everyDay:'daily',onceOn:d=>`once · ${d}`,
+  dows:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']},
+kn:{appName:'ಹೋಮ್ ಕೀಪರ್',tagline:'ಮನೆ ನಿರ್ವಹಣೆ ಮತ್ತು ಜೋಡಣೆ',
+  tabToday:'ಇಂದು',tabAreas:'ಸ್ಥಳಗಳು',tabTeam:'ತಂಡ',tabHistory:'ಇತಿಹಾಸ',
+  todayHead:d=>`📋 ವೇಳಾಪಟ್ಟಿ — ${d}`,save:'ಉಳಿಸಿ',delete:'ಅಳಿಸಿ',edit:'ತಿದ್ದಿ',
+  addTask:'ಕೆಲಸ ನಿಗದಿಪಡಿಸಿ',taskTitle:'ಕೆಲಸ *',area:'ಸ್ಥಳ',assignee:'ಯಾರಿಗೆ',
+  freq:'ಪುನರಾವರ್ತನೆ',everyday:'ಪ್ರತಿದಿನ',weeklyOn:'ವಾರಕ್ಕೊಮ್ಮೆ (ದಿನ ಆರಿಸಿ)',once:'ಒಂದು ಬಾರಿ',
+  chooseDays:'ವಾರದ ದಿನಗಳು',date:'ದಿನಾಂಕ',noArea:'— ಸ್ಥಳ ಇಲ್ಲ —',noWho:'— ನಿಯೋಜನೆ ಇಲ್ಲ —',
+  addArea:'ಸ್ಥಳ ಮತ್ತು ಮಾಸ್ಟರ್ ಫೋಟೋ',areaName:'ಸ್ಥಳದ ಹೆಸರು *',notes:'ಟಿಪ್ಪಣಿ (ಸೂಕ್ಷ್ಮ ವಸ್ತು, ಕ್ರಮ…)',
+  areasHint:'ಪ್ರತಿ ಸ್ಥಳಕ್ಕೂ (ಶೋಕೇಸ್, ಕಪಾಟು…) ವಸ್ತುಗಳ ಜೋಡಣೆಯ ಮಾಸ್ಟರ್ ಫೋಟೋ ಇರುತ್ತದೆ. ಸ್ವಚ್ಛತೆಯ ನಂತರದ ಫೋಟೋವನ್ನು ಇದರೊಂದಿಗೆ ಹೋಲಿಸಲಾಗುತ್ತದೆ.',
+  masterHint:'ಮಾಸ್ಟರ್ ಫೋಟೋ — ಎಲ್ಲವನ್ನೂ ಸರಿಯಾಗಿ ಜೋಡಿಸಿ ಫೋಟೋ ತೆಗೆಯಿರಿ. ಸ್ವಚ್ಛತೆಯ ನಂತರದ ಫೋಟೋವನ್ನು ಇದಕ್ಕೆ ಹೋಲಿಸಲಾಗುತ್ತದೆ.',
+  snapMaster:'📷 ಮಾಸ್ಟರ್ ಜೋಡಣೆಯ ಫೋಟೋ ತೆಗೆಯಲು ಒತ್ತಿ',
+  masterSet:d=>`ಮಾಸ್ಟರ್ ಫೋಟೋ ${d} ರಂದು ತೆಗೆದದ್ದು`,noMaster:'ಇನ್ನೂ ಮಾಸ್ಟರ್ ಫೋಟೋ ಇಲ್ಲ',
+  addStaff:'ತಂಡದ ಸದಸ್ಯ',staffName:'ಹೆಸರು *',role:'ಪಾತ್ರ',
+  verifyTitle:'ಜೋಡಣೆ ಪರಿಶೀಲನೆ',masterCap:'ಮಾಸ್ಟರ್',afterCap:'ಸ್ವಚ್ಛತೆಯ ನಂತರ',
+  snapAfter:'📷 ಸ್ವಚ್ಛತೆಯ ನಂತರದ ಫೋಟೋ',
+  match:'ಜೋಡಣೆ ಹೊಂದಾಣಿಕೆ',flagged:n=>`${n} ಭಾಗ ಭಿನ್ನವಾಗಿ ಕಾಣುತ್ತದೆ — ಕೆಂಪು ಚೌಕ ನೋಡಿ`,
+  verdictOk:'✅ ಸರಿಯಾಗಿ ಜೋಡಿಸಿದಂತೆ ಕಾಣುತ್ತದೆ',verdictCheck:'⚠️ ಕೆಲವು ವಸ್ತುಗಳು ಸರಿದಿರಬಹುದು — ಕೆಂಪು ಚೌಕಗಳನ್ನು ಮಾಸ್ಟರ್‌ನೊಂದಿಗೆ ಹೋಲಿಸಿ',
+  confirmOk:'✓ ಸರಿಯಾಗಿ ಇಡಲಾಗಿದೆ',confirmRedo:'✗ ಮತ್ತೆ ಮಾಡಬೇಕು',
+  done:'ಮುಗಿಯಿತು ✓',doneVerify:'📷 ಮುಗಿಯಿತು — ಜೋಡಣೆ ಪರಿಶೀಲಿಸಿ',markDone:'ಮುಗಿಯಿತು ಎಂದು ಗುರುತಿಸಿ',
+  verified:'ಪರಿಶೀಲಿತ',mismatch:'ಮತ್ತೆ ಮಾಡಲು ಗುರುತು',plainDone:'ಮುಗಿದಿದೆ',
+  noTasksToday:'ಇಂದು ಯಾವ ಕೆಲಸವೂ ಇಲ್ಲ. ＋ ಒತ್ತಿ ನಿಗದಿಪಡಿಸಿ.',
+  noAreas:'ಇನ್ನೂ ಸ್ಥಳಗಳಿಲ್ಲ. ＋ ಒತ್ತಿ ಸ್ಥಳ ಮತ್ತು ಮಾಸ್ಟರ್ ಫೋಟೋ ಸೇರಿಸಿ.',
+  noStaff:'ಇನ್ನೂ ತಂಡದ ಸದಸ್ಯರಿಲ್ಲ. ＋ ಒತ್ತಿ ಸೇರಿಸಿ.',
+  noHist:'ಇನ್ನೂ ಇತಿಹಾಸವಿಲ್ಲ — ಮುಗಿದ ಕೆಲಸಗಳು ಪರಿಶೀಲನೆಯೊಂದಿಗೆ ಇಲ್ಲಿ ಕಾಣುತ್ತವೆ.',
+  needMasterFirst:'ಮೊದಲು ಈ ಸ್ಥಳಕ್ಕೆ ಮಾಸ್ಟರ್ ಫೋಟೋ ಸೇರಿಸಿ (ಸ್ಥಳಗಳು ಟ್ಯಾಬ್).',
+  confirmDel:'ಇದನ್ನು ಮತ್ತು ಇತಿಹಾಸವನ್ನು ಅಳಿಸಬೇಕೆ?',allDone:'🎉 ಇಂದಿನ ಎಲ್ಲಾ ಕೆಲಸ ಮುಗಿದಿದೆ.',
+  by:'ಮಾಡಿದವರು',viewPhotos:'ಫೋಟೋಗಳು 🖼️',reMaster:'ಇದನ್ನೇ ಹೊಸ ಮಾಸ್ಟರ್ ಮಾಡಿ',
+  histScore:'ಹೊಂದಾಣಿಕೆ',everyDay:'ಪ್ರತಿದಿನ',onceOn:d=>`ಒಮ್ಮೆ · ${d}`,
+  dows:['ಭಾನು','ಸೋಮ','ಮಂಗಳ','ಬುಧ','ಗುರು','ಶುಕ್ರ','ಶನಿ']},
+hi:{appName:'होम कीपर',tagline:'हाउसकीपिंग और सजावट',
+  tabToday:'आज',tabAreas:'स्थान',tabTeam:'टीम',tabHistory:'इतिहास',
+  todayHead:d=>`📋 शेड्यूल — ${d}`,save:'सेव',delete:'हटाएँ',edit:'संपादित',
+  addTask:'कार्य निर्धारित करें',taskTitle:'कार्य *',area:'स्थान',assignee:'किसे सौंपा',
+  freq:'दोहराव',everyday:'हर दिन',weeklyOn:'साप्ताहिक (दिन चुनें)',once:'एक बार',
+  chooseDays:'सप्ताह के दिन',date:'तिथि',noArea:'— कोई स्थान नहीं —',noWho:'— किसी को नहीं —',
+  addArea:'स्थान और मास्टर फ़ोटो',areaName:'स्थान का नाम *',notes:'नोट (नाज़ुक वस्तुएँ, क्रम…)',
+  areasHint:'हर स्थान (शोकेस, शेल्फ़…) की वस्तु-सजावट की एक मास्टर फ़ोटो रहती है. सफ़ाई के बाद की फ़ोटो इसी से मिलाई जाती है.',
+  masterHint:'मास्टर फ़ोटो — सब कुछ सही जगह सजाकर फ़ोटो लें. सफ़ाई के बाद की फ़ोटो इसी से जाँची जाएगी.',
+  snapMaster:'📷 मास्टर सजावट की फ़ोटो लेने के लिए दबाएँ',
+  masterSet:d=>`मास्टर फ़ोटो ${d} को ली गई`,noMaster:'अभी मास्टर फ़ोटो नहीं',
+  addStaff:'टीम सदस्य',staffName:'नाम *',role:'भूमिका',
+  verifyTitle:'सजावट जाँच',masterCap:'मास्टर',afterCap:'सफ़ाई के बाद',
+  snapAfter:'📷 सफ़ाई के बाद की फ़ोटो',
+  match:'सजावट मिलान',flagged:n=>`${n} हिस्से अलग दिखते हैं — लाल बक्से देखें`,
+  verdictOk:'✅ सही जगह रखा लगता है',verdictCheck:'⚠️ कुछ वस्तुएँ खिसकी हो सकती हैं — लाल बक्सों को मास्टर से मिलाएँ',
+  confirmOk:'✓ सही रखा गया',confirmRedo:'✗ दोबारा करना होगा',
+  done:'हो गया ✓',doneVerify:'📷 हो गया — सजावट जाँचें',markDone:'पूर्ण चिह्नित करें',
+  verified:'सत्यापित',mismatch:'दोबारा करने को कहा',plainDone:'पूर्ण',
+  noTasksToday:'आज कुछ निर्धारित नहीं. ＋ दबाकर कार्य जोड़ें.',
+  noAreas:'अभी कोई स्थान नहीं. ＋ दबाकर स्थान और मास्टर फ़ोटो जोड़ें.',
+  noStaff:'अभी कोई टीम सदस्य नहीं. ＋ दबाकर जोड़ें.',
+  noHist:'अभी इतिहास नहीं — पूर्ण कार्य जाँच सहित यहाँ दिखेंगे.',
+  needMasterFirst:'पहले इस स्थान की मास्टर फ़ोटो जोड़ें (स्थान टैब).',
+  confirmDel:'इसे और इसका इतिहास हटाएँ?',allDone:'🎉 आज के सभी कार्य पूर्ण.',
+  by:'द्वारा',viewPhotos:'फ़ोटो 🖼️',reMaster:'इसे नया मास्टर बनाएँ',
+  histScore:'मिलान',everyDay:'दैनिक',onceOn:d=>`एक बार · ${d}`,
+  dows:['रवि','सोम','मंगल','बुध','गुरु','शुक्र','शनि']}
+};
+let lang = localStorage.getItem('hs-lang') || 'en';
+const t = k => (L[lang][k] !== undefined ? L[lang][k] : L.en[k]);
+
+/* ---------------- IndexedDB ---------------- */
+let db;
+function openDB(){
+  return new Promise((res,rej)=>{
+    const rq = indexedDB.open('homekeeper',1);
+    rq.onupgradeneeded = e=>{
+      const d = e.target.result;
+      d.createObjectStore('staff',{keyPath:'id'});
+      d.createObjectStore('areas',{keyPath:'id'});
+      d.createObjectStore('tasks',{keyPath:'id'});
+      d.createObjectStore('logs',{keyPath:'id'});
+    };
+    rq.onsuccess = ()=>{db=rq.result; res();};
+    rq.onerror = ()=>rej(rq.error);
+  });
+}
+const dbAll = s => new Promise((res,rej)=>{const r=db.transaction(s).objectStore(s).getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});
+const dbPut = (s,o) => new Promise((res,rej)=>{const r=db.transaction(s,'readwrite').objectStore(s).put(o); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});
+const dbDel = (s,id) => new Promise((res,rej)=>{const r=db.transaction(s,'readwrite').objectStore(s).delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);});
+
+let staff=[], areas=[], tasks=[], logs=[];
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const today = () => new Date().toISOString().slice(0,10);
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const areaOf = id => areas.find(a=>a.id===id);
+const staffOf = id => staff.find(s=>s.id===id);
+const taskOf = id => tasks.find(x=>x.id===id);
+
+function compressImage(file,maxW=1100,q=0.72){
+  return new Promise((res,rej)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const sc = Math.min(1, maxW/img.width);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(img.src);
+      res(c.toDataURL('image/jpeg',q));
+    };
+    img.onerror = rej;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/* ---------------- nav / theme / lang ---------------- */
+let page='today';
+document.querySelectorAll('nav button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    page=b.dataset.page;
+    document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));
+    document.querySelectorAll('.tabpage').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+page).classList.add('active');
+    document.getElementById('fabAdd').style.display = page==='history'?'none':'';
+    render();
+  });
+});
+document.getElementById('fabAdd').onclick = ()=>{
+  if(page==='areas') openAreaForm();
+  else if(page==='team') openStaffForm();
+  else openTaskForm();
+};
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function openModal(id){document.getElementById(id).classList.add('open'); document.getElementById(id).scrollTop=0}
+
+const themeBtn = document.getElementById('themeBtn');
+function applyTheme(v){
+  if(v) document.documentElement.dataset.theme = v; else delete document.documentElement.dataset.theme;
+  themeBtn.textContent = (document.documentElement.dataset.theme==='dark') ? '☀️' : '🌙';
+}
+themeBtn.onclick = ()=>{
+  const cur = document.documentElement.dataset.theme ||
+    (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  const next = cur==='dark' ? 'light':'dark';
+  localStorage.setItem('hs-theme',next); applyTheme(next);
+};
+applyTheme(localStorage.getItem('hs-theme')||'');
+
+const langSel = document.getElementById('langSel');
+langSel.value = lang;
+langSel.onchange = ()=>{lang=langSel.value; localStorage.setItem('hs-lang',lang); applyLang(); render();};
+function applyLang(){
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    const v = t(el.dataset.t);
+    if(typeof v==='string') el.innerHTML = esc(v).replace(/\n/g,'<br>');
+  });
+}
+
+/* ---------------- today / schedule ---------------- */
+function dueToday(task){
+  const d = new Date(), dow = d.getDay();
+  if(task.freq==='daily') return true;
+  if(task.freq==='weekly') return (task.dows||[]).includes(dow);
+  if(task.freq==='once') return task.date===today();
+  return false;
+}
+function logForToday(taskId){return logs.find(l=>l.taskId===taskId && l.date===today());}
+function freqLabel(task){
+  if(task.freq==='daily') return t('everyDay');
+  if(task.freq==='weekly') return (task.dows||[]).map(d=>t('dows')[d]).join(' ');
+  return t('onceOn')(task.date||'');
+}
+function renderToday(){
+  document.getElementById('todayHead').textContent =
+    t('todayHead')(new Date().toLocaleDateString(lang==='kn'?'kn-IN':lang==='hi'?'hi-IN':'en-IN',{weekday:'long',day:'numeric',month:'short'}));
+  const due = tasks.filter(dueToday);
+  const el = document.getElementById('todayList');
+  if(!due.length){el.innerHTML=`<div class="empty">${esc(t('noTasksToday'))}</div>`; return;}
+  const open = due.filter(x=>!logForToday(x.id)), closed = due.filter(x=>logForToday(x.id));
+  const card = (task)=>{
+    const ar = areaOf(task.areaId), who = staffOf(task.whoId), lg = logForToday(task.id);
+    const status = lg ? (lg.status==='verified'?`<span class="chip green">✅ ${esc(t('verified'))} ${lg.score!=null?lg.score+'%':''}</span>`
+                      : lg.status==='mismatch'?`<span class="chip red">⚠️ ${esc(t('mismatch'))}</span>`
+                      : `<span class="chip green">${esc(t('plainDone'))}</span>`) : '';
+    return `<div class="item">
+      <div class="thumb">${ar&&ar.master?`<img src="${ar.master}">`:'🧹'}</div>
+      <div class="grow" onclick="openTaskForm('${task.id}')">
+        <div class="name">${esc(task.title)}</div>
+        <div class="sub">${ar?esc(ar.name)+' · ':''}${who?'👤 '+esc(who.name)+' · ':''}${esc(freqLabel(task))}</div>
+        <div style="margin-top:3px">${status}</div>
+      </div>
+      ${lg?'':`<div style="display:flex; flex-direction:column; gap:6px">
+        ${ar&&ar.master
+          ?`<button class="btn small" onclick="startVerify('${task.id}')">${esc(t('doneVerify'))}</button>`
+          :`<button class="btn small ghost" onclick="markPlainDone('${task.id}')">${esc(t('markDone'))}</button>`}
+      </div>`}
+    </div>`;
+  };
+  el.innerHTML = open.map(card).join('')
+    + (open.length===0?`<div class="card">${esc(t('allDone'))}</div>`:'')
+    + closed.map(card).join('');
+}
+async function markPlainDone(taskId){
+  const task = taskOf(taskId); if(!task) return;
+  const l = {id:uid(), taskId, areaId:task.areaId, whoId:task.whoId, date:today(), status:'done'};
+  logs.push(l); await dbPut('logs',l); render();
+}
+
+/* ---------------- task form ---------------- */
+let editTaskId=null, dowSel=new Set();
+function freqUI(){
+  document.getElementById('dowWrap').hidden = tkFreq.value!=='weekly';
+  document.getElementById('onceWrap').hidden = tkFreq.value!=='once';
+}
+function paintDows(){
+  document.getElementById('dowBar').innerHTML = t('dows').map((d,i)=>
+    `<button type="button" class="${dowSel.has(i)?'on':''}" onclick="dowSel.has(${i})?dowSel.delete(${i}):dowSel.add(${i});paintDows()">${esc(d)}</button>`).join('');
+}
+function openTaskForm(id){
+  editTaskId = id||null;
+  const task = id?taskOf(id):null;
+  tkTitle.value = task?.title||'';
+  tkArea.innerHTML = `<option value="">${esc(t('noArea'))}</option>`+areas.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+  tkWho.innerHTML = `<option value="">${esc(t('noWho'))}</option>`+staff.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  tkArea.value = task?.areaId||''; tkWho.value = task?.whoId||'';
+  tkFreq.value = task?.freq||'daily'; tkDate.value = task?.date||today();
+  dowSel = new Set(task?.dows||[]); paintDows(); freqUI();
+  document.getElementById('btnDelTask').hidden = !task;
+  openModal('taskModal');
+}
+async function saveTask(){
+  if(!tkTitle.value.trim()){tkTitle.focus(); return;}
+  const task = {id:editTaskId||uid(), title:tkTitle.value.trim(), areaId:tkArea.value||null,
+    whoId:tkWho.value||null, freq:tkFreq.value, dows:[...dowSel].sort(), date:tkDate.value};
+  await dbPut('tasks',task);
+  const i = tasks.findIndex(x=>x.id===task.id);
+  if(i>=0) tasks[i]=task; else tasks.push(task);
+  closeModal('taskModal'); render();
+}
+async function deleteTask(){
+  if(!editTaskId || !confirm(t('confirmDel'))) return;
+  await dbDel('tasks',editTaskId);
+  tasks = tasks.filter(x=>x.id!==editTaskId);
+  closeModal('taskModal'); render();
+}
+
+/* ---------------- areas & master photos ---------------- */
+let editAreaId=null, areaPhoto=null;
+document.getElementById('arInput').addEventListener('change',async e=>{
+  if(e.target.files[0]){areaPhoto = await compressImage(e.target.files[0]); paintAreaPhoto();}
+  e.target.value='';
+});
+function paintAreaPhoto(){
+  const box = document.getElementById('arBox');
+  box.innerHTML = areaPhoto
+    ? `<img src="${areaPhoto}"><button class="clearp" onclick="event.stopPropagation();areaPhoto=null;paintAreaPhoto()">✕</button>`
+    : `<span>${esc(t('snapMaster'))}</span>`;
+}
+function openAreaForm(id){
+  editAreaId = id||null;
+  const a = id?areaOf(id):null;
+  arName.value = a?.name||''; arNotes.value = a?.notes||'';
+  areaPhoto = a?.master||null; paintAreaPhoto();
+  document.getElementById('arMasterDate').textContent = a?.masterDate?t('masterSet')(a.masterDate):'';
+  document.getElementById('btnDelArea').hidden = !a;
+  openModal('areaModal');
+}
+async function saveArea(){
+  if(!arName.value.trim()){arName.focus(); return;}
+  const prev = editAreaId?areaOf(editAreaId):null;
+  const a = {id:editAreaId||uid(), name:arName.value.trim(), notes:arNotes.value.trim(),
+    master:areaPhoto, masterDate:areaPhoto ? (areaPhoto===prev?.master?prev.masterDate:today()) : null};
+  await dbPut('areas',a);
+  const i = areas.findIndex(x=>x.id===a.id);
+  if(i>=0) areas[i]=a; else areas.push(a);
+  closeModal('areaModal'); render();
+}
+async function deleteArea(){
+  if(!editAreaId || !confirm(t('confirmDel'))) return;
+  await dbDel('areas',editAreaId);
+  areas = areas.filter(x=>x.id!==editAreaId);
+  closeModal('areaModal'); render();
+}
+function renderAreas(){
+  const el = document.getElementById('areaList');
+  if(!areas.length){el.innerHTML=`<div class="empty">${esc(t('noAreas'))}</div>`; return;}
+  el.innerHTML = areas.map(a=>`<div class="item" onclick="openAreaForm('${a.id}')">
+    <div class="thumb">${a.master?`<img src="${a.master}">`:'🖼️'}</div>
+    <div class="grow">
+      <div class="name">${esc(a.name)}</div>
+      <div class="sub">${a.master?esc(t('masterSet')(a.masterDate||'')):esc(t('noMaster'))}</div>
+      ${a.notes?`<div class="sub">📝 ${esc(a.notes)}</div>`:''}
+    </div>
+  </div>`).join('');
+}
+
+/* ---------------- team ---------------- */
+let editStaffId=null;
+function openStaffForm(id){
+  editStaffId = id||null;
+  const s = id?staffOf(id):null;
+  stName.value = s?.name||''; stRole.value = s?.role||'';
+  document.getElementById('btnDelStaff').hidden = !s;
+  openModal('staffModal');
+}
+async function saveStaff(){
+  if(!stName.value.trim()){stName.focus(); return;}
+  const s = {id:editStaffId||uid(), name:stName.value.trim(), role:stRole.value.trim()};
+  await dbPut('staff',s);
+  const i = staff.findIndex(x=>x.id===s.id);
+  if(i>=0) staff[i]=s; else staff.push(s);
+  closeModal('staffModal'); render();
+}
+async function deleteStaff(){
+  if(!editStaffId || !confirm(t('confirmDel'))) return;
+  await dbDel('staff',editStaffId);
+  staff = staff.filter(x=>x.id!==editStaffId);
+  closeModal('staffModal'); render();
+}
+function renderTeam(){
+  const el = document.getElementById('teamList');
+  if(!staff.length){el.innerHTML=`<div class="empty">${esc(t('noStaff'))}</div>`; return;}
+  el.innerHTML = staff.map(s=>{
+    const open = tasks.filter(x=>x.whoId===s.id && dueToday(x) && !logForToday(x.id)).length;
+    return `<div class="item" onclick="openStaffForm('${s.id}')">
+      <div class="thumb">👤</div>
+      <div class="grow">
+        <div class="name">${esc(s.name)}</div>
+        <div class="sub">${esc(s.role||'')}</div>
+      </div>
+      ${open?`<span class="chip amber">${open} 📋</span>`:`<span class="chip green">✓</span>`}
+    </div>`;
+  }).join('');
+}
+
+/* ---------------- placement verification ----------------
+   Both photos are scaled to a common grid, converted to grayscale and
+   brightness/contrast-normalised (so evening vs morning light matters
+   less), then compared region by region. Regions that differ get red
+   boxes drawn over the after-photo. A person confirms the verdict —
+   this flags what moved; it does not "recognise" objects. */
+function loadImg(src){return new Promise((res,rej)=>{const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=src;});}
+async function compareImages(masterSrc, afterSrc){
+  const S=96, G=12, cell=S/G;
+  const [ia,ib] = await Promise.all([loadImg(masterSrc),loadImg(afterSrc)]);
+  const gray = img=>{
+    const c=document.createElement('canvas'); c.width=c.height=S;
+    c.getContext('2d').drawImage(img,0,0,S,S);
+    const d=c.getContext('2d').getImageData(0,0,S,S).data;
+    const g=new Float32Array(S*S);
+    for(let i=0;i<S*S;i++) g[i]=d[i*4]*.299+d[i*4+1]*.587+d[i*4+2]*.114;
+    return g;
+  };
+  const norm = g=>{
+    let m=0; for(const v of g) m+=v; m/=g.length;
+    let sd=0; for(const v of g) sd+=(v-m)*(v-m); sd=Math.sqrt(sd/g.length)||1;
+    const o=new Float32Array(g.length);
+    for(let i=0;i<g.length;i++) o[i]=(g[i]-m)/sd;
+    return o;
+  };
+  const na=norm(gray(ia)), nb=norm(gray(ib));
+  const blocks=[]; let total=0;
+  for(let gy=0;gy<G;gy++)for(let gx=0;gx<G;gx++){
+    let diff=0;
+    for(let y=0;y<cell;y++)for(let x=0;x<cell;x++){
+      const i=(gy*cell+y)*S+(gx*cell+x);
+      diff+=Math.abs(na[i]-nb[i]);
+    }
+    diff/=cell*cell;
+    blocks.push({gx,gy,diff}); total+=diff;
+  }
+  const avg = total/blocks.length;
+  const score = Math.max(0, Math.min(100, Math.round(100 - avg*70)));
+  const flagged = blocks.filter(b=>b.diff>Math.max(0.5, avg*1.7));
+  return {score, flagged, G, afterImg:ib};
+}
+function drawOverlay(canvas, res){
+  const img = res.afterImg, W = Math.min(480, img.width);
+  const H = Math.round(img.height*W/img.width);
+  canvas.width=W; canvas.height=H;
+  const x = canvas.getContext('2d');
+  x.drawImage(img,0,0,W,H);
+  x.strokeStyle='rgba(220,38,38,.95)'; x.fillStyle='rgba(220,38,38,.18)'; x.lineWidth=2;
+  for(const b of res.flagged){
+    const bx=b.gx*W/res.G, by=b.gy*H/res.G, bw=W/res.G, bh=H/res.G;
+    x.fillRect(bx,by,bw,bh); x.strokeRect(bx,by,bw,bh);
+  }
+}
+
+let verifyTaskId=null, afterPhoto=null, verifyRes=null;
+document.getElementById('vfInput').addEventListener('change',async e=>{
+  if(e.target.files[0]){
+    afterPhoto = await compressImage(e.target.files[0]);
+    document.getElementById('vfBox').innerHTML = `<img src="${afterPhoto}">`;
+    runCompare();
+  }
+  e.target.value='';
+});
+function startVerify(taskId){
+  const task = taskOf(taskId), ar = task&&areaOf(task.areaId);
+  if(!ar || !ar.master){alert(t('needMasterFirst')); return;}
+  verifyTaskId = taskId; afterPhoto=null; verifyRes=null;
+  document.getElementById('vfTask').textContent = `${task.title} · ${ar.name}`;
+  document.getElementById('vfMaster').src = ar.master;
+  document.getElementById('vfBox').innerHTML = `<span>${esc(t('snapAfter'))}</span>`;
+  document.getElementById('vfResult').innerHTML = '';
+  openModal('verifyModal');
+}
+async function runCompare(){
+  const task = taskOf(verifyTaskId), ar = areaOf(task.areaId);
+  verifyRes = await compareImages(ar.master, afterPhoto);
+  const ok = verifyRes.score>=85 && verifyRes.flagged.length<=3;
+  const col = ok?'var(--accent)':verifyRes.score>=70?'var(--amber)':'var(--red)';
+  document.getElementById('vfResult').innerHTML = `
+    <div class="card" style="margin-top:10px">
+      <div class="row"><b class="grow">${esc(t('match'))}</b><b style="color:${col}">${verifyRes.score}%</b></div>
+      <div class="scorebar"><div class="fill" style="width:${verifyRes.score}%;background:${col}"></div></div>
+      <p style="margin:6px 0">${esc(ok?t('verdictOk'):t('verdictCheck'))}</p>
+      ${verifyRes.flagged.length?`<p class="muted">${esc(t('flagged')(verifyRes.flagged.length))}</p>`:''}
+      <canvas id="vfOverlay" style="width:100%; border-radius:10px"></canvas>
+      <div class="row" style="margin-top:10px; gap:8px">
+        <button class="btn small grow" onclick="finishVerify('verified')">${esc(t('confirmOk'))}</button>
+        <button class="btn small danger grow" onclick="finishVerify('mismatch')">${esc(t('confirmRedo'))}</button>
+      </div>
+    </div>`;
+  drawOverlay(document.getElementById('vfOverlay'), verifyRes);
+}
+async function finishVerify(status){
+  const task = taskOf(verifyTaskId); if(!task) return;
+  const l = {id:uid(), taskId:task.id, areaId:task.areaId, whoId:task.whoId, date:today(),
+    status, score:verifyRes?verifyRes.score:null, after:afterPhoto};
+  logs.push(l); await dbPut('logs',l);
+  closeModal('verifyModal'); render();
+}
+
+/* ---------------- history ---------------- */
+function renderHistory(){
+  const el = document.getElementById('histList');
+  const ls = logs.slice().sort((a,b)=>a.date<b.date?1:-1);
+  if(!ls.length){el.innerHTML=`<div class="empty">${esc(t('noHist'))}</div>`; return;}
+  el.innerHTML = `<div class="card"><table class="hist">
+    <tr><th>${esc(t('date'))}</th><th></th><th>${esc(t('histScore'))}</th><th></th></tr>
+    ${ls.slice(0,60).map(l=>{
+      const task=taskOf(l.taskId), who=staffOf(l.whoId);
+      const chip = l.status==='verified'?`<span class="chip green">✅ ${l.score!=null?l.score+'%':''}</span>`
+        : l.status==='mismatch'?`<span class="chip red">⚠️ ${l.score!=null?l.score+'%':''}</span>`
+        : `<span class="chip">✓</span>`;
+      return `<tr><td>${esc(l.date)}</td>
+        <td>${esc(task?task.title:'—')}${who?`<br><span class="muted">${esc(t('by'))} ${esc(who.name)}</span>`:''}</td>
+        <td>${chip}</td>
+        <td>${l.after?`<a href="#" onclick="viewLog('${l.id}');return false">${esc(t('viewPhotos'))}</a>`:''}</td></tr>`;
+    }).join('')}
+  </table></div>`;
+}
+async function viewLog(id){
+  const l = logs.find(x=>x.id===id); if(!l||!l.after) return;
+  const ar = areaOf(l.areaId), task = taskOf(l.taskId);
+  document.getElementById('photoTitle').textContent = `${task?task.title:''} · ${l.date}`;
+  document.getElementById('photoBody').innerHTML = `
+    <div class="duo">
+      <figure><img src="${ar&&ar.master?ar.master:''}"><figcaption>${esc(t('masterCap'))}</figcaption></figure>
+      <figure><img src="${l.after}"><figcaption>${esc(t('afterCap'))} · ${l.score!=null?l.score+'%':''}</figcaption></figure>
+    </div>
+    ${ar?`<button class="btn small ghost" style="margin-top:10px" onclick="promoteMaster('${l.id}')">${esc(t('reMaster'))}</button>`:''}`;
+  openModal('photoModal');
+}
+async function promoteMaster(logId){
+  const l = logs.find(x=>x.id===logId), ar = l&&areaOf(l.areaId);
+  if(!ar||!l.after) return;
+  ar.master = l.after; ar.masterDate = l.date;
+  await dbPut('areas',ar);
+  closeModal('photoModal'); render();
+}
+
+/* ---------------- boot ---------------- */
+function render(){renderToday(); renderAreas(); renderTeam(); renderHistory();}
+(async function(){
+  await openDB();
+  [staff,areas,tasks,logs] = await Promise.all([dbAll('staff'),dbAll('areas'),dbAll('tasks'),dbAll('logs')]);
+  applyLang(); render();
+})();
+</script>
+</body>
+</html>
