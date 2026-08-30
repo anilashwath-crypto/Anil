@@ -183,6 +183,16 @@
   .duo img,.duo canvas{width:100%; border-radius:10px; display:block; background:var(--chip)}
   .duo figcaption{font-size:11px; color:var(--muted); text-align:center; margin-top:3px}
   .brand{color:var(--muted); font-size:11px; text-align:center; margin:14px 0 4px; letter-spacing:.03em}
+  /* multi-photo grid (up to 4 per item) */
+  .pgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:6px}
+  .pcell{aspect-ratio:1; border:1.5px dashed var(--line); border-radius:10px; background:var(--card);
+    display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:20px;
+    cursor:pointer; overflow:hidden; position:relative}
+  .pcell img{width:100%; height:100%; object-fit:cover}
+  .pcell .clearp{position:absolute; top:3px; right:3px; background:rgba(0,0,0,.55); color:#fff;
+    border:0; border-radius:7px; padding:1px 6px; font-size:11px; cursor:pointer}
+  .scanmsg{font-size:12.5px; margin:6px 0; color:var(--muted)}
+  .scanmsg b{color:var(--accent)}
   /* app lock */
   #lockScreen{position:fixed; inset:0; z-index:100; background:var(--bg); display:none;
     align-items:center; justify-content:center; text-align:center; padding:24px}
@@ -326,11 +336,12 @@
     <button class="btn small" onclick="saveItem()" data-t="save">Save</button>
   </div>
   <div class="mbody">
-    <div class="photobox" id="photoBox" onclick="document.getElementById('photoInput').click()">
-      <span id="photoHint" data-t="takePhoto">📷 Tap to photograph the packet<br>(front + ingredients label)</span>
-    </div>
+    <span class="muted" data-t="photosHint">📷 Up to 4 photos — front, ingredients label, mfg/expiry panel, MRP</span>
+    <div class="pgrid" id="photoGrid" style="margin-top:6px"></div>
     <input id="photoInput" type="file" accept="image/*" capture="environment" hidden>
-    <div style="height:12px"></div>
+    <button class="btn small ghost" id="scanBtn" style="margin-top:8px" onclick="scanPacket()" data-t="scanBtn">📖 Read details from photos</button>
+    <div class="scanmsg" id="scanMsg"></div>
+    <div style="height:6px"></div>
     <label class="f"><span data-t="itemName">Item name *</span><input id="fName" placeholder="e.g. Toor dal 1kg"></label>
     <div class="f2">
       <label class="f"><span data-t="category">Category</span>
@@ -394,6 +405,8 @@
       <span id="invHint" data-t="snapInvoice">🧾 Tap to photograph the invoice</span>
     </div>
     <input id="invInput" type="file" accept="image/*" capture="environment" hidden>
+    <button class="btn small ghost" id="scanInvBtn" style="margin-top:8px" onclick="scanInvoice()" data-t="scanInvBtn">📖 Read the bill</button>
+    <div class="scanmsg" id="scanInvMsg"></div>
   </div>
 </div>
 
@@ -565,6 +578,8 @@
     <span class="muted" data-t="billPhotoLbl">🧾 Bill photo (optional)</span>
     <div class="photobox" id="fuBox" style="margin-top:6px; min-height:80px" onclick="document.getElementById('fuInput').click()"><span>🧾📷</span></div>
     <input id="fuInput" type="file" accept="image/*" capture="environment" hidden>
+    <button class="btn small ghost" id="scanFuelBtn" style="margin-top:8px" onclick="scanFuel()" data-t="scanInvBtn">📖 Read the bill</button>
+    <div class="scanmsg" id="scanFuelMsg"></div>
   </div>
 </div>
 
@@ -779,7 +794,12 @@ en:{appName:'HouseKeeper',tagline:'The House Of Ommi',search:'Search items…',a
   thisMonthS:'this month',needVehFirst:'Add a vehicle first.',
   noVeh:'No vehicles yet. Tap ＋ to add one.',noTrips:'No KM entries yet. Tap ＋ to log a day\'s run.',
   noFuel:'No fuel bills yet.',noReps:'No repairs logged yet.',
-  lockNeedsSecure:'App lock works on the https site or on localhost — on a WiFi hub address the app runs without the lock. Use "Forgot? Reset" only if you are locked out.'},
+  lockNeedsSecure:'App lock works on the https site or on localhost — on a WiFi hub address the app runs without the lock. Use "Forgot? Reset" only if you are locked out.',
+  photosHint:'📷 Up to 4 photos — front, ingredients label, mfg/expiry panel, MRP',
+  scanBtn:'📖 Read details from photos',scanInvBtn:'📖 Read the bill',scanning:'Reading…',
+  scanNeedPhoto:'Add a photo first.',scanFilled:'Read from photo →',totalLbl:'total',
+  scanNone:'Could not read useful details from the photo — please enter them manually.',
+  scanFail:'The photo-reader could not load (internet is needed the first time) — enter details manually.'},
 kn:{appName:'ಹೌಸ್‌ಕೀಪರ್',tagline:'The House Of Ommi',search:'ವಸ್ತು ಹುಡುಕಿ…',allCats:'ಎಲ್ಲಾ ವರ್ಗಗಳು',
   catGrocery:'ದಿನಸಿ',catToiletry:'ಸ್ನಾನ/ಶೌಚ ಸಾಮಗ್ರಿ',catCleaning:'ಸ್ವಚ್ಛತೆ',catOther:'ಇತರೆ',
   tabInv:'ದಾಸ್ತಾನು',tabBuy:'ಖರೀದಿ',tabAlerts:'ಎಚ್ಚರಿಕೆ',tabAI:'ವಿಶ್ಲೇಷಣೆ',tabMore:'ಇನ್ನಷ್ಟು',
@@ -884,7 +904,12 @@ kn:{appName:'ಹೌಸ್‌ಕೀಪರ್',tagline:'The House Of Ommi',search:
   thisMonthS:'ಈ ತಿಂಗಳು',needVehFirst:'ಮೊದಲು ವಾಹನ ಸೇರಿಸಿ.',
   noVeh:'ಇನ್ನೂ ವಾಹನಗಳಿಲ್ಲ. ＋ ಒತ್ತಿ ಸೇರಿಸಿ.',noTrips:'ಇನ್ನೂ KM ದಾಖಲೆ ಇಲ್ಲ. ＋ ಒತ್ತಿ ದಾಖಲಿಸಿ.',
   noFuel:'ಇನ್ನೂ ಇಂಧನ ಬಿಲ್ ಇಲ್ಲ.',noReps:'ಇನ್ನೂ ದುರಸ್ತಿ ದಾಖಲೆ ಇಲ್ಲ.',
-  lockNeedsSecure:'ಆ್ಯಪ್ ಲಾಕ್ https ಸೈಟ್ ಅಥವಾ localhost ನಲ್ಲಿ ಮಾತ್ರ ಕೆಲಸ ಮಾಡುತ್ತದೆ — WiFi ಹಬ್ ವಿಳಾಸದಲ್ಲಿ ಆ್ಯಪ್ ಲಾಕ್ ಇಲ್ಲದೆ ನಡೆಯುತ್ತದೆ.'},
+  lockNeedsSecure:'ಆ್ಯಪ್ ಲಾಕ್ https ಸೈಟ್ ಅಥವಾ localhost ನಲ್ಲಿ ಮಾತ್ರ ಕೆಲಸ ಮಾಡುತ್ತದೆ — WiFi ಹಬ್ ವಿಳಾಸದಲ್ಲಿ ಆ್ಯಪ್ ಲಾಕ್ ಇಲ್ಲದೆ ನಡೆಯುತ್ತದೆ.',
+  photosHint:'📷 ಗರಿಷ್ಠ 4 ಫೋಟೋ — ಮುಂಭಾಗ, ಪದಾರ್ಥ ಲೇಬಲ್, ತಯಾರಿಕೆ/ಅವಧಿ, MRP',
+  scanBtn:'📖 ಫೋಟೋದಿಂದ ವಿವರ ಓದಿ',scanInvBtn:'📖 ಬಿಲ್ ಓದಿ',scanning:'ಓದಲಾಗುತ್ತಿದೆ…',
+  scanNeedPhoto:'ಮೊದಲು ಫೋಟೋ ಸೇರಿಸಿ.',scanFilled:'ಫೋಟೋದಿಂದ ಓದಿದ್ದು →',totalLbl:'ಒಟ್ಟು',
+  scanNone:'ಫೋಟೋದಿಂದ ಉಪಯುಕ್ತ ವಿವರ ಓದಲಾಗಲಿಲ್ಲ — ದಯವಿಟ್ಟು ಕೈಯಾರೆ ನಮೂದಿಸಿ.',
+  scanFail:'ಫೋಟೋ-ರೀಡರ್ ಲೋಡ್ ಆಗಲಿಲ್ಲ (ಮೊದಲ ಬಾರಿ ಇಂಟರ್ನೆಟ್ ಬೇಕು) — ಕೈಯಾರೆ ನಮೂದಿಸಿ.'},
 hi:{appName:'हाउसकीपर',tagline:'The House Of Ommi',search:'वस्तु खोजें…',allCats:'सभी श्रेणियाँ',
   catGrocery:'किराना',catToiletry:'टॉयलेटरीज़',catCleaning:'सफ़ाई',catOther:'अन्य',
   tabInv:'स्टॉक',tabBuy:'ख़रीद',tabAlerts:'अलर्ट',tabAI:'विश्लेषण',tabMore:'और',
@@ -989,7 +1014,12 @@ hi:{appName:'हाउसकीपर',tagline:'The House Of Ommi',search:'व�
   thisMonthS:'इस माह',needVehFirst:'पहले वाहन जोड़ें.',
   noVeh:'अभी कोई वाहन नहीं. ＋ दबाकर जोड़ें.',noTrips:'अभी KM प्रविष्टि नहीं. ＋ दबाकर दर्ज करें.',
   noFuel:'अभी ईंधन बिल नहीं.',noReps:'अभी मरम्मत दर्ज नहीं.',
-  lockNeedsSecure:'ऐप लॉक https साइट या localhost पर ही चलता है — WiFi हब पते पर ऐप बिना लॉक चलता है.'}
+  lockNeedsSecure:'ऐप लॉक https साइट या localhost पर ही चलता है — WiFi हब पते पर ऐप बिना लॉक चलता है.',
+  photosHint:'📷 अधिकतम 4 फ़ोटो — सामने, सामग्री लेबल, निर्माण/एक्सपायरी, MRP',
+  scanBtn:'📖 फ़ोटो से विवरण पढ़ें',scanInvBtn:'📖 बिल पढ़ें',scanning:'पढ़ा जा रहा है…',
+  scanNeedPhoto:'पहले फ़ोटो जोड़ें.',scanFilled:'फ़ोटो से पढ़ा →',totalLbl:'कुल',
+  scanNone:'फ़ोटो से उपयोगी विवरण नहीं पढ़ा जा सका — कृपया हाथ से भरें.',
+  scanFail:'फ़ोटो-रीडर लोड नहीं हुआ (पहली बार इंटरनेट चाहिए) — हाथ से भरें.'}
 };
 let lang = localStorage.getItem('hs-lang') || 'en';
 const t = k => (L[lang][k] !== undefined ? L[lang][k] : L.en[k]);
@@ -1204,23 +1234,33 @@ function renderInventory(){
 }
 
 /* ---------------- item form ---------------- */
-let editingId=null, formPhoto=null;
+let editingId=null, formPhotos=[];
+const MAX_PHOTOS = 4;
 document.getElementById('photoInput').addEventListener('change',async e=>{
-  if(e.target.files[0]){formPhoto = await compressImage(e.target.files[0]); paintPhoto();}
+  if(e.target.files[0] && formPhotos.length<MAX_PHOTOS){
+    formPhotos.push(await compressImage(e.target.files[0]));
+    paintPhotos();
+  }
   e.target.value='';
 });
-function paintPhoto(){
-  const box = document.getElementById('photoBox');
-  box.innerHTML = formPhoto
-    ? `<img src="${formPhoto}" alt=""><button class="clearp" onclick="event.stopPropagation();formPhoto=null;paintPhoto()">✕</button>`
-    : `<span id="photoHint">${esc(t('takePhoto')).replace(/\n/g,'<br>')}</span>`;
+function delPhoto(i){formPhotos.splice(i,1); paintPhotos();}
+function paintPhotos(){
+  const cells = formPhotos.map((p,i)=>
+    `<div class="pcell"><img src="${p}" alt="">
+     <button class="clearp" onclick="delPhoto(${i})">✕</button></div>`);
+  if(formPhotos.length<MAX_PHOTOS)
+    cells.push(`<div class="pcell" onclick="document.getElementById('photoInput').click()">📷＋</div>`);
+  while(cells.length<MAX_PHOTOS) cells.push(`<div class="pcell" style="border-style:solid; opacity:.35"></div>`);
+  document.getElementById('photoGrid').innerHTML = cells.join('');
 }
 function openItemForm(id){
   editingId = id||null;
   const it = id?byId(id):null;
   document.getElementById('itemFormTitle').textContent = it?t('editItem'):t('addItem');
   document.getElementById('btnDeleteItem').hidden = !it;
-  formPhoto = it?.photo||null; paintPhoto();
+  formPhotos = it ? (it.photos ? it.photos.slice(0,MAX_PHOTOS) : (it.photo?[it.photo]:[])) : [];
+  paintPhotos();
+  document.getElementById('scanMsg').textContent='';
   fName.value=it?.name||''; fCat.value=it?.cat||'grocery'; fBrand.value=it?.brand||'';
   fStock.value=it?.stock??''; fUnit.value=it?.unit||'pcs';
   fMfg.value=it?.mfg||''; fExp.value=it?.exp||''; fPrice.value=it?.price??'';
@@ -1238,7 +1278,8 @@ async function saveItem(){
     stock, openingStock: prev?prev.openingStock:stock, unit:fUnit.value,
     mfg:fMfg.value, exp:fExp.value, price:parseFloat(fPrice.value)||null,
     low:parseFloat(fLow.value)||0, vendor:fVendor.value.trim(),
-    ingredients:fIng.value.trim(), photo:formPhoto,
+    ingredients:fIng.value.trim(),
+    photos:formPhotos.slice(0,MAX_PHOTOS), photo:formPhotos[0]||null,
     created: prev?prev.created:today(), wastedNoted: prev?.wastedNoted||false,
   };
   await dbPut('items',it);
@@ -1264,8 +1305,11 @@ function openDetail(id){
   const ps = purchases.filter(p=>p.itemId===id).sort((a,b)=>a.date<b.date?1:-1);
   const us = usage.filter(u=>u.itemId===id).sort((a,b)=>a.date<b.date?1:-1);
   const flags = ingFlagsOf(it);
+  const detPhotos = it.photos && it.photos.length ? it.photos : (it.photo?[it.photo]:[]);
   document.getElementById('detBody').innerHTML = `
-    ${it.photo?`<div class="card" style="padding:6px"><img src="${it.photo}" style="width:100%;border-radius:10px" alt=""></div>`:''}
+    ${detPhotos.length?`<div class="card" style="padding:6px">${
+      detPhotos.map(p=>`<img src="${p}" style="width:100%;border-radius:10px;margin-bottom:6px" alt="">`).join('')
+    }</div>`:''}
     <div class="card">
       <div>${expChip(it)} <span class="chip">${CAT_ICO[it.cat]} ${esc(catLabel(it.cat))}</span>
       ${it.brand?`<span class="chip">${esc(it.brand)}</span>`:''}</div>
@@ -2214,6 +2258,182 @@ function renderDrive(){
         <td>${rup(x.amount)}</td>
         <td>${x.bill?`<a href="#" onclick="viewBill('rep','${x.id}');return false">🧾</a>`:''}</td></tr>`;
     }).join('')}</table></div>` : `<div class="empty">${esc(t('noReps'))}</div>`;
+}
+
+/* ================================================================
+   PHOTO READING (OCR) — fill forms from packet / bill photographs.
+   Tesseract.js loads from a CDN on first use (browser-cached after).
+   Parsing is heuristic: it fills only empty fields and reports what
+   it read, so the user always confirms before saving.
+   ================================================================ */
+const OCR_SRCS = [
+  'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js',
+  'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
+];
+let ocrLoading=null;
+function loadOCR(){
+  if(window.Tesseract) return Promise.resolve();
+  if(ocrLoading) return ocrLoading;
+  ocrLoading = (async()=>{
+    for(const src of OCR_SRCS){
+      try{
+        await new Promise((res,rej)=>{
+          const s=document.createElement('script');
+          s.src=src; s.onload=res; s.onerror=()=>{s.remove(); rej(new Error('cdn'))};
+          document.head.appendChild(s);
+        });
+        return;
+      }catch(e){}
+    }
+    ocrLoading=null;
+    throw new Error('ocr-load');
+  })();
+  return ocrLoading;
+}
+async function ocrText(dataURL,onProgress){
+  await loadOCR();
+  const r = await Tesseract.recognize(dataURL,'eng',{logger:m=>{
+    if(m.status==='recognizing text' && onProgress) onProgress(Math.round(m.progress*100));
+  }});
+  return (r.data && r.data.text)||'';
+}
+
+/* ---- text parsers (Indian label / bill conventions, day-first dates) ---- */
+const MONTHS = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+const iso = (y,m,d)=>`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const lastDay = (y,m)=>new Date(y,m,0).getDate();
+function dateInText(s, endOfMonth){
+  if(!s) return null;
+  // collect every candidate with its position; the earliest one wins,
+  // so "EXP 08/2027 ... PKD 14.02.2026" reads the date next to the keyword
+  const cands=[]; let m;
+  const re1=/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/g;
+  while((m=re1.exec(s))){
+    let d=+m[1], mo=+m[2], y=+m[3];
+    if(y<100) y+=2000;
+    if(mo>12 && d<=12){const t=d; d=mo; mo=t;}          // mm/dd slipped in
+    if(mo>=1&&mo<=12&&d>=1&&d<=31&&y>2000&&y<2100) cands.push({i:m.index, iso:iso(y,mo,d)});
+  }
+  const re2=/(\d{1,2})[\/\-.](\d{4})/g;
+  while((m=re2.exec(s))){
+    const mo=+m[1], y=+m[2];
+    if(mo>=1&&mo<=12&&y>2000&&y<2100) cands.push({i:m.index+0.5, iso:iso(y,mo,endOfMonth?lastDay(y,mo):1)});
+  }
+  const re3=/([a-z]{3})[a-z]*\.?\s*[\/\-]?\s*(\d{4})/gi;
+  while((m=re3.exec(s))){
+    const mo=MONTHS[m[1].toLowerCase()], y=+m[2];
+    if(mo && y>2000&&y<2100) cands.push({i:m.index+0.5, iso:iso(y,mo,endOfMonth?lastDay(y,mo):1)});
+  }
+  if(!cands.length) return null;
+  cands.sort((a,b)=>a.i-b.i);
+  return cands[0].iso;
+}
+function afterKeyword(txt,re,span=34){
+  const m = re.exec(txt);
+  return m ? txt.substr(m.index+m[0].length, span) : null;
+}
+function addMonthsISO(isoDate,n){
+  const d = new Date(isoDate+'T00:00:00');
+  d.setMonth(d.getMonth()+n);
+  return d.toISOString().slice(0,10);
+}
+function parseLabel(raw){
+  const out = {};
+  out.mfg = dateInText(afterKeyword(raw,/(?:mfd|mfg|manufactur\w*|pkd|packed)\.?\s*(?:date|dt|on)?\s*[:\-]?/i), false);
+  out.exp = dateInText(afterKeyword(raw,/(?:exp|expiry|expires?|use\s*by|best\s*before)\.?\s*(?:date|dt)?\s*[:\-]?/i), true);
+  if(!out.exp && out.mfg){
+    const bb = raw.match(/best\s*before[^0-9]{0,12}(\d{1,3})\s*(?:month|mth|mo\b)/i);
+    if(bb) out.exp = addMonthsISO(out.mfg, +bb[1]);
+  }
+  const mrp = raw.match(/m\.?\s?r\.?\s?p\.?[^0-9₹]{0,10}(?:₹|rs\.?|inr)?\s*([\d,]+(?:\.\d{1,2})?)/i);
+  if(mrp) out.mrp = parseFloat(mrp[1].replace(/,/g,''));
+  const nq = raw.match(/net\s*(?:wt|weight|qty|quantity|content)s?\.?\s*[:\-]?\s*([\d.]+)\s*(kg|gm?|l(?:tr|itre)?|ml)/i);
+  if(nq){
+    const map={g:'g',gm:'g',kg:'kg',l:'L',ltr:'L',litre:'L',ml:'ml'};
+    out.netQty={q:parseFloat(nq[1]), unit:map[nq[2].toLowerCase()]||nq[2]};
+  }
+  const ing = raw.match(/ingredients?\s*[:\-]\s*([\s\S]{10,400}?)(?=\bnutri|\ballergen|\bstorage\b|\bmrp\b|\bmfd\b|\bmfg\b|\bbest\s*before|\bnet\s|\buse\s*by|\bexp\b|$)/i);
+  if(ing) out.ing = ing[1].replace(/\s+/g,' ').trim().replace(/[,;.\s]+$/,'');
+  return out;
+}
+function biggestAmount(raw){
+  const tot = raw.match(/(?:grand\s*)?total[^0-9]{0,14}([\d,]+(?:\.\d{1,2})?)/i);
+  if(tot) return parseFloat(tot[1].replace(/,/g,''));
+  let best=null;
+  for(const m of raw.matchAll(/(?:₹|rs\.?|inr)\s*([\d,]+(?:\.\d{1,2})?)/gi)){
+    const v=parseFloat(m[1].replace(/,/g,''));
+    if(v && (best===null||v>best)) best=v;
+  }
+  return best;
+}
+function parseInvoice(raw){
+  const vendor = (raw.split('\n').map(s=>s.trim()).find(s=>/[a-z]{3,}/i.test(s))||'').slice(0,40);
+  return {date:dateInText(raw,false), total:biggestAmount(raw), vendor};
+}
+function parseFuelBill(raw){
+  const lit = raw.match(/(?:vol\w*|qty|litres?)[^0-9]{0,10}([\d.]+)/i) || raw.match(/([\d.]+)\s*(?:l(?:tr|itre)?s?)\b/i);
+  return {litres:lit?parseFloat(lit[1]):null, amount:biggestAmount(raw), date:dateInText(raw,false)};
+}
+
+/* ---- scan flows (fill only empty fields; report what was read) ---- */
+async function ocrMany(photos, btn, label){
+  const texts=[];
+  for(let i=0;i<photos.length;i++){
+    texts.push(await ocrText(photos[i],
+      p=>{btn.textContent=`${label} ${photos.length>1?(i+1)+'/'+photos.length+' ':''}${p}%`;}));
+  }
+  return texts.join('\n');
+}
+async function scanPacket(){
+  const btn=document.getElementById('scanBtn'), msg=document.getElementById('scanMsg');
+  if(!formPhotos.length){msg.textContent=t('scanNeedPhoto'); return;}
+  btn.disabled=true; msg.textContent='';
+  try{
+    const txt = await ocrMany(formPhotos, btn, t('scanning'));
+    const f = parseLabel(txt), filled=[];
+    if(f.mfg && !fMfg.value){fMfg.value=f.mfg; filled.push(`${t('mfgDate')} ${f.mfg}`);}
+    if(f.exp && !fExp.value){fExp.value=f.exp; filled.push(`${t('expDate')} ${f.exp}`);}
+    if(f.mrp && !fPrice.value){fPrice.value=f.mrp; filled.push(`MRP ₹${f.mrp}`);}
+    if(f.ing && !fIng.value.trim()){fIng.value=f.ing; filled.push(t('ingredients').split('(')[0].trim());}
+    if(f.netQty){
+      if([...fUnit.options].some(o=>o.value===f.netQty.unit)){
+        if(!fStock.value){fUnit.value=f.netQty.unit; fStock.value=f.netQty.q;
+          filled.push(`${f.netQty.q} ${f.netQty.unit}`);}
+      }
+    }
+    msg.innerHTML = filled.length ? `<b>${esc(t('scanFilled'))}</b> ${esc(filled.join(' · '))}` : esc(t('scanNone'));
+  }catch(e){msg.textContent = t('scanFail');}
+  btn.disabled=false; btn.textContent=t('scanBtn');
+}
+async function scanInvoice(){
+  const btn=document.getElementById('scanInvBtn'), msg=document.getElementById('scanInvMsg');
+  if(!formInvoice){msg.textContent=t('scanNeedPhoto'); return;}
+  btn.disabled=true; msg.textContent='';
+  try{
+    const f = parseInvoice(await ocrMany([formInvoice], btn, t('scanning'))), filled=[];
+    if(f.date){pDate.value=f.date; filled.push(f.date);}
+    if(f.vendor && !pVendor.value.trim()){pVendor.value=f.vendor; filled.push(f.vendor);}
+    if(f.total){
+      const q=parseFloat(pQty.value);
+      if(q>0 && !pPrice.value){pPrice.value=+(f.total/q).toFixed(2);}
+      filled.push(`${t('totalLbl')} ₹${f.total}`);
+    }
+    msg.innerHTML = filled.length ? `<b>${esc(t('scanFilled'))}</b> ${esc(filled.join(' · '))}` : esc(t('scanNone'));
+  }catch(e){msg.textContent = t('scanFail');}
+  btn.disabled=false; btn.textContent=t('scanInvBtn');
+}
+async function scanFuel(){
+  const btn=document.getElementById('scanFuelBtn'), msg=document.getElementById('scanFuelMsg');
+  if(!fuelPhoto){msg.textContent=t('scanNeedPhoto'); return;}
+  btn.disabled=true; msg.textContent='';
+  try{
+    const f = parseFuelBill(await ocrMany([fuelPhoto], btn, t('scanning'))), filled=[];
+    if(f.date){fuDate.value=f.date; filled.push(f.date);}
+    if(f.litres && !fuLit.value){fuLit.value=f.litres; filled.push(f.litres+' L');}
+    if(f.amount && !fuAmt.value){fuAmt.value=f.amount; filled.push('₹'+f.amount);}
+    msg.innerHTML = filled.length ? `<b>${esc(t('scanFilled'))}</b> ${esc(filled.join(' · '))}` : esc(t('scanNone'));
+  }catch(e){msg.textContent = t('scanFail');}
+  btn.disabled=false; btn.textContent=t('scanInvBtn');
 }
 
 /* ---------------- first-run language setup ---------------- */

@@ -19,7 +19,8 @@ time from the header).
 | Feature | How |
 |---|---|
 | Opening stock | Add each product once with its starting quantity and unit |
-| Packet photos | Camera capture (front + ingredients label), compressed and stored on-device |
+| Packet photos | **Up to 4 photos per item** (front, ingredients label, mfg/expiry panel, MRP), compressed and stored on-device |
+| Read from photo (OCR) | **📖 Read details from photos** runs on-device OCR over all the item's photos and fills empty fields: mfg/expiry dates (incl. "best before N months"), MRP, net quantity/unit, ingredients. Purchase and fuel forms have **📖 Read the bill** for date/vendor/total and litres/amount. The reader (Tesseract) downloads from a CDN on first use (~few MB, then cached); results are shown for you to confirm — label prints vary, so treat it as a fast first draft, not gospel |
 | Mfg / expiry dates | Recorded per item; updated per batch when you log a new purchase |
 | Ingredients | Copied from the label; scanned for flags (palm oil, trans fats, MSG, maida, SLS/parabens, artificial colours, preservatives…) |
 | Expiry reminders | Alerts tab + phone notification (once a day when the app is opened) for anything expired or expiring within 7 days; 30-day early-warning list |
