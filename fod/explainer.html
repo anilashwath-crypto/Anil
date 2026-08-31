@@ -154,6 +154,7 @@
         <button data-s="rot15" aria-pressed="false">Rotated 15°</button>
         <button data-s="flip" aria-pressed="false">Flipped 180°</button>
         <button data-s="fo" aria-pressed="false">Nut left behind</button>
+        <button data-s="wrong" aria-pressed="false">Wrong part</button>
         <button data-s="missing" aria-pressed="false">No part</button>
       </div>
       <button class="rerun" id="rerun">⟳ Reload cycle &amp; check again</button>
@@ -214,8 +215,9 @@
         <p>The live frame is slid and twisted against the master — shifts of a few pixels, tilts to ±12°,
           plus the flipped positions 90/180/270° — and each pose is scored by how strongly the two images
           correlate. A part that merely sits a little off still scores high near 0° and passes. Best score
-          at a wrong angle → <code>MISORIENTED</code>. No pose scores above the job's threshold →
-          <code>JOB MISSING</code>. The dashed outline shows where the master expects the part.</p>
+          at a wrong angle → <code>MISORIENTED</code>. No pose — not even the best one — scores above the
+          job's threshold → <code>WRONG OR MISSING PART</code>: an empty fixture and a part from a
+          different job both fail here, because neither correlates with this job's master. The dashed outline shows where the master expects the part.</p>
       </div>
       <div class="viz"><canvas id="vz2" width="300" height="225"></canvas><div class="cap" id="cap2">LIVE FRAME vs EXPECTED POSE</div></div>
     </div>
@@ -354,6 +356,21 @@ function drawScene(ctx,o){ // o:{angle,dx,dy,part,fo,light,seed}
     ctx.beginPath();ctx.arc(24,46,8,0,7);ctx.fill();
     ctx.restore();
   }
+  // wrong part: a round flange from a different job
+  if(o.wrong){
+    const cx=ROI.x+ROI.w/2+o.dx,cy=ROI.y+ROI.h/2+o.dy;
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(o.angle*Math.PI/180);
+    const g=ctx.createRadialGradient(-18,-22,10,0,0,70);
+    g.addColorStop(0,"rgb("+(210*li|0)+","+(206*li|0)+","+(196*li|0)+")");
+    g.addColorStop(1,"rgb("+(128*li|0)+","+(126*li|0)+","+(120*li|0)+")");
+    ctx.fillStyle=g;ctx.strokeStyle="rgba(0,0,0,.55)";ctx.lineWidth=3;
+    ctx.translate(12,-9);ctx.beginPath();ctx.arc(0,0,52,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle="rgba(0,0,0,.35)";
+    for(let i=0;i<4;i++){const a=i*Math.PI/2+0.4;
+      ctx.beginPath();ctx.arc(Math.cos(a)*34,Math.sin(a)*34,7,0,7);ctx.fill();}
+    ctx.fillStyle="rgba(0,0,0,.45)";ctx.beginPath();ctx.arc(0,0,14,0,7);ctx.fill();
+    ctx.restore();
+  }
   // foreign object: hex nut left on the plate
   if(o.fo){
     const nx=ROI.x+ROI.w*0.70,ny=ROI.y+ROI.h*0.30;
@@ -386,7 +403,7 @@ function grayOf(canvas){ // ROI → blurred analysis gray
 const masterCv=document.createElement("canvas");masterCv.width=CW;masterCv.height=CH;
 drawScene(masterCv.getContext("2d"),{angle:0,dx:0,dy:0,part:true,fo:false,light:1,seed:7});
 const MG=grayOf(masterCv);
-const ORIENT_THRESH=0.60,DIFF_THRESH=45,MIN_AREA=Math.round(AW*AH*0.006);
+const ORIENT_THRESH=0.65,DIFF_THRESH=45,MIN_AREA=Math.round(AW*AH*0.006);
 
 /* ---------- interaction ---------- */
 const SCN={
@@ -394,6 +411,7 @@ const SCN={
   rot15:{angle:15,part:true,fo:false},
   flip:{angle:180,part:true,fo:false},
   fo:{angle:0,part:true,fo:true},
+  wrong:{angle:0,part:false,wrong:true,fo:false},
   missing:{angle:0,part:false,fo:false}};
 let scenario="correct",cur=null,busy=false;
 function reload(){
@@ -402,7 +420,7 @@ function reload(){
     dx:Math.round((Math.random()*2-1)*6),dy:Math.round((Math.random()*2-1)*5),
     angle:base.angle+(Math.random()*2-1)*1.5,
     light:0.92+Math.random()*0.16,seed:(Math.random()*1e9)|0};
-  if(!base.part){cur.dx=0;cur.dy=0;}
+  if(!base.part&&!base.wrong){cur.dx=0;cur.dy=0;}
   drawScene(cctx,cur);
   $("camTime").textContent="CYCLE "+new Date().toLocaleTimeString();
 }
@@ -429,14 +447,14 @@ function render(al,present,orientOk,blobs,dd,ok){
   $("mScore").style.background=orientOk?"var(--good)":"var(--bad)";
   $("vScore").textContent=Math.round(sc*100)+"%";
   $("vAngle").textContent=(al.th>0?"+":"")+Math.round(al.th)+"°";
-  $("vOrient").textContent=orientOk?"OK":(present?"WRONG":"NO PART");
+  $("vOrient").textContent=orientOk?"OK":(present?"WRONG":"NO MATCH");
   $("vOrient").style.color=orientOk?"var(--good)":"var(--bad)";
   $("vFo").textContent=orientOk?String(blobs.length):"—";
   $("vFo").style.color=blobs.length?"var(--bad)":"var(--good)";
   const v=$("verdict");
   v.className="verdict "+(ok?"ok":"bad");
   v.textContent=ok?"ALL CLEAR — DOOR LOCKED":
-    !present?"FAULT — JOB MISSING":
+    !present?"FAULT — WRONG OR MISSING PART":
     !orientOk?"FAULT — MISORIENTED "+(al.th>0?"+":"")+Math.round(al.th)+"°":
     "FAULT — FOREIGN OBJECT ×"+blobs.length;
   $("relay").innerHTML=ok
