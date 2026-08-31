@@ -138,3 +138,11 @@ the click handler, so wiring them to gateway commands (`POST /zones/:id/valve`
 etc.) is a small change. The dashboard is deliberately read-mostly: per the
 design's offline-first principle, schedules always run locally on the gateway
 even when this page can't reach the farm.
+
+## Related: `npk-live/`
+
+`npk-live/` holds the mobile dashboard for the FST100-2006E1111 soil NPK probe —
+a self-contained `npk-live.html` that polls the probe's own `server.py`, plus the
+server patch (`server.py.diff`) that adds a `/live` route, a CORS header and an
+`NPK_BIND` env var for LAN access. That is a separate project from the farm
+dashboard above; see `npk-live/README.md` for how to run and install it.
