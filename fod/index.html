@@ -118,6 +118,7 @@
       <select id="jobSel" class="pill"></select>
     </div>
     <button id="runBtn" class="big" disabled>▶ <span data-i="run">RUN CYCLE CHECK</span></button>
+    <button id="runAllBtn" class="ghost" style="width:100%;margin-top:8px">🏭 <span data-i="check_all">CHECK ALL MACHINES</span></button>
     <div class="row">
       <label><input type="checkbox" id="autoChk"> <span data-i="auto">Auto every</span></label>
       <input type="number" id="autoSec" min="3" max="600" value="15" style="width:70px" class="field">
@@ -162,6 +163,12 @@
       <canvas id="roiCanvas" width="640" height="480"></canvas>
     </div>
     <p class="note" data-i="roi_hint">Drag a box on the master image to mark the inspection zone (die / fixture area). The check runs only inside this zone.</p>
+
+    <div class="row" style="margin-top:12px"><label data-i="cell_head">Central mode — this machine's endpoints</label></div>
+    <input type="url" id="jobSnap" placeholder="http://192.168.1.64/snapshot.jpg">
+    <input type="url" id="jobLock" placeholder="http://192.168.1.90/relay/0?turn=on" style="margin-top:6px">
+    <input type="url" id="jobUnlock" placeholder="http://192.168.1.90/relay/0?turn=off" style="margin-top:6px">
+    <p class="note" data-i="cell_note">Optional — fill these when one computer supervises several machines over the network: this machine's camera snapshot URL, then its lock and unlock relay URLs. Blank fields fall back to Settings.</p>
 
     <div class="slider">
       <label><span data-i="orient_thresh">Orientation match required</span><b id="orientThreshVal"></b></label>
@@ -283,7 +290,11 @@ no_log:"No cycles yet.",clear_log:"Clear history",ok_txt:"PASS",bad_txt:"FAIL",
 orient_ok:"OK",misoriented:"Misoriented ~{a}°",job_missing:"Job missing / wrong job",fo_none:"None",fo_n:"{n} found",
 need_cam:"Start the camera first",need_master:"Capture a master image first",need_name:"Enter a job name",
 cam_err:"Camera error: ",snap_err:"Snapshot failed (URL/CORS): ",relay_sent:"Relay call sent",relay_err:"Relay call failed: ",
-confirm_del:"Delete this job?",confirm_clear:"Clear all history?",no_jobs:"— no jobs —",saved:"Saved ✓"},
+confirm_del:"Delete this job?",confirm_clear:"Clear all history?",no_jobs:"— no jobs —",saved:"Saved ✓",
+cell_head:"Central mode — this machine's endpoints",
+cell_note:"Optional — fill these when one computer supervises several machines over the network: this machine's camera snapshot URL, then its lock and unlock relay URLs. Blank fields fall back to Settings.",
+check_all:"CHECK ALL MACHINES",need_cells:"No machine has its own camera URL yet — set one in each job's Central-mode fields",
+checked_n:"{n} machines checked"},
 kn:{subtitle:"CCTV ಪರಕೀಯ ವಸ್ತು & ದಿಕ್ಕು ಪರಿಶೀಲನೆ",monitor:"ಮಾನಿಟರ್",jobs:"ಜಾಬ್‌ಗಳು",settings:"ಸೆಟ್ಟಿಂಗ್ಸ್",log:"ಲಾಗ್",
 ready:"ಸಿದ್ಧ — ಜಾಬ್ ಆಯ್ಕೆಮಾಡಿ ಚೆಕ್ ನಡೆಸಿ",checking:"ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ…",clear:"ಎಲ್ಲವೂ ಸರಿ — ಬಾಗಿಲು ಲಾಕ್",
 fault:"ದೋಷ — ಸೈಕಲ್ ಪ್ರಾರಂಭಿಸಬೇಡಿ",start_cam:"ಕ್ಯಾಮೆರಾ ಪ್ರಾರಂಭಿಸಿ",stop_cam:"ಕ್ಯಾಮೆರಾ ನಿಲ್ಲಿಸಿ",back_live:"ಲೈವ್‌ಗೆ ಹಿಂತಿರುಗಿ",
@@ -307,7 +318,11 @@ no_log:"ಇನ್ನೂ ಸೈಕಲ್‌ಗಳಿಲ್ಲ.",clear_log:"ಇತ
 orient_ok:"ಸರಿ",misoriented:"ದಿಕ್ಕು ತಪ್ಪಿದೆ ~{a}°",job_missing:"ಜಾಬ್ ಇಲ್ಲ / ತಪ್ಪು ಜಾಬ್",fo_none:"ಇಲ್ಲ",fo_n:"{n} ಪತ್ತೆ",
 need_cam:"ಮೊದಲು ಕ್ಯಾಮೆರಾ ಪ್ರಾರಂಭಿಸಿ",need_master:"ಮೊದಲು ಮಾಸ್ಟರ್ ಚಿತ್ರ ಸೆರೆಹಿಡಿಯಿರಿ",need_name:"ಜಾಬ್ ಹೆಸರು ನಮೂದಿಸಿ",
 cam_err:"ಕ್ಯಾಮೆರಾ ದೋಷ: ",snap_err:"ಸ್ನಾಪ್‌ಶಾಟ್ ವಿಫಲ (URL/CORS): ",relay_sent:"ರಿಲೇ ಕರೆ ಕಳುಹಿಸಲಾಗಿದೆ",relay_err:"ರಿಲೇ ಕರೆ ವಿಫಲ: ",
-confirm_del:"ಈ ಜಾಬ್ ಅಳಿಸುವುದೇ?",confirm_clear:"ಎಲ್ಲಾ ಇತಿಹಾಸ ಅಳಿಸುವುದೇ?",no_jobs:"— ಜಾಬ್‌ಗಳಿಲ್ಲ —",saved:"ಉಳಿಸಲಾಗಿದೆ ✓"},
+confirm_del:"ಈ ಜಾಬ್ ಅಳಿಸುವುದೇ?",confirm_clear:"ಎಲ್ಲಾ ಇತಿಹಾಸ ಅಳಿಸುವುದೇ?",no_jobs:"— ಜಾಬ್‌ಗಳಿಲ್ಲ —",saved:"ಉಳಿಸಲಾಗಿದೆ ✓",
+cell_head:"ಸೆಂಟ್ರಲ್ ಮೋಡ್ — ಈ ಯಂತ್ರದ ಎಂಡ್‌ಪಾಯಿಂಟ್‌ಗಳು",
+cell_note:"ಐಚ್ಛಿಕ — ಒಂದೇ ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ ಮೂಲಕ ಹಲವು ಯಂತ್ರಗಳನ್ನು ನೋಡಿಕೊಳ್ಳುವಾಗ ಇವನ್ನು ಭರ್ತಿ ಮಾಡಿ: ಈ ಯಂತ್ರದ ಕ್ಯಾಮೆರಾ ಸ್ನಾಪ್‌ಶಾಟ್ URL, ನಂತರ ಲಾಕ್ ಮತ್ತು ಅನ್‌ಲಾಕ್ ರಿಲೇ URL. ಖಾಲಿ ಇದ್ದರೆ ಸೆಟ್ಟಿಂಗ್ಸ್ ಬಳಕೆ.",
+check_all:"ಎಲ್ಲಾ ಯಂತ್ರ ಪರಿಶೀಲಿಸಿ",need_cells:"ಯಾವ ಯಂತ್ರಕ್ಕೂ ಕ್ಯಾಮೆರಾ URL ಇಲ್ಲ — ಪ್ರತಿ ಜಾಬ್‌ನ ಸೆಂಟ್ರಲ್-ಮೋಡ್ ಕ್ಷೇತ್ರಗಳಲ್ಲಿ ಹೊಂದಿಸಿ",
+checked_n:"{n} ಯಂತ್ರ ಪರಿಶೀಲಿಸಲಾಗಿದೆ"},
 hi:{subtitle:"CCTV बाहरी वस्तु व दिशा जाँच",monitor:"मॉनिटर",jobs:"जॉब",settings:"सेटिंग्स",log:"लॉग",
 ready:"तैयार — जॉब चुनें और साइकिल जाँच चलाएँ",checking:"जाँच हो रही है…",clear:"सब ठीक — दरवाज़ा लॉक",
 fault:"त्रुटि — साइकिल शुरू न करें",start_cam:"कैमरा शुरू करें",stop_cam:"कैमरा बंद करें",back_live:"लाइव पर लौटें",
@@ -331,7 +346,11 @@ no_log:"अभी कोई साइकिल नहीं।",clear_log:"इ�
 orient_ok:"ठीक",misoriented:"दिशा गलत ~{a}°",job_missing:"जॉब गायब / गलत जॉब",fo_none:"कोई नहीं",fo_n:"{n} मिलीं",
 need_cam:"पहले कैमरा शुरू करें",need_master:"पहले मास्टर छवि लें",need_name:"जॉब का नाम भरें",
 cam_err:"कैमरा त्रुटि: ",snap_err:"स्नैपशॉट विफल (URL/CORS): ",relay_sent:"रिले कॉल भेजी गई",relay_err:"रिले कॉल विफल: ",
-confirm_del:"यह जॉब हटाएँ?",confirm_clear:"पूरा इतिहास साफ़ करें?",no_jobs:"— कोई जॉब नहीं —",saved:"सहेजा गया ✓"}
+confirm_del:"यह जॉब हटाएँ?",confirm_clear:"पूरा इतिहास साफ़ करें?",no_jobs:"— कोई जॉब नहीं —",saved:"सहेजा गया ✓",
+cell_head:"सेंट्रल मोड — इस मशीन के एंडपॉइंट",
+cell_note:"वैकल्पिक — जब एक कंप्यूटर नेटवर्क से कई मशीनें देखता है तो ये भरें: इस मशीन का कैमरा स्नैपशॉट URL, फिर उसके लॉक और अनलॉक रिले URL। खाली रहने पर सेटिंग्स उपयोग होंगी।",
+check_all:"सभी मशीनें जाँचें",need_cells:"किसी मशीन का कैमरा URL सेट नहीं है — हर जॉब के सेंट्रल-मोड फ़ील्ड में सेट करें",
+checked_n:"{n} मशीनें जाँची गईं"}
 };
 let lang = "en";
 const t = (k,v)=>{let s=(L[lang]&&L[lang][k])||L.en[k]||k;if(v)for(const p in v)s=s.replace("{"+p+"}",v[p]);return s;};
@@ -411,15 +430,17 @@ async function listDevices(){
   }catch(e){}
 }
 function fetchSnapshot(url){
-  return fetch(url+(url.includes("?")?"&":"?")+"_t="+Date.now(),{cache:"no-store"})
+  const bust=/^https?:/i.test(url)?(url.includes("?")?"&":"?")+"_t="+Date.now():"";
+  return fetch(url+bust,{cache:"no-store"})
     .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.blob();})
     .then(b=>URL.createObjectURL(b));
 }
-/* Grab a full frame onto the work canvas. Returns {canvas,w,h} or null. */
-async function grabFrame(){
+/* Grab a full frame onto the work canvas. Returns {canvas,w,h} or null.
+   snapUrl (per-machine, central mode) overrides the global camera source. */
+async function grabFrame(snapUrl){
   const wk=$("work"),ctx=wk.getContext("2d",{willReadFrequently:true});
-  if(S.settings.camMode==="ip"){
-    const url=S.settings.snapUrl;if(!url)return null;
+  if(snapUrl||S.settings.camMode==="ip"){
+    const url=snapUrl||S.settings.snapUrl;if(!url)return null;
     const src=await fetchSnapshot(url);
     const img=new Image();
     await new Promise((res,rej)=>{img.onload=res;img.onerror=()=>rej(new Error("load"));img.src=src;});
@@ -580,7 +601,8 @@ $("jobSel").onchange=e=>{S.selectedJob=e.target.value;save();updateRunEnabled();
 function updateRunEnabled(){
   const camOn=!!($("camBtn").dataset.on);
   const job=S.jobs.find(j=>j.id===$("jobSel").value);
-  $("runBtn").disabled=!(camOn&&job&&job.master)||checking;
+  // a job with its own snapshot URL (central mode) needs no local camera
+  $("runBtn").disabled=!((camOn||(job&&job.snapUrl))&&job&&job.master)||checking;
 }
 function renderJobs(){
   const el=$("jobList");el.innerHTML="";
@@ -590,7 +612,7 @@ function renderJobs(){
     const nm=document.createElement("div");nm.className="nm";
     nm.textContent=j.name;
     const sm=document.createElement("small");
-    sm.textContent=(j.master?t("master_set"):t("no_master"));
+    sm.textContent=(j.snapUrl?"📡 ":"")+(j.master?t("master_set"):t("no_master"));
     nm.appendChild(sm);
     const eb=document.createElement("button");eb.className="ghost";eb.textContent="✏️";
     eb.onclick=()=>openEditor(j.id);
@@ -609,6 +631,9 @@ function openEditor(id){
   $("orientThresh").value=j?j.orientThresh:0.60;
   $("diffThresh").value=j?j.diffThresh:45;
   $("minArea").value=j?j.minArea:0.5;
+  $("jobSnap").value=(j&&j.snapUrl)||"";
+  $("jobLock").value=(j&&j.lockUrl)||"";
+  $("jobUnlock").value=(j&&j.unlockUrl)||"";
   $("deleteJobBtn").classList.toggle("hidden",!j);
   syncSliderLabels();drawRoiCanvas();
   $("masterState").textContent=editorMaster?t("master_set"):t("no_master");
@@ -622,7 +647,7 @@ function syncSliderLabels(){
   $("minAreaVal").textContent=$("minArea").value+"%";
 }
 $("captureMasterBtn").onclick=async()=>{
-  const f=await grabFrame().catch(e=>{alert(t("snap_err")+e.message);return null;});
+  const f=await grabFrame(($("jobSnap").value||"").trim()||null).catch(e=>{alert(t("snap_err")+e.message);return null;});
   if(!f){alert(t("need_cam"));return;}
   editorMaster=f.canvas.toDataURL("image/jpeg",0.85);
   if(!editorRoi)editorRoi={x:0.05,y:0.05,w:0.9,h:0.9};
@@ -679,7 +704,8 @@ $("saveJobBtn").onclick=()=>{
   let j=editingJobId?S.jobs.find(x=>x.id===editingJobId):null;
   if(!j){j={id:"j"+Date.now().toString(36)};S.jobs.push(j);}
   Object.assign(j,{name,master:editorMaster,roi:editorRoi||{x:0.05,y:0.05,w:0.9,h:0.9},
-    orientThresh:+$("orientThresh").value,diffThresh:+$("diffThresh").value,minArea:+$("minArea").value});
+    orientThresh:+$("orientThresh").value,diffThresh:+$("diffThresh").value,minArea:+$("minArea").value,
+    snapUrl:$("jobSnap").value.trim(),lockUrl:$("jobLock").value.trim(),unlockUrl:$("jobUnlock").value.trim()});
   delete masterCache[j.id];
   S.selectedJob=j.id;save();
   $("jobEditor").classList.add("hidden");
@@ -709,12 +735,12 @@ function beep(good){
     if(good)tone(1200,0,0.15);else{tone(300,0,0.25);tone(300,0.35,0.4);}
   }catch(e){}
 }
-function setLock(locked){
+function setLock(locked,job){
   const box=$("lockBox");
   box.className="lockbox "+(locked?"locked":"unlocked");
   $("lockIcon").textContent=locked?"🔒":"🔓";
   $("lockTxt").textContent=locked?t("door_locked"):t("door_unlocked");
-  const url=locked?S.settings.lockUrl:S.settings.unlockUrl;
+  const url=locked?((job&&job.lockUrl)||S.settings.lockUrl):((job&&job.unlockUrl)||S.settings.unlockUrl);
   if(url)fireRelay(url).then(()=>{$("lockNote").textContent=t("relay_sent")+" → "+url;})
                        .catch(e=>{$("lockNote").textContent=t("relay_err")+e.message;});
   else $("lockNote").textContent=t("lock_note");
@@ -726,13 +752,14 @@ $("testLockBtn").onclick=()=>{saveSettingsFromUI();if(S.settings.lockUrl)fireRel
 $("testUnlockBtn").onclick=()=>{saveSettingsFromUI();if(S.settings.unlockUrl)fireRelay(S.settings.unlockUrl).then(()=>alert(t("relay_sent"))).catch(e=>alert(t("relay_err")+e.message));};
 
 async function runCheck(){
-  if(checking)return;
+  if(checking)return false;
   const job=S.jobs.find(j=>j.id===$("jobSel").value);
-  if(!job||!job.master){alert(t("need_master"));return;}
+  if(!job||!job.master){alert(t("need_master"));return false;}
   checking=true;updateRunEnabled();
   setBanner("busy",t("checking"),job.name);
+  let pass=false;
   try{
-    const f=await grabFrame();
+    const f=await grabFrame(job.snapUrl||null);
     if(!f)throw new Error(t("need_cam"));
     const M=await masterGray(job);
     // ROI in the live frame, scaled from master frame size in case resolutions differ
@@ -748,11 +775,13 @@ async function runCheck(){
     }
     const ok=orientOk&&blobs.length===0;
     showResult(job,f,r,M,al,orientOk,present,blobs,ok);
+    pass=ok;
   }catch(e){
     setBanner("bad",t("fault"),String(e.message||e));
-    setLock(false);
+    setLock(false,job);
   }
   checking=false;updateRunEnabled();
+  return pass;
 }
 function showResult(job,f,r,M,al,orientOk,present,blobs,ok){
   // annotate snapshot
@@ -788,7 +817,7 @@ function showResult(job,f,r,M,al,orientOk,present,blobs,ok){
   $("rVerdict").className=ok?"ok":"bad";
   if(ok)setBanner("ok",t("clear"),job.name);
   else setBanner("bad",t("fault"),job.name+" — "+orientTxt+(blobs.length?" · "+t("fo_n",{n:blobs.length}):""));
-  setLock(ok);beep(ok);
+  setLock(ok,job);beep(ok);
   // log
   const th=document.createElement("canvas");th.width=120;th.height=Math.round(120*f.h/f.w);
   th.getContext("2d").drawImage(rc,0,0,th.width,th.height);
@@ -803,6 +832,20 @@ $("backLiveBtn").onclick=()=>{
   if(S.settings.camMode==="ip")$("ipImg").classList.remove("hidden");else $("vid").classList.remove("hidden");
 };
 $("runBtn").onclick=runCheck;
+$("runAllBtn").onclick=async()=>{
+  if(checking)return;
+  const jobs=S.jobs.filter(j=>j.master&&j.snapUrl);
+  if(!jobs.length){alert(t("need_cells"));return;}
+  const failed=[];
+  for(const j of jobs){
+    $("jobSel").value=j.id;S.selectedJob=j.id;
+    const ok=await runCheck();
+    if(!ok)failed.push(j.name);
+  }
+  save();
+  if(failed.length)setBanner("bad",t("fault"),t("checked_n",{n:jobs.length})+" — "+failed.join(", "));
+  else setBanner("ok",t("checked_n",{n:jobs.length}),"");
+};
 document.addEventListener("keydown",e=>{
   if(e.code==="Space"&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();runCheck();}
 });

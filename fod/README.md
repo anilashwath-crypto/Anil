@@ -53,6 +53,23 @@ cd Anil && python3 -m http.server 8000
 Camera access (`getUserMedia`) requires HTTPS or `http://localhost` — open the page from
 a local file, localhost server, or an HTTPS host (e.g. GitHub Pages).
 
+## Central mode — one computer, many machines
+
+One PC on the plant network can supervise several machines: each job carries optional
+**Central-mode fields** (this machine's camera snapshot URL + its lock/unlock relay
+URLs; blank falls back to Settings). Create one job per machine — the part currently
+running on it — and:
+
+- pick a machine in the Job selector and RUN CYCLE CHECK (no local camera needed when
+  the job has its own snapshot URL), or
+- press **CHECK ALL MACHINES** to sweep every job that has a camera URL: each machine's
+  own relay is fired, every result is logged, and the banner summarises which machines
+  failed.
+
+When a machine changes over to a different part, edit its job (or keep one job per
+part per machine) and re-capture the master. Hardware for this topology is priced in
+`BOM.md` → *Central option* (PoE switch head-end + per-machine kit).
+
 ## Per-job tuning
 
 - **Orientation match required** (default 60%) — minimum correlation to accept the part.

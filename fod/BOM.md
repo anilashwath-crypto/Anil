@@ -71,6 +71,26 @@ ordering. The software itself (`fod/index.html`) is free.
 software are shared. With the spare-PC and Shelly swaps, an incremental cell can come
 in near **₹10,000**.
 
+## Central option — one computer, many machines
+
+One PC on the plant network runs FOD Guard for every cell; each machine keeps only
+camera + light + lock. In the app, give each machine's job its own camera snapshot URL
+and lock/unlock relay URLs (Central-mode fields in the job editor) and use
+**CHECK ALL MACHINES**. Full priced sheet: `FOD_Guard_BOM.xlsx` → *Central* tab
+(machine count is an editable cell).
+
+| | ₹ |
+|---|--:|
+| Head-end, once per plant — refurb i5 mini PC, 24" monitor, kb+mouse, 8-port Gigabit **PoE** switch (powers the cameras), 600 VA UPS, Cat6 drum | **29,800** |
+| Per-machine kit — PoE IP camera + mount, floodlight + hood, ESP32 Wi-Fi relay node, solenoid bolt lock, SMPS, tower light, enclosure + wiring | **10,150** |
+| Example: 4 machines (29,800 + 4 × 10,150) | 70,400 |
+| + Contingency 10% → **GRAND TOTAL, 4 machines** | **77,440** |
+
+Versus 4 standalone cells at ₹22,275 each (₹89,100), central saves ~₹11,700 at 4
+machines and more as the count grows — and every verdict is watched from one screen.
+Serve the app from the central PC; pick cameras/DVRs whose snapshot endpoint allows
+CORS, or run a small snapshot proxy on the PC.
+
 > ⚠️ **Safety** — FOD Guard is a process-assist check, not a certified safety device.
 > The guard-door interlock must still run through the machine's certified safety relay /
 > guard switch — this lock is wired **in addition to** it, never instead of it.
