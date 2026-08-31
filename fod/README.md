@@ -25,6 +25,18 @@ jobs, settings and history persist in `localStorage` and can be exported/importe
 Trilingual (EN / ಕನ್ನಡ / हिंदी), light/dark theme, mobile-first — same conventions as the
 rest of this repo.
 
+## Interactive explainer
+
+`fod/explainer.html` is a self-contained walkthrough of how the system decides — a simulated
+machine cell running the **same detection algorithm** as the app, with scenario buttons
+(correct load, rotated 15°, flipped 180°, nut left behind, no part) and live visuals of each
+stage: master + zone, pose search, aligned difference map, and the lock decision. Run it locally:
+
+```sh
+cd Anil && python3 -m http.server 8000
+# then open http://localhost:8000/fod/explainer.html  (app: /fod/index.html)
+```
+
 ## Camera options
 
 | Setup | How |

@@ -493,6 +493,15 @@ function findAlignment(M,C,w,h){
     const s=nccAt(M,C,w,h,best.th,dx,dy,2);
     if(s>best.score)best={th:best.th,dx,dy,score:s};
   }
+  for(let th=best.th-2;th<=best.th+2;th++){
+    const s=nccAt(M,C,w,h,th,best.dx,best.dy,2);
+    if(s>best.score)best={th,dx:best.dx,dy:best.dy,score:s};
+  }
+  const c={...best};
+  for(let th=c.th-1;th<=c.th+1;th+=0.5)for(let dy=c.dy-0.5;dy<=c.dy+0.5;dy+=0.5)for(let dx=c.dx-0.5;dx<=c.dx+0.5;dx+=0.5){
+    const s=nccAt(M,C,w,h,th,dx,dy,2);
+    if(s>best.score)best={th,dx,dy,score:s};
+  }
   return best;
 }
 /* Diff master vs aligned current, return foreign-object blobs [{x,y,w,h,area}] in analysis coords */
