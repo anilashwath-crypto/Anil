@@ -21,6 +21,12 @@ with LoRa sensors, GSM/SMS fallback, and solar-backed controls.
   backup. Same conventions as the dashboard (trilingual `L` dict, theme
   tokens, no build step). Docs in `home/README.md`.
   Branch: `claude/household-inventory-tracker-qje7gi`.
+- `fod/index.html` — **FOD Guard**, a single-file CCTV foreign-object detection gate
+  for a machine cell: per-job master image + drag-marked inspection zone, per-cycle
+  orientation verification (rotation/shift-searched NCC) and foreign-object diff
+  detection, HTTP relay trigger that locks the door only when all is clear, cycle log.
+  Same conventions (trilingual `L` dict, theme tokens, no build step). Docs in
+  `fod/README.md`. Branch: `claude/foreign-object-detection-cctv-d3tjm7`.
 - `BOM.md` / `Smart_Farm_DIY_BOM.xlsx` — DIY electronics bill of materials (~₹1.67 lakh + 10%)
 - Working branch: `claude/farm-monitoring-dashboard-iorey1`
 - Published artifact: https://claude.ai/code/artifact/9d7580d8-d8bd-4c5d-b23d-61c88dc8a27d
