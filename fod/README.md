@@ -25,6 +25,11 @@ jobs, settings and history persist in `localStorage` and can be exported/importe
 Trilingual (EN / ಕನ್ನಡ / हिंदी), light/dark theme, mobile-first — same conventions as the
 rest of this repo.
 
+## Bill of materials
+
+Per-machine hardware (~Rs.22,300 incl. 10% contingency; ~Rs.10,000 incremental with
+swaps) is listed in `fod/BOM.md` / `fod/FOD_Guard_BOM.xlsx`.
+
 ## Interactive explainer
 
 `fod/explainer.html` is a self-contained walkthrough of how the system decides — a simulated
