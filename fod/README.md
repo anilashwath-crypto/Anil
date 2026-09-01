@@ -25,6 +25,14 @@ jobs, settings and history persist in `localStorage` and can be exported/importe
 Trilingual (EN / ಕನ್ನಡ / हिंदी), light/dark theme, mobile-first — same conventions as the
 rest of this repo.
 
+## Field manual
+
+`fod/GUIDE.html` is the full commissioning reference: how the detection works in depth,
+hardware + wiring diagrams, software/hosting rules, relay endpoints (Shelly / ESP32
+sketch), first-job walkthrough with an acceptance sequence, threshold tuning, central
+multi-machine setup (incl. a CORS snapshot proxy), troubleshooting, and safety
+boundaries. Open it at `http://localhost:8000/fod/GUIDE.html`.
+
 ## Bill of materials
 
 Per-machine hardware (~Rs.22,300 incl. 10% contingency; ~Rs.10,000 incremental with

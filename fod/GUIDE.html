@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOD Guard Field Manual</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#10161c; --panel:#18212a; --panel2:#1e2933; --inset:#0b1015;
+    --ink:#e8eef3; --muted:#8fa1b0; --line:#2a3641; --line2:#39485a;
+    --accent:#f2a93b; --accent-ink:#1a1204;
+    --good:#46d98b; --good-dim:#0f2b1c; --bad:#ff6161; --bad-dim:#331416;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#e7ebee; --panel:#f6f8f9; --panel2:#eceff2; --inset:#dde3e8;
+      --ink:#1a232c; --muted:#5b6c7a; --line:#cfd8df; --line2:#b6c2cc;
+      --accent:#b26f0e; --accent-ink:#fff;
+      --good:#158a4b; --good-dim:#d9f2e4; --bad:#c53a35; --bad-dim:#f8e0df;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#e7ebee; --panel:#f6f8f9; --panel2:#eceff2; --inset:#dde3e8;
+    --ink:#1a232c; --muted:#5b6c7a; --line:#cfd8df; --line2:#b6c2cc;
+    --accent:#b26f0e; --accent-ink:#fff;
+    --good:#158a4b; --good-dim:#d9f2e4; --bad:#c53a35; --bad-dim:#f8e0df;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15.5px;line-height:1.6}
+  .wrap{max-width:900px;margin:0 auto;padding:28px 18px 80px}
+  .eyebrow{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;font-weight:600;
+    letter-spacing:.22em;font-size:13px;color:var(--accent);text-transform:uppercase}
+  h1{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;font-weight:700;
+    font-size:clamp(36px,6.5vw,54px);line-height:.95;margin:6px 0 10px;text-transform:uppercase;text-wrap:balance}
+  h2{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;font-weight:700;
+    font-size:clamp(24px,3.6vw,30px);text-transform:uppercase;letter-spacing:.04em;
+    margin:46px 0 4px;padding-top:14px;border-top:2px solid var(--line);text-wrap:balance}
+  h2 .no{color:var(--accent);margin-right:10px}
+  h3{font-size:17px;font-weight:600;margin:24px 0 6px}
+  p{max-width:72ch;margin:10px 0}
+  .lede{color:var(--muted);max-width:68ch}
+  .lede b{color:var(--ink)}
+  ul,ol{max-width:72ch;padding-left:24px}
+  li{margin:6px 0}
+  code{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--ink);
+    background:var(--panel2);padding:1px 6px;border:1px solid var(--line);border-radius:3px}
+  pre{background:var(--inset);border:1px solid var(--line);padding:14px;overflow-x:auto;
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.55;color:var(--ink)}
+  pre code{background:none;border:none;padding:0}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
+  th{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;font-weight:600;
+    letter-spacing:.08em;text-transform:uppercase;font-size:13px;color:var(--muted)}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  .tablewrap{overflow-x:auto}
+  .callout{border-left:4px solid var(--accent);background:var(--panel);padding:12px 14px;
+    margin:16px 0;max-width:72ch}
+  .callout.warn{border-color:var(--bad);background:var(--bad-dim)}
+  .callout.good{border-color:var(--good);background:var(--good-dim)}
+  .callout b:first-child{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;
+    letter-spacing:.08em;text-transform:uppercase;font-size:14px}
+  .toc{background:var(--panel);border:1px solid var(--line);padding:14px 18px;margin:22px 0;
+    columns:2;column-gap:30px;font-size:14px}
+  @media(max-width:620px){.toc{columns:1}}
+  .toc a{color:var(--ink);text-decoration:none;display:block;padding:3px 0}
+  .toc a:hover{color:var(--accent)}
+  .toc a span{color:var(--accent);font-family:"IBM Plex Mono",monospace;font-size:12px;margin-right:8px}
+  figure{margin:18px 0;background:var(--panel);border:1px solid var(--line);padding:12px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);
+    text-align:center;padding-top:8px}
+  .kbd{font-family:"IBM Plex Mono",monospace;font-size:12px;border:1px solid var(--line2);
+    border-bottom-width:3px;border-radius:4px;padding:1px 7px;background:var(--panel2)}
+  .pill{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+    padding:1px 8px;border:1px solid var(--line2);border-radius:12px;background:var(--panel2)}
+  a{color:var(--accent)}
+  footer{margin-top:50px;border-top:1px solid var(--line);padding-top:14px;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="eyebrow">FOD Guard · function &amp; installation reference</div>
+<h1>Field Manual</h1>
+<p class="lede">Everything needed to understand and commission <b>FOD Guard</b> — the CCTV
+pre-cycle inspection gate in <code>fod/index.html</code>. It explains <b>what the system does
+and how the detection actually works</b>, then walks through hardware, wiring, software,
+job setup, tuning, multi-machine (central) deployment, and troubleshooting.</p>
+
+<nav class="toc">
+  <a href="#s1"><span>01</span>What the system does</a>
+  <a href="#s2"><span>02</span>How detection works, in depth</a>
+  <a href="#s3"><span>03</span>Hardware &amp; wiring</a>
+  <a href="#s4"><span>04</span>Software setup</a>
+  <a href="#s5"><span>05</span>Relay endpoints (Shelly / ESP32)</a>
+  <a href="#s6"><span>06</span>Setting up the first job</a>
+  <a href="#s7"><span>07</span>Tuning the three thresholds</a>
+  <a href="#s8"><span>08</span>Daily operation</a>
+  <a href="#s9"><span>09</span>Central mode: many machines</a>
+  <a href="#s10"><span>10</span>Troubleshooting</a>
+  <a href="#s11"><span>11</span>Safety boundaries</a>
+</nav>
+
+<h2 id="s1"><span class="no">01</span>What the system does</h2>
+<p>FOD Guard turns one fixed CCTV camera pointed at a machine's die/fixture into a
+<strong>pre-cycle inspection gate</strong>. The operating contract is simple:</p>
+<ol>
+  <li><strong>Teach once per job.</strong> With the part loaded correctly, capture one
+    <em>master image</em> and drag a box marking the <em>inspection zone</em> (the die area).
+    Everything outside that box — hands, walkways, the operator — is ignored forever.</li>
+  <li><strong>Check every cycle.</strong> Each time the job is reloaded, the app grabs a
+    frame and answers two questions inside the zone: <em>is the part present and sitting the
+    right way round?</em> and <em>is anything in the zone that wasn't in the master?</em></li>
+  <li><strong>Gate the door.</strong> Only when both answers are good does it call the
+    <em>Lock URL</em> — an HTTP relay wired to the door solenoid — so the door locks and the
+    cycle is enabled. Any fault calls the <em>Unlock/inhibit URL</em>, shows a red banner,
+    beeps, and names the reason (misoriented, wrong/missing part, or foreign objects with
+    red boxes drawn on the snapshot).</li>
+</ol>
+<p>Every check is logged with a timestamp, verdict, score, and annotated thumbnail. All
+data (jobs, settings, history) lives in the browser's <code>localStorage</code> and can be
+exported/imported as one JSON file. The UI is trilingual (English / ಕನ್ನಡ / हिंदी) with a
+day/night toggle. To <em>see</em> the whole decision play out on a simulated machine before
+touching hardware, open <code>fod/explainer.html</code>.</p>
+
+<figure aria-label="System overview diagram">
+<svg viewBox="0 0 860 190" role="img">
+  <style>
+    .bx{fill:var(--panel2);stroke:var(--line2);stroke-width:1.5}
+    .tt{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;font-weight:600;font-size:16px;fill:var(--ink);letter-spacing:.06em}
+    .ss{font-family:"IBM Plex Mono",monospace;font-size:10.5px;fill:var(--muted)}
+    .ar{stroke:var(--accent);stroke-width:2;fill:none;marker-end:url(#ah)}
+    .al{font-family:"IBM Plex Mono",monospace;font-size:10px;fill:var(--accent)}
+  </style>
+  <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+    <path d="M0,0 L8,4.5 L0,9 z" fill="var(--accent)"/></marker></defs>
+  <rect class="bx" x="10" y="55" width="150" height="70"/>
+  <text class="tt" x="85" y="85" text-anchor="middle">CCTV CAMERA</text>
+  <text class="ss" x="85" y="105" text-anchor="middle">over the die zone</text>
+  <rect class="bx" x="240" y="55" width="180" height="70"/>
+  <text class="tt" x="330" y="80" text-anchor="middle">COMPUTER</text>
+  <text class="ss" x="330" y="98" text-anchor="middle">browser running</text>
+  <text class="ss" x="330" y="112" text-anchor="middle">fod/index.html</text>
+  <rect class="bx" x="500" y="55" width="160" height="70"/>
+  <text class="tt" x="580" y="85" text-anchor="middle">RELAY NODE</text>
+  <text class="ss" x="580" y="105" text-anchor="middle">ESP32 / Shelly</text>
+  <rect class="bx" x="720" y="55" width="130" height="70"/>
+  <text class="tt" x="785" y="80" text-anchor="middle">DOOR</text>
+  <text class="ss" x="785" y="98" text-anchor="middle">12 V solenoid</text>
+  <text class="ss" x="785" y="112" text-anchor="middle">bolt lock</text>
+  <path class="ar" d="M160,90 H236"/><text class="al" x="198" y="82" text-anchor="middle">frame</text>
+  <path class="ar" d="M420,90 H496"/><text class="al" x="458" y="82" text-anchor="middle">HTTP lock/unlock</text>
+  <path class="ar" d="M660,90 H716"/><text class="al" x="688" y="82" text-anchor="middle">contact</text>
+  <text class="ss" x="330" y="150" text-anchor="middle">USB webcam · capture dongle · IP snapshot URL</text>
+  <text class="ss" x="580" y="150" text-anchor="middle">plant Wi-Fi / LAN</text>
+</svg>
+<figcaption>SIGNAL CHAIN — ONE FRAME PER CYCLE DECIDES WHETHER THE DOOR MAY LOCK</figcaption>
+</figure>
+
+<h2 id="s2"><span class="no">02</span>How detection works, in depth</h2>
+<p>Everything runs in the browser on plain pixels — no cloud, no training, no neural
+network. That's a deliberate choice: it is explainable, deterministic, and runs on a
+Raspberry Pi. Five stages per check:</p>
+
+<h3>2.1 Capture &amp; reduce</h3>
+<p>A frame is grabbed at 640 px wide. The inspection-zone rectangle is cut out, scaled
+down to at most 144 px on its longer side, converted to grayscale, and blurred (two 3×3
+box passes). The blur is not laziness — it makes the comparison tolerant of sensor grain
+and sub-pixel wobble so that only <em>real</em> changes survive to later stages.</p>
+
+<h3>2.2 Find the part: pose search</h3>
+<p>The live zone image is compared against the master zone image at many candidate
+<em>poses</em>: rotations −12°…+15° in 3° steps plus the flipped positions 90°, 180°,
+270°, each combined with pixel shifts up to ±8 px. Every pose gets a score — the
+<strong>normalized cross-correlation</strong> (Pearson correlation of the two images'
+pixels), which is 1.0 for a perfect match, ~0 for unrelated content, and is immune to
+overall brightness changes. The best coarse pose is then refined in 1° / 1 px steps and
+finally in 0.5° / 0.5 px steps, so residual misalignment is tiny.</p>
+<p>The best pose and its score decide the orientation verdict:</p>
+<div class="tablewrap"><table>
+  <tr><th>Result of the search</th><th>Verdict</th></tr>
+  <tr><td>Best score ≥ threshold, best angle within ±6°</td><td><span class="pill">ORIENTATION OK</span> — a part that merely sits a little off still passes; the found shift/angle is remembered for stage 2.3</td></tr>
+  <tr><td>Best score ≥ threshold, but at a bigger angle (e.g. 15°, 180°)</td><td><span class="pill">MISORIENTED ~N°</span> — the part is there, the wrong way round</td></tr>
+  <tr><td>No pose reaches the threshold</td><td><span class="pill">JOB MISSING / WRONG JOB</span> — empty fixture, or a different part that doesn't correlate with this job's master</td></tr>
+</table></div>
+
+<h3>2.3 Foreign objects: aligned difference</h3>
+<p>Only when orientation is OK does the foreign-object stage run. The live image is
+resampled <em>through the found pose</em> so it lies exactly on top of the master, both
+images are normalized to the same mean and contrast (this cancels lighting drift between
+shifts, seasons, or a dimming lamp), and subtracted pixel by pixel. What remains is only
+what <em>changed</em> since the master was taught.</p>
+<p>Pixels whose difference exceeds the <em>sensitivity</em> threshold are marked, and
+connected patches are grouped into blobs. Any blob larger than the <em>minimum object
+size</em> (a percentage of the zone) is a foreign object — a forgotten nut, a spanner, a
+chip of scrap — and is boxed in red on the snapshot. Grain, glare speckle, and tiny edge
+ghosts fall below the size floor and are ignored.</p>
+
+<h3>2.4 The decision gate</h3>
+<p>The verdict is a strict AND — the door is never locked on a hunch:</p>
+<pre>orientation OK  AND  zero foreign objects   →  ALL CLEAR  →  GET/POST Lock URL    →  door locks, cycle enabled
+anything else                                →  FAULT      →  GET/POST Unlock URL  →  cycle inhibited, red banner + beep</pre>
+
+<h3>2.5 Record</h3>
+<p>The annotated snapshot, verdict, score, angle and foreign-object count are pushed to
+the cycle log (latest 60 kept), which persists across restarts.</p>
+
+<div class="callout good"><b>Why this design is robust on a real floor</b><br>
+Each cycle the part lands a few millimetres off and lighting drifts — the pose search and
+normalization absorb exactly those two nuisances, so thresholds can stay tight enough to
+catch a single nut without crying wolf every cycle.</div>
+
+<h2 id="s3"><span class="no">03</span>Hardware &amp; wiring</h2>
+<p>Complete priced list: <code>fod/BOM.md</code> / <code>fod/FOD_Guard_BOM.xlsx</code>
+(₹22,275 per standalone machine incl. contingency; central multi-machine variant in
+section 09). What matters for a reliable install:</p>
+
+<h3>3.1 Camera — three ways in</h3>
+<div class="tablewrap"><table>
+  <tr><th>You have</th><th>Connect it as</th><th>App setting</th></tr>
+  <tr><td>USB webcam</td><td>Straight into the computer</td><td>Settings → Source → <em>Device / USB camera</em></td></tr>
+  <tr><td>Analogue / HDMI CCTV or DVR spot output</td><td>USB capture dongle into the computer</td><td>Same — the dongle appears as a camera</td></tr>
+  <tr><td>IP camera / NVR channel</td><td>Over the LAN</td><td>Settings → Source → <em>IP camera snapshot URL</em> — a JPEG endpoint such as <code>/snapshot.jpg</code> or <code>/cgi-bin/snapshot.cgi</code></td></tr>
+</table></div>
+<p><strong>Mounting rules that matter more than resolution:</strong> bolt the camera to
+something that does not vibrate (the machine frame with a rubber isolator, or a wall
+bracket), aim it so the die fills a good share of the frame, and never let it be nudged —
+the master is only valid for one exact viewpoint. 2 MP is plenty; a rock-steady 2 MP
+image beats a shaky 4K one every time.</p>
+
+<h3>3.2 Lighting — the single biggest reliability lever</h3>
+<p>Mount a small LED floodlight (≈20 W, neutral white) so the zone is lit the same at
+7 am and 7 pm, with a hood so the lamp never shines into the lens. Consistent light does
+more for detection quality than any threshold tuning. If reflections off polished parts
+cause trouble, angle the lamp across the die rather than down onto it.</p>
+
+<h3>3.3 Lock, relay and indication</h3>
+<figure aria-label="Cell wiring diagram">
+<svg viewBox="0 0 860 300" role="img">
+  <style>
+    .bx2{fill:var(--panel2);stroke:var(--line2);stroke-width:1.5}
+    .t2{font-family:"Big Shoulders Display","Arial Narrow",sans-serif;font-weight:600;font-size:14px;fill:var(--ink);letter-spacing:.05em}
+    .s2{font-family:"IBM Plex Mono",monospace;font-size:10px;fill:var(--muted)}
+    .w{stroke:var(--accent);stroke-width:2;fill:none}
+    .wg{stroke:var(--muted);stroke-width:1.6;fill:none;stroke-dasharray:5 4}
+    .wl{font-family:"IBM Plex Mono",monospace;font-size:9.5px;fill:var(--accent)}
+    .wl2{font-family:"IBM Plex Mono",monospace;font-size:9.5px;fill:var(--muted)}
+  </style>
+  <rect class="bx2" x="20" y="20" width="150" height="58"/>
+  <text class="t2" x="95" y="44" text-anchor="middle">230 V AC MAINS</text>
+  <text class="s2" x="95" y="62" text-anchor="middle">via MCB</text>
+  <rect class="bx2" x="20" y="120" width="150" height="58"/>
+  <text class="t2" x="95" y="144" text-anchor="middle">SMPS 12 V 5 A</text>
+  <text class="s2" x="95" y="162" text-anchor="middle">in IP65 box, DIN rail</text>
+  <path class="w" d="M95,78 V116"/>
+  <rect class="bx2" x="250" y="20" width="170" height="58"/>
+  <text class="t2" x="335" y="44" text-anchor="middle">FLOODLIGHT 20 W</text>
+  <text class="s2" x="335" y="62" text-anchor="middle">always on with machine</text>
+  <rect class="bx2" x="250" y="120" width="170" height="70"/>
+  <text class="t2" x="335" y="144" text-anchor="middle">ESP32 + RELAY ×2</text>
+  <text class="s2" x="335" y="161" text-anchor="middle">via 12→5 V buck</text>
+  <text class="s2" x="335" y="176" text-anchor="middle">Wi-Fi: /lock /unlock</text>
+  <rect class="bx2" x="500" y="90" width="170" height="58"/>
+  <text class="t2" x="585" y="114" text-anchor="middle">SOLENOID BOLT 12 V</text>
+  <text class="s2" x="585" y="132" text-anchor="middle">flyback diode across coil!</text>
+  <rect class="bx2" x="500" y="185" width="170" height="58"/>
+  <text class="t2" x="585" y="209" text-anchor="middle">TOWER LIGHT 12 V</text>
+  <text class="s2" x="585" y="227" text-anchor="middle">red/amber/green + buzzer</text>
+  <rect class="bx2" x="710" y="90" width="130" height="58"/>
+  <text class="t2" x="775" y="114" text-anchor="middle">GUARD DOOR</text>
+  <text class="s2" x="775" y="132" text-anchor="middle">bolt keeper plate</text>
+  <path class="w" d="M170,149 H246"/><text class="wl" x="208" y="142" text-anchor="middle">12 V</text>
+  <path class="w" d="M170,140 C210,140 210,49 246,49"/>
+  <path class="w" d="M420,141 H496 V119"/><text class="wl" x="458" y="134" text-anchor="middle">CH1</text>
+  <path class="w" d="M420,168 C460,168 460,214 496,214"/><text class="wl" x="458" y="196" text-anchor="middle">CH2</text>
+  <path class="w" d="M670,119 H706"/>
+  <path class="wg" d="M710,60 H840"/>
+  <text class="wl2" x="775" y="52" text-anchor="middle">CERTIFIED SAFETY INTERLOCK</text>
+  <text class="wl2" x="775" y="74" text-anchor="middle">(separate circuit — stays!)</text>
+</svg>
+<figcaption>CELL WIRING — RELAY CH1 DRIVES THE BOLT, CH2 THE TOWER LIGHT; THE CERTIFIED INTERLOCK IS A SEPARATE CIRCUIT</figcaption>
+</figure>
+<ul>
+  <li><strong>Relay node</strong>: either a <em>Shelly 1</em> (ready-made, has an HTTP API out
+    of the box) or an <em>ESP32 + 2-channel opto relay</em> (sketch in section 05). Powered
+    from the 12 V rail through a 12→5 V buck.</li>
+  <li><strong>Lock</strong>: a 12 V DC solenoid bolt (spring-return) on the guard door, or a
+    180 kg electromagnetic lock for flush door faces. <strong>Fit a flyback diode across the
+    coil</strong> (1N5408, striped end to +12 V) — without it the relay contacts pit and fail
+    within weeks.</li>
+  <li><strong>Tower light</strong> (recommended): relay channel 2 mirrors the verdict so the
+    operator sees red/green at the machine without looking at the screen.</li>
+  <li>Everything low-voltage lives in one IP65 box on DIN rail next to the door, mains via
+    an MCB.</li>
+</ul>
+
+<h3>3.4 Computer</h3>
+<p>Anything that runs a modern browser: a Raspberry Pi 4 in Chromium kiosk mode with a
+7" touchscreen at the machine, a spare Windows/Linux PC, or an Android tablet. For the
+Pi, autostart the kiosk with:</p>
+<pre>chromium-browser --kiosk --noerrdialogs --disable-restore-session-state \
+  http://localhost:8000/fod/index.html</pre>
+
+<h2 id="s4"><span class="no">04</span>Software setup</h2>
+<h3>4.1 Serve the app</h3>
+<p>The app is one file with no build step. Serve the repo folder and open it:</p>
+<pre>cd Anil
+python3 -m http.server 8000
+# open  http://localhost:8000/fod/index.html</pre>
+<p>Three hosting rules decide what works where:</p>
+<div class="tablewrap"><table>
+  <tr><th>Page served from</th><th>Local camera (getUserMedia)</th><th>IP camera / relay over http://</th></tr>
+  <tr><td><code>http://localhost:8000</code></td><td>✔ works (localhost counts as secure)</td><td>✔ works</td></tr>
+  <tr><td><code>http://&lt;LAN-IP&gt;:8000</code> (another device on the LAN)</td><td>✘ blocked by browsers</td><td>✔ works — use IP-camera mode</td></tr>
+  <tr><td><code>https://…github.io/…</code> (GitHub Pages)</td><td>✔ works</td><td>✘ blocked — an https page may not call http URLs (mixed content)</td></tr>
+</table></div>
+<div class="callout"><b>Rule of thumb</b><br>
+USB/webcam at the machine → localhost or GitHub Pages, either is fine.
+IP cameras and HTTP relays → serve over plain <code>http://</code> from the supervising
+computer (localhost) so the browser is allowed to call the camera and relay URLs.</div>
+
+<h3>4.2 Configure Settings (⚙ tab)</h3>
+<ol>
+  <li><strong>Camera source</strong> — <em>Device / USB camera</em> (then pick the camera from
+    the list after starting it once) or <em>IP camera snapshot URL</em>. The snapshot endpoint
+    must return a JPEG and allow cross-origin requests (CORS); most CP Plus / Hikvision /
+    Dahua cameras and DVRs expose one — check the model's manual for
+    <code>/snapshot.jpg</code>, <code>/cgi-bin/snapshot.cgi</code> or ONVIF snapshot URI. If
+    the camera refuses CORS, run the tiny proxy from section 09.3 on the supervising PC.</li>
+  <li><strong>Door-lock relay</strong> — paste the Lock URL and the Unlock/inhibit URL, pick
+    GET or POST, and use <em>Test lock</em>/<em>Test unlock</em>: you should hear the relay
+    click and see the bolt move. Leave the URLs blank to run with the on-screen indicator
+    only (useful during commissioning).</li>
+  <li><strong>Backup</strong> — after commissioning, Export the JSON once and keep it; it
+    restores every job, master, threshold and URL onto a replacement device in one step.</li>
+</ol>
+
+<h2 id="s5"><span class="no">05</span>Relay endpoints (Shelly / ESP32)</h2>
+<h3>5.1 Ready-made relays</h3>
+<div class="tablewrap"><table>
+  <tr><th>Device</th><th>Lock URL</th><th>Unlock URL</th></tr>
+  <tr><td>Shelly 1 / Plus 1</td><td><code>http://&lt;ip&gt;/relay/0?turn=on</code></td><td><code>http://&lt;ip&gt;/relay/0?turn=off</code></td></tr>
+  <tr><td>Tasmota (Sonoff etc.)</td><td><code>http://&lt;ip&gt;/cm?cmnd=Power%20On</code></td><td><code>http://&lt;ip&gt;/cm?cmnd=Power%20Off</code></td></tr>
+</table></div>
+<p>Give the relay a fixed IP (DHCP reservation in the router) so the URL never changes.</p>
+
+<h3>5.2 DIY ESP32 sketch</h3>
+<p>Complete sketch for the ESP32 + 2-channel relay in the BOM — flash from the Arduino
+IDE, set your Wi-Fi credentials, note the IP it prints:</p>
+<pre>#include &lt;WiFi.h&gt;
+#include &lt;WebServer.h&gt;
+
+const char* SSID = "PLANT-WIFI";
+const char* PASS = "********";
+const int LOCK_PIN  = 26;   // relay CH1 — door solenoid
+const int LIGHT_PIN = 27;   // relay CH2 — tower light (green when locked)
+
+WebServer server(80);
+
+void setPins(bool locked){
+  digitalWrite(LOCK_PIN,  locked ? HIGH : LOW);
+  digitalWrite(LIGHT_PIN, locked ? HIGH : LOW);
+}
+
+void handle(bool locked){
+  setPins(locked);
+  server.send(200, "text/plain", locked ? "LOCKED" : "UNLOCKED");
+}
+
+void setup(){
+  pinMode(LOCK_PIN, OUTPUT); pinMode(LIGHT_PIN, OUTPUT);
+  setPins(false);                          // boot UNLOCKED — the safe default
+  WiFi.begin(SSID, PASS);
+  while (WiFi.status() != WL_CONNECTED) delay(300);
+  Serial.begin(115200);
+  Serial.println(WiFi.localIP());          // -> use in the app's URLs
+  server.on("/lock",   [](){ handle(true);  });
+  server.on("/unlock", [](){ handle(false); });
+  server.begin();
+}
+
+void loop(){ server.handleClient(); }</pre>
+<p>App URLs become <code>http://&lt;esp32-ip&gt;/lock</code> and
+<code>http://&lt;esp32-ip&gt;/unlock</code>. The sketch boots <em>unlocked</em> — the safe
+default: a power cut never leaves the gate asserting "clear".</p>
+
+<h2 id="s6"><span class="no">06</span>Setting up the first job</h2>
+<ol>
+  <li><strong>Prepare the scene.</strong> Floodlight on, die clean, the part loaded exactly
+    as a good cycle should look.</li>
+  <li><strong>Monitor tab</strong> → <em>Start camera</em> (device mode) and confirm the live
+    view shows the die sharp and well lit.</li>
+  <li><strong>Jobs tab</strong> → <em>New job</em> → name it after the part and operation
+    (e.g. <code>Flange 80mm — Op.20</code>).</li>
+  <li><strong>Capture master from camera.</strong> The frozen frame appears below.</li>
+  <li><strong>Drag the inspection zone</strong> on the master — a tight box around the die
+    and part. Tight matters twice: things outside can never cause a false alarm, and the
+    minimum-object-size percentage refers to this box, so a tighter box detects smaller
+    objects.</li>
+  <li>Leave the three sliders at their defaults for now (60% / 45 / 0.5%).</li>
+  <li><strong>Save job.</strong> It appears in the Monitor tab's job selector.</li>
+  <li><strong>Prove it before trusting it</strong> — run this acceptance sequence:
+    <ul>
+      <li>Correct load → expect <span class="pill">ALL CLEAR</span>, relay clicks, bolt in.</li>
+      <li>Part rotated / flipped → expect <span class="pill">MISORIENTED</span>.</li>
+      <li>Part removed → expect <span class="pill">JOB MISSING</span>.</li>
+      <li>Smallest object you care about (a nut, an insert) laid in the zone → expect
+        <span class="pill">FOREIGN OBJECT</span> with a red box on it.</li>
+    </ul>
+    If any of the four misbehaves, go to section 07 — one slider fixes each symptom.</li>
+</ol>
+<div class="callout"><b>Re-teach when the world changes</b><br>
+Re-capture the master whenever tooling, the camera position, or the lighting rig changes.
+It costs 30 seconds; a stale master costs a shift of false alarms.</div>
+
+<h2 id="s7"><span class="no">07</span>Tuning the three thresholds</h2>
+<div class="tablewrap"><table>
+  <tr><th>Slider (per job)</th><th>Default</th><th>What it means</th><th>Raise it when…</th><th>Lower it when…</th></tr>
+  <tr><td><strong>Orientation match required</strong></td><td>60%</td>
+      <td>Minimum correlation score to accept that the right part is present</td>
+      <td>A <em>wrong-but-similar</em> part from another job slips through as "misoriented" instead of "wrong job"</td>
+      <td>Good loads are wrongly reported as "job missing" (dark scene, low-contrast part — fix lighting first)</td></tr>
+  <tr><td><strong>Foreign-object sensitivity</strong></td><td>45</td>
+      <td>How different a pixel must be (gray levels) before it counts as changed. Lower number = more sensitive</td>
+      <td>Glare/reflection patches get flagged as objects</td>
+      <td>A low-contrast object (dark tool on dark plate) is missed</td></tr>
+  <tr><td><strong>Minimum object size</strong></td><td>0.5% of zone</td>
+      <td>Blobs smaller than this are ignored</td>
+      <td>Speckle, dust or chips you don't care about trigger alarms</td>
+      <td>The smallest object you must catch isn't flagged (also consider a tighter zone or closer camera)</td></tr>
+</table></div>
+<p>Tune with the real acceptance sequence from 06 after every change — one slider at a
+time, and only after lighting and mounting are solid. Nine of ten false-alarm problems
+are light or vibration, not thresholds.</p>
+
+<h2 id="s8"><span class="no">08</span>Daily operation</h2>
+<ul>
+  <li><strong>Per cycle</strong>: reload the job, press <strong>▶ RUN CYCLE CHECK</strong>
+    (or the <span class="kbd">Space</span> bar). Green banner → door locks → run the cycle.
+    Red banner → the reason and any red boxes are on the snapshot; clear the cause, press
+    <em>Back to live</em>, check again.</li>
+  <li><strong>Auto mode</strong>: tick <em>Auto every N sec</em> to re-check on a timer —
+    useful while dialling in, or as a continuous watch on a slow process.</li>
+  <li><strong>Changeover</strong>: pick the new part's job in the selector — every job
+    carries its own master and thresholds.</li>
+  <li><strong>Log tab</strong>: last 60 checks with verdict and annotated thumbnail — the
+    shift-end evidence trail for why a cycle was inhibited.</li>
+  <li><strong>Weekly</strong>: wipe the lens, glance at the tower light bulbs, and export a
+    JSON backup after any job change.</li>
+</ul>
+
+<h2 id="s9"><span class="no">09</span>Central mode: many machines, one computer</h2>
+<p>Past a couple of machines, drop the per-machine computer: one PC on the plant network
+supervises every cell. Each machine keeps only its camera (PoE), floodlight, and relay
+node; the PC runs the app for all of them. Priced in <code>FOD_Guard_BOM.xlsx</code> →
+<em>Central</em> tab — head-end ₹29,800 once + ₹10,150 per machine (4 machines ≈ ₹77,440
+vs ₹89,100 standalone).</p>
+<h3>9.1 How the app models it</h3>
+<ul>
+  <li>Create <strong>one job per machine</strong> (the part currently running on it) and fill
+    the job's <strong>Central-mode fields</strong>: that machine's camera snapshot URL, and
+    its own lock/unlock relay URLs. Blank fields fall back to the global Settings, so
+    single-machine use is unchanged.</li>
+  <li>A job with its own snapshot URL needs <strong>no local camera</strong> — RUN CYCLE
+    CHECK fetches the frame over the network.</li>
+  <li><strong>🏭 CHECK ALL MACHINES</strong> sweeps every job that has a camera URL, one
+    after another: each machine's own relay is fired, every result is logged, and the final
+    banner names exactly the machines that failed.</li>
+  <li>If one machine runs several parts, keep a job per part per machine (e.g.
+    <code>Press-02 · Flange 80</code>) — pick the active one at changeover; CHECK ALL will
+    sweep whatever jobs currently carry camera URLs.</li>
+</ul>
+<h3>9.2 Network layout</h3>
+<ul>
+  <li>Cameras home-run over Cat6 to a PoE switch at the PC (the switch powers them).</li>
+  <li>Relay nodes join the plant Wi-Fi (ESP32/Shelly) — no extra cabling.</li>
+  <li>Give every camera and relay a DHCP reservation; label each with its IP.</li>
+  <li>Serve the app from the central PC over <code>http://localhost:8000</code>
+    (section 4.1's mixed-content rule: http page → http cameras/relays all allowed).</li>
+</ul>
+<h3>9.3 If a camera refuses CORS</h3>
+<p>Some cameras serve JPEG but without the CORS header the browser needs. Run this
+15-line proxy on the central PC and use
+<code>http://localhost:8090/?u=http://&lt;cam&gt;/snapshot.jpg</code> as the job's camera
+URL:</p>
+<pre>from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse, parse_qs
+import urllib.request
+
+class Snap(BaseHTTPRequestHandler):
+    def do_GET(self):
+        url = parse_qs(urlparse(self.path).query).get("u", [None])[0]
+        if not url: self.send_error(400); return
+        data = urllib.request.urlopen(url, timeout=5).read()
+        self.send_response(200)
+        self.send_header("Content-Type", "image/jpeg")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers(); self.wfile.write(data)
+
+HTTPServer(("127.0.0.1", 8090), Snap).serve_forever()</pre>
+
+<h2 id="s10"><span class="no">10</span>Troubleshooting</h2>
+<div class="tablewrap"><table>
+  <tr><th>Symptom</th><th>Likely cause → fix</th></tr>
+  <tr><td>Camera won't start (device mode)</td><td>Page not on localhost/https → serve per 4.1; or another app holds the camera → close it; or permission denied → allow camera in the browser's site settings</td></tr>
+  <tr><td>"Snapshot failed (URL/CORS)"</td><td>Wrong URL (test it directly in a browser tab — you should see a JPEG); camera without CORS → proxy from 9.3; https page calling http camera → serve over http</td></tr>
+  <tr><td>Good loads randomly FAIL with small red boxes</td><td>Vibrating camera mount, or lighting changed since the master → stiffen the mount / fix the lamp, then re-capture the master; last resort: raise minimum object size</td></tr>
+  <tr><td>Good loads report "job missing"</td><td>Scene too dark or master stale → light it, re-teach; threshold too high for a low-contrast part → lower orientation match</td></tr>
+  <tr><td>Wrong part passes as "misoriented"</td><td>Raise the job's orientation match required (e.g. 60% → 70%) so only the true part clears it</td></tr>
+  <tr><td>Small object not caught</td><td>Lower minimum object size / sensitivity value; tighten the zone; move the camera closer</td></tr>
+  <tr><td>Relay never clicks</td><td>Test the URL in a browser tab first — if that fails it's network/IP (reservation, Wi-Fi), not the app; check 12 V supply and relay wiring; https page → http relay is blocked (serve over http)</td></tr>
+  <tr><td>Everything vanished after a browser cleanup</td><td>localStorage was cleared → Settings → Import the JSON backup (this is why section 4.2 says export one)</td></tr>
+</table></div>
+
+<h2 id="s11"><span class="no">11</span>Safety boundaries</h2>
+<div class="callout warn"><b>⚠ Read before wiring</b><br>
+FOD Guard is a <strong>process-assist check</strong> — it protects the die and the part
+from crashes and forgotten objects. It is <strong>not a certified safety device</strong> and
+must never become one:
+<ul>
+  <li>The machine's certified guard interlock (safety relay, guard switch, light curtain —
+    per the machine's applicable safety standard) <strong>stays in place, on its own
+    circuit</strong>. FOD Guard's lock is wired <em>in addition to</em> it, never instead
+    of it.</li>
+  <li>Fail-safe direction: on power loss or network loss the relay de-energises and the
+    gate reads "not clear" — the system can only <em>withhold</em> permission, never force
+    a cycle.</li>
+  <li>Never let an "ALL CLEAR" screen substitute for the operator's own look into the die
+    area.</li>
+</ul></div>
+
+<footer>FOD Guard field manual · app <code>fod/index.html</code> · interactive demo
+<code>fod/explainer.html</code> · hardware <code>fod/BOM.md</code> /
+<code>FOD_Guard_BOM.xlsx</code> · quick docs <code>fod/README.md</code></footer>
+</div>
+</body>
+</html>
