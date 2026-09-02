@@ -56,7 +56,7 @@ cd Anil && python3 -m http.server 8000
 |---|---|
 | Analogue/HDMI CCTV | USB capture dongle into the device running the browser → "Device / USB camera" |
 | USB webcam | "Device / USB camera" |
-| IP camera / DVR | "IP camera snapshot URL" — a JPEG endpoint such as `/snapshot.jpg` or `/cgi-bin/snapshot.cgi`. The endpoint must allow CORS; if it doesn't, serve this page from the same gateway/host or fall back to a capture dongle |
+| IP camera / DVR | "IP camera snapshot URL" — a JPEG endpoint such as `/snapshot.jpg` or `/cgi-bin/snapshot.cgi`. The endpoint must allow CORS for pixel *reads* (the live view alone can work without it); most cameras don't send CORS headers — run `python3 fod/snapshot_proxy.py` and use `http://localhost:8090/?u=<camera-url>` instead |
 
 Camera access (`getUserMedia`) requires HTTPS or `http://localhost` — open the page from
 a local file, localhost server, or an HTTPS host (e.g. GitHub Pages).

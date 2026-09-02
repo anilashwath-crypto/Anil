@@ -480,9 +480,10 @@ vs ₹89,100 standalone).</p>
     (section 4.1's mixed-content rule: http page → http cameras/relays all allowed).</li>
 </ul>
 <h3>9.3 If a camera refuses CORS</h3>
-<p>Some cameras serve JPEG but without the CORS header the browser needs. Run this
-15-line proxy on the central PC and use
-<code>http://localhost:8090/?u=http://&lt;cam&gt;/snapshot.jpg</code> as the job's camera
+<p>Most CCTV cameras serve JPEG but without the CORS header the browser needs to
+<em>read pixels</em> — the live picture displays, yet capture/check fails. Run the proxy
+shipped as <code>fod/snapshot_proxy.py</code> (same code as below) on the supervising PC
+and use <code>http://localhost:8090/?u=http://&lt;cam&gt;/snapshot.jpg</code> as the camera
 URL:</p>
 <pre>from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
