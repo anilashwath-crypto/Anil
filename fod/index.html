@@ -212,6 +212,10 @@
       <input type="url" id="snapUrl" placeholder="http://192.168.1.64/snapshot.jpg">
     </div>
     <p class="note" data-i="ip_note">The snapshot URL must return a JPEG and allow cross-origin access (CORS). Most DVR/IP cameras expose one (e.g. /snapshot.jpg, /cgi-bin/snapshot.cgi). If blocked, serve this page from the same gateway or use a USB capture dongle on the CCTV's analogue/HDMI output.</p>
+    <div class="row">
+      <button id="testCamBtn" class="ghost">🔍 <span data-i="test_cam">Test camera</span></button>
+      <span class="note grow" id="testCamOut"></span>
+    </div>
   </div>
 
   <div class="card">
@@ -294,7 +298,13 @@ confirm_del:"Delete this job?",confirm_clear:"Clear all history?",no_jobs:"— n
 cell_head:"Central mode — this machine's endpoints",
 cell_note:"Optional — fill these when one computer supervises several machines over the network: this machine's camera snapshot URL, then its lock and unlock relay URLs. Blank fields fall back to Settings.",
 check_all:"CHECK ALL MACHINES",need_cells:"No machine has its own camera URL yet — set one in each job's Central-mode fields",
-checked_n:"{n} machines checked"},
+checked_n:"{n} machines checked",
+test_cam:"Test camera",
+cam_diag_ok:"Camera OK — frame {w}×{h} read successfully",
+cam_diag_nofeed:"No frame — start the camera first (device mode) or fill the snapshot URL (IP mode)",
+cam_diag_cors:"The browser could not read the image (CORS, mixed content, or camera unreachable). Open the URL in a new browser tab: if a photo shows, run  python3 fod/snapshot_proxy.py  on THIS computer and use  http://localhost:8090/?u=<camera URL>  here; if no photo shows, fix the URL/network first",
+cam_diag_auth:"Camera needs a login — put it inside the proxy URL:  http://localhost:8090/?u=http://user:password@<camera-ip>/…",
+cam_diag_http:"Camera answered {s} — the snapshot path is wrong; check the camera manual (CP Plus/Dahua: /cgi-bin/snapshot.cgi, Hikvision: /ISAPI/Streaming/channels/101/picture)"},
 kn:{subtitle:"CCTV ಪರಕೀಯ ವಸ್ತು & ದಿಕ್ಕು ಪರಿಶೀಲನೆ",monitor:"ಮಾನಿಟರ್",jobs:"ಜಾಬ್‌ಗಳು",settings:"ಸೆಟ್ಟಿಂಗ್ಸ್",log:"ಲಾಗ್",
 ready:"ಸಿದ್ಧ — ಜಾಬ್ ಆಯ್ಕೆಮಾಡಿ ಚೆಕ್ ನಡೆಸಿ",checking:"ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ…",clear:"ಎಲ್ಲವೂ ಸರಿ — ಬಾಗಿಲು ಲಾಕ್",
 fault:"ದೋಷ — ಸೈಕಲ್ ಪ್ರಾರಂಭಿಸಬೇಡಿ",start_cam:"ಕ್ಯಾಮೆರಾ ಪ್ರಾರಂಭಿಸಿ",stop_cam:"ಕ್ಯಾಮೆರಾ ನಿಲ್ಲಿಸಿ",back_live:"ಲೈವ್‌ಗೆ ಹಿಂತಿರುಗಿ",
@@ -322,7 +332,13 @@ confirm_del:"ಈ ಜಾಬ್ ಅಳಿಸುವುದೇ?",confirm_clear:"ಎ�
 cell_head:"ಸೆಂಟ್ರಲ್ ಮೋಡ್ — ಈ ಯಂತ್ರದ ಎಂಡ್‌ಪಾಯಿಂಟ್‌ಗಳು",
 cell_note:"ಐಚ್ಛಿಕ — ಒಂದೇ ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ ಮೂಲಕ ಹಲವು ಯಂತ್ರಗಳನ್ನು ನೋಡಿಕೊಳ್ಳುವಾಗ ಇವನ್ನು ಭರ್ತಿ ಮಾಡಿ: ಈ ಯಂತ್ರದ ಕ್ಯಾಮೆರಾ ಸ್ನಾಪ್‌ಶಾಟ್ URL, ನಂತರ ಲಾಕ್ ಮತ್ತು ಅನ್‌ಲಾಕ್ ರಿಲೇ URL. ಖಾಲಿ ಇದ್ದರೆ ಸೆಟ್ಟಿಂಗ್ಸ್ ಬಳಕೆ.",
 check_all:"ಎಲ್ಲಾ ಯಂತ್ರ ಪರಿಶೀಲಿಸಿ",need_cells:"ಯಾವ ಯಂತ್ರಕ್ಕೂ ಕ್ಯಾಮೆರಾ URL ಇಲ್ಲ — ಪ್ರತಿ ಜಾಬ್‌ನ ಸೆಂಟ್ರಲ್-ಮೋಡ್ ಕ್ಷೇತ್ರಗಳಲ್ಲಿ ಹೊಂದಿಸಿ",
-checked_n:"{n} ಯಂತ್ರ ಪರಿಶೀಲಿಸಲಾಗಿದೆ"},
+checked_n:"{n} ಯಂತ್ರ ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
+test_cam:"ಕ್ಯಾಮೆರಾ ಪರೀಕ್ಷೆ",
+cam_diag_ok:"ಕ್ಯಾಮೆರಾ ಸರಿ — {w}×{h} ಫ್ರೇಮ್ ಯಶಸ್ವಿಯಾಗಿ ಓದಲಾಗಿದೆ",
+cam_diag_nofeed:"ಫ್ರೇಮ್ ಇಲ್ಲ — ಮೊದಲು ಕ್ಯಾಮೆರಾ ಪ್ರಾರಂಭಿಸಿ (ಸಾಧನ ಮೋಡ್) ಅಥವಾ ಸ್ನಾಪ್‌ಶಾಟ್ URL ಭರ್ತಿ ಮಾಡಿ (IP ಮೋಡ್)",
+cam_diag_cors:"ಬ್ರೌಸರ್ ಚಿತ್ರ ಓದಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ (CORS, ಮಿಶ್ರ ವಿಷಯ, ಅಥವಾ ಕ್ಯಾಮೆರಾ ತಲುಪುತ್ತಿಲ್ಲ). URL ಅನ್ನು ಹೊಸ ಟ್ಯಾಬ್‌ನಲ್ಲಿ ತೆರೆಯಿರಿ: ಫೋಟೋ ಕಂಡರೆ ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ  python3 fod/snapshot_proxy.py  ಚಲಾಯಿಸಿ ಇಲ್ಲಿ  http://localhost:8090/?u=<ಕ್ಯಾಮೆರಾ URL>  ಬಳಸಿ; ಫೋಟೋ ಕಾಣದಿದ್ದರೆ ಮೊದಲು URL/ನೆಟ್‌ವರ್ಕ್ ಸರಿಪಡಿಸಿ",
+cam_diag_auth:"ಕ್ಯಾಮೆರಾಗೆ ಲಾಗಿನ್ ಬೇಕು — ಪ್ರಾಕ್ಸಿ URL ಒಳಗೆ ಸೇರಿಸಿ:  http://localhost:8090/?u=http://user:password@<ಕ್ಯಾಮೆರಾ-ip>/…",
+cam_diag_http:"ಕ್ಯಾಮೆರಾ {s} ಉತ್ತರಿಸಿದೆ — ಸ್ನಾಪ್‌ಶಾಟ್ ಪಥ ತಪ್ಪು; ಕ್ಯಾಮೆರಾ ಕೈಪಿಡಿ ನೋಡಿ (CP Plus/Dahua: /cgi-bin/snapshot.cgi, Hikvision: /ISAPI/Streaming/channels/101/picture)"},
 hi:{subtitle:"CCTV बाहरी वस्तु व दिशा जाँच",monitor:"मॉनिटर",jobs:"जॉब",settings:"सेटिंग्स",log:"लॉग",
 ready:"तैयार — जॉब चुनें और साइकिल जाँच चलाएँ",checking:"जाँच हो रही है…",clear:"सब ठीक — दरवाज़ा लॉक",
 fault:"त्रुटि — साइकिल शुरू न करें",start_cam:"कैमरा शुरू करें",stop_cam:"कैमरा बंद करें",back_live:"लाइव पर लौटें",
@@ -350,7 +366,13 @@ confirm_del:"यह जॉब हटाएँ?",confirm_clear:"पूरा इ�
 cell_head:"सेंट्रल मोड — इस मशीन के एंडपॉइंट",
 cell_note:"वैकल्पिक — जब एक कंप्यूटर नेटवर्क से कई मशीनें देखता है तो ये भरें: इस मशीन का कैमरा स्नैपशॉट URL, फिर उसके लॉक और अनलॉक रिले URL। खाली रहने पर सेटिंग्स उपयोग होंगी।",
 check_all:"सभी मशीनें जाँचें",need_cells:"किसी मशीन का कैमरा URL सेट नहीं है — हर जॉब के सेंट्रल-मोड फ़ील्ड में सेट करें",
-checked_n:"{n} मशीनें जाँची गईं"}
+checked_n:"{n} मशीनें जाँची गईं",
+test_cam:"कैमरा परीक्षण",
+cam_diag_ok:"कैमरा ठीक — {w}×{h} फ्रेम सफलतापूर्वक पढ़ा गया",
+cam_diag_nofeed:"फ्रेम नहीं — पहले कैमरा शुरू करें (डिवाइस मोड) या स्नैपशॉट URL भरें (IP मोड)",
+cam_diag_cors:"ब्राउज़र छवि नहीं पढ़ सका (CORS, मिश्रित सामग्री, या कैमरा अनुपलब्ध)। URL को नए टैब में खोलें: फोटो दिखे तो इसी कंप्यूटर पर  python3 fod/snapshot_proxy.py  चलाएँ और यहाँ  http://localhost:8090/?u=<कैमरा URL>  डालें; फोटो न दिखे तो पहले URL/नेटवर्क ठीक करें",
+cam_diag_auth:"कैमरे को लॉगिन चाहिए — प्रॉक्सी URL के अंदर डालें:  http://localhost:8090/?u=http://user:password@<कैमरा-ip>/…",
+cam_diag_http:"कैमरे ने {s} जवाब दिया — स्नैपशॉट पथ गलत है; कैमरा मैनुअल देखें (CP Plus/Dahua: /cgi-bin/snapshot.cgi, Hikvision: /ISAPI/Streaming/channels/101/picture)"}
 };
 let lang = "en";
 const t = (k,v)=>{let s=(L[lang]&&L[lang][k])||L.en[k]||k;if(v)for(const p in v)s=s.replace("{"+p+"}",v[p]);return s;};
@@ -881,6 +903,23 @@ function saveSettingsFromUI(){
   save();
 }
 ["camMode","snapUrl","lockUrl","unlockUrl","relayMethod"].forEach(id=>$(id).onchange=()=>{saveSettingsFromUI();toggleCamRows();});
+$("testCamBtn").onclick=async()=>{
+  saveSettingsFromUI();
+  const out=$("testCamOut");out.textContent="⏳…";
+  try{
+    const f=await grabFrame(null);
+    if(!f){out.textContent="❌ "+t("cam_diag_nofeed");return;}
+    f.canvas.getContext("2d").getImageData(0,0,4,4); // throws if the canvas is CORS-tainted
+    out.textContent="✅ "+t("cam_diag_ok",{w:f.w,h:f.h});
+  }catch(e){
+    const msg=String((e&&e.message)||e);
+    let hint;
+    if(/HTTP 40[13]/.test(msg))hint=t("cam_diag_auth");
+    else if(/HTTP \d+/.test(msg))hint=t("cam_diag_http",{s:msg});
+    else hint=t("cam_diag_cors");
+    out.textContent="❌ "+msg+" — "+hint;
+  }
+};
 $("deviceSel").onchange=()=>{saveSettingsFromUI();if(stream)startCamera();};
 $("exportBtn").onclick=()=>{
   const a=document.createElement("a");
