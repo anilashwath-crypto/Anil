@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FOD Guard — Foreign Object Detection</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --panel:#ffffff; --ink:#16212b; --muted:#5b6b7a;
+    --line:#dbe3ea; --accent:#0b72c4; --accent-ink:#ffffff;
+    --ok:#1a8f4a; --ok-bg:#e5f6ec; --bad:#c62f2f; --bad-bg:#fdeaea;
+    --warn:#b97a00; --warn-bg:#fff4dd; --chip:#eef2f6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d1319; --panel:#161e27; --ink:#e8eef4; --muted:#8fa1b3;
+      --line:#26303b; --accent:#3da2e8; --accent-ink:#06131d;
+      --ok:#3ecf7a; --ok-bg:#0f2b1c; --bad:#ff6b6b; --bad-bg:#331416;
+      --warn:#f0b23e; --warn-bg:#33270f; --chip:#1d2733;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1319; --panel:#161e27; --ink:#e8eef4; --muted:#8fa1b3;
+    --line:#26303b; --accent:#3da2e8; --accent-ink:#06131d;
+    --ok:#3ecf7a; --ok-bg:#0f2b1c; --bad:#ff6b6b; --bad-bg:#331416;
+    --warn:#f0b23e; --warn-bg:#33270f; --chip:#1d2733;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Noto Sans Kannada","Noto Sans Devanagari",sans-serif;
+    background:var(--bg);color:var(--ink);padding-bottom:70px}
+  header{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--panel);
+    border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  header h1{font-size:17px;margin:0;flex:1;line-height:1.2}
+  header h1 small{display:block;font-size:11px;color:var(--muted);font-weight:400}
+  select,input,button,textarea{font:inherit;color:inherit}
+  .pill{background:var(--chip);border:1px solid var(--line);border-radius:20px;padding:5px 10px;font-size:13px}
+  main{max-width:760px;margin:0 auto;padding:12px}
+  section.tabpage{display:none}
+  section.tabpage.on{display:block}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+  .card h2{margin:0 0 8px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  nav.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--panel);
+    border-top:1px solid var(--line);z-index:20}
+  nav.tabs button{flex:1;background:none;border:none;padding:10px 4px 12px;font-size:12px;color:var(--muted);cursor:pointer}
+  nav.tabs button.on{color:var(--accent);font-weight:700}
+  nav.tabs button span{display:block;font-size:19px}
+  #banner{border-radius:12px;padding:14px;margin-bottom:12px;text-align:center;font-weight:800;font-size:17px;
+    border:2px solid var(--line);background:var(--panel)}
+  #banner.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+  #banner.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+  #banner.busy{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+  #banner small{display:block;font-weight:500;font-size:12px;margin-top:4px}
+  .videowrap{position:relative;background:#000;border-radius:10px;overflow:hidden}
+  .videowrap video,.videowrap canvas,.videowrap img{display:block;width:100%;max-width:100%}
+  #liveTag{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;
+    padding:3px 8px;border-radius:12px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+  .row label{font-size:13px;color:var(--muted)}
+  .grow{flex:1}
+  button.big{width:100%;padding:14px;font-size:17px;font-weight:800;border:none;border-radius:12px;
+    background:var(--accent);color:var(--accent-ink);cursor:pointer}
+  button.big:disabled{opacity:.45}
+  button.ghost{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer}
+  button.danger{background:var(--bad-bg);border:1px solid var(--bad);color:var(--bad);border-radius:10px;padding:8px 12px;cursor:pointer}
+  input[type=text],input[type=url],input[type=number],select.field{width:100%;padding:9px 10px;border:1px solid var(--line);
+    border-radius:10px;background:var(--bg)}
+  .kv{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-bottom:1px dashed var(--line)}
+  .kv:last-child{border-bottom:none}
+  .kv b.ok{color:var(--ok)} .kv b.bad{color:var(--bad)}
+  .lockbox{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:var(--chip);margin-top:10px}
+  .lockbox .icon{font-size:30px}
+  .lockbox.locked{outline:2px solid var(--ok)}
+  .lockbox.unlocked{outline:2px solid var(--bad)}
+  .joblist .job{display:flex;gap:10px;align-items:center;padding:9px;border:1px solid var(--line);
+    border-radius:10px;margin-bottom:8px}
+  .joblist img{width:64px;height:48px;object-fit:cover;border-radius:6px;background:#000}
+  .joblist .nm{flex:1;font-weight:700}
+  .joblist .nm small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+  .slider{margin:10px 0}
+  .slider label{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+  .slider input{width:100%}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:middle}
+  td img{width:56px;height:42px;object-fit:cover;border-radius:4px}
+  .res-ok{color:var(--ok);font-weight:700} .res-bad{color:var(--bad);font-weight:700}
+  .note{font-size:12px;color:var(--muted);line-height:1.5}
+  .safety{border-left:4px solid var(--warn);background:var(--warn-bg);padding:10px;border-radius:8px;font-size:12.5px;line-height:1.5}
+  #roiCanvas{touch-action:none;cursor:crosshair;border-radius:10px;width:100%}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛡️ FOD Guard <small><span data-i="subtitle">CCTV foreign-object &amp; orientation check</span> · v2026-09-02</small></h1>
+  <select id="langSel" class="pill" aria-label="Language">
+    <option value="en">EN</option><option value="kn">ಕನ್ನಡ</option><option value="hi">हिंदी</option>
+  </select>
+  <button id="themeBtn" class="pill" aria-label="Theme">🌗</button>
+</header>
+
+<main>
+<!-- ============ MONITOR ============ -->
+<section class="tabpage on" id="page-monitor">
+  <div id="banner"><span id="bannerTxt" data-i="ready">Ready — select a job and run a cycle check</span><small id="bannerSub"></small></div>
+
+  <div class="card">
+    <div class="videowrap">
+      <video id="vid" autoplay playsinline muted class="hidden"></video>
+      <img id="ipImg" class="hidden" alt="">
+      <canvas id="resultCanvas" class="hidden"></canvas>
+      <span id="liveTag">● LIVE</span>
+    </div>
+    <div class="row">
+      <button id="camBtn" class="ghost">📷 <span data-i="start_cam">Start camera</span></button>
+      <button id="backLiveBtn" class="ghost hidden">↩ <span data-i="back_live">Back to live</span></button>
+      <span class="grow"></span>
+      <label data-i="job">Job</label>
+      <select id="jobSel" class="pill"></select>
+    </div>
+    <button id="runBtn" class="big" disabled>▶ <span data-i="run">RUN CYCLE CHECK</span></button>
+    <button id="runAllBtn" class="ghost" style="width:100%;margin-top:8px">🏭 <span data-i="check_all">CHECK ALL MACHINES</span></button>
+    <div class="row">
+      <label><input type="checkbox" id="autoChk"> <span data-i="auto">Auto every</span></label>
+      <input type="number" id="autoSec" min="3" max="600" value="15" style="width:70px" class="field">
+      <label data-i="seconds">sec</label>
+      <span class="grow"></span><span class="note" data-i="space_hint">(Space bar also runs a check)</span>
+    </div>
+  </div>
+
+  <div class="card" id="resCard">
+    <h2 data-i="last_result">Last result</h2>
+    <div class="kv"><span data-i="orientation">Orientation</span><b id="rOrient">—</b></div>
+    <div class="kv"><span data-i="match_score">Match score</span><b id="rScore">—</b></div>
+    <div class="kv"><span data-i="fo">Foreign objects</span><b id="rFo">—</b></div>
+    <div class="kv"><span data-i="verdict">Verdict</span><b id="rVerdict">—</b></div>
+    <div class="lockbox" id="lockBox">
+      <span class="icon" id="lockIcon">🔓</span>
+      <div>
+        <b id="lockTxt" data-i="door_unlocked">Door UNLOCKED — cycle inhibited</b>
+        <div class="note" id="lockNote" data-i="lock_note">Relay is triggered only when orientation matches and no foreign object is found.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ JOBS ============ -->
+<section class="tabpage" id="page-jobs">
+  <div class="card">
+    <h2 data-i="jobs">Jobs</h2>
+    <div class="joblist" id="jobList"></div>
+    <button id="newJobBtn" class="ghost">➕ <span data-i="new_job">New job</span></button>
+  </div>
+
+  <div class="card hidden" id="jobEditor">
+    <h2 data-i="job_setup">Job setup</h2>
+    <div class="row"><label data-i="job_name">Job name</label></div>
+    <input type="text" id="jobName" placeholder="e.g. Flange 80mm — Op.20">
+    <div class="row" style="margin-top:10px">
+      <button id="captureMasterBtn" class="ghost">📸 <span data-i="capture_master">Capture master from camera</span></button>
+      <span class="note" id="masterState" data-i="no_master">No master image yet</span>
+    </div>
+    <div class="videowrap" id="roiWrap" style="margin-top:8px">
+      <canvas id="roiCanvas" width="640" height="480"></canvas>
+    </div>
+    <p class="note" data-i="roi_hint">Drag a box on the master image to mark the inspection zone (die / fixture area). The check runs only inside this zone.</p>
+
+    <div class="row" style="margin-top:12px"><label data-i="cell_head">Central mode — this machine's endpoints</label></div>
+    <input type="url" id="jobSnap" placeholder="http://192.168.1.64/snapshot.jpg">
+    <input type="url" id="jobLock" placeholder="http://192.168.1.90/relay/0?turn=on" style="margin-top:6px">
+    <input type="url" id="jobUnlock" placeholder="http://192.168.1.90/relay/0?turn=off" style="margin-top:6px">
+    <p class="note" data-i="cell_note">Optional — fill these when one computer supervises several machines over the network: this machine's camera snapshot URL, then its lock and unlock relay URLs. Blank fields fall back to Settings.</p>
+
+    <div class="slider">
+      <label><span data-i="orient_thresh">Orientation match required</span><b id="orientThreshVal"></b></label>
+      <input type="range" id="orientThresh" min="0.30" max="0.90" step="0.05" value="0.60">
+    </div>
+    <div class="slider">
+      <label><span data-i="diff_sens">Foreign-object sensitivity</span><b id="diffThreshVal"></b></label>
+      <input type="range" id="diffThresh" min="20" max="90" step="5" value="45">
+    </div>
+    <div class="slider">
+      <label><span data-i="min_area">Minimum object size (% of zone)</span><b id="minAreaVal"></b></label>
+      <input type="range" id="minArea" min="0.1" max="3" step="0.1" value="0.5">
+    </div>
+
+    <div class="row">
+      <button id="saveJobBtn" class="big" style="flex:1">💾 <span data-i="save_job">Save job</span></button>
+    </div>
+    <div class="row">
+      <button id="cancelJobBtn" class="ghost grow" data-i="cancel">Cancel</button>
+      <button id="deleteJobBtn" class="danger hidden" data-i="delete_job">Delete job</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section class="tabpage" id="page-settings">
+  <div class="card">
+    <h2 data-i="camera">Camera</h2>
+    <div class="row">
+      <label data-i="cam_source">Source</label>
+      <select id="camMode" class="field grow">
+        <option value="device" data-i="cam_device">Device / USB camera (CCTV via USB capture)</option>
+        <option value="ip" data-i="cam_ip">IP camera snapshot URL</option>
+      </select>
+    </div>
+    <div class="row" id="devRow">
+      <label data-i="cam_pick">Camera</label>
+      <select id="deviceSel" class="field grow"></select>
+    </div>
+    <div class="row hidden" id="ipRow">
+      <input type="url" id="snapUrl" placeholder="http://192.168.1.64/snapshot.jpg">
+    </div>
+    <p class="note" data-i="ip_note">The snapshot URL must return a JPEG and allow cross-origin access (CORS). Most DVR/IP cameras expose one (e.g. /snapshot.jpg, /cgi-bin/snapshot.cgi). If blocked, serve this page from the same gateway or use a USB capture dongle on the CCTV's analogue/HDMI output.</p>
+    <div class="row">
+      <button id="testCamBtn" class="ghost">🔍 <span data-i="test_cam">Test camera</span></button>
+      <span class="note grow" id="testCamOut"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 data-i="door_relay">Door-lock relay</h2>
+    <div class="row"><label data-i="lock_url">Lock URL (all clear)</label></div>
+    <input type="url" id="lockUrl" placeholder="http://192.168.1.90/relay/0?turn=on">
+    <div class="row" style="margin-top:8px"><label data-i="unlock_url">Unlock / inhibit URL (fault)</label></div>
+    <input type="url" id="unlockUrl" placeholder="http://192.168.1.90/relay/0?turn=off">
+    <div class="row" style="margin-top:8px">
+      <label data-i="http_method">HTTP method</label>
+      <select id="relayMethod" class="pill"><option>GET</option><option>POST</option></select>
+      <span class="grow"></span>
+      <button id="testLockBtn" class="ghost">🔒 <span data-i="test_lock">Test lock</span></button>
+      <button id="testUnlockBtn" class="ghost">🔓 <span data-i="test_unlock">Test unlock</span></button>
+    </div>
+    <p class="note" data-i="relay_note">Works with any relay that accepts an HTTP call: Shelly, Tasmota/Sonoff, ESP8266/ESP32 sketch. Wire the relay to the door solenoid lock. Leave blank to use the on-screen indicator only.</p>
+    <div class="safety" data-i="safety">⚠️ Safety: FOD Guard is a process-assist check, not a certified safety device. The door interlock must still go through a proper safety relay / guard switch as per your machine's safety standard. Never bypass it with this system alone.</div>
+  </div>
+
+  <div class="card">
+    <h2 data-i="data">Data</h2>
+    <div class="row">
+      <button id="exportBtn" class="ghost" data-i="export">Export backup (JSON)</button>
+      <label class="ghost" style="cursor:pointer" role="button">📥 <span data-i="import">Import</span><input type="file" id="importFile" accept=".json" class="hidden"></label>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LOG ============ -->
+<section class="tabpage" id="page-log">
+  <div class="card">
+    <h2 data-i="history">Cycle history</h2>
+    <table id="logTable">
+      <thead><tr><th></th><th data-i="time">Time</th><th data-i="job">Job</th><th data-i="verdict">Verdict</th><th data-i="detail">Detail</th></tr></thead>
+      <tbody id="logBody"></tbody>
+    </table>
+    <p class="note" id="noLog" data-i="no_log">No cycles yet.</p>
+    <button id="clearLogBtn" class="danger" data-i="clear_log">Clear history</button>
+  </div>
+</section>
+</main>
+
+<nav class="tabs">
+  <button data-tab="monitor" class="on"><span>🖥️</span><span data-i="monitor">Monitor</span></button>
+  <button data-tab="jobs"><span>🧩</span><span data-i="jobs">Jobs</span></button>
+  <button data-tab="settings"><span>⚙️</span><span data-i="settings">Settings</span></button>
+  <button data-tab="log"><span>📜</span><span data-i="log">Log</span></button>
+</nav>
+
+<canvas id="work" class="hidden"></canvas>
+
+<script>
+"use strict";
+/* ============================== i18n ============================== */
+const L = {
+en:{subtitle:"CCTV foreign-object & orientation check",monitor:"Monitor",jobs:"Jobs",settings:"Settings",log:"Log",
+ready:"Ready — select a job and run a cycle check",checking:"Checking…",clear:"ALL CLEAR — DOOR LOCKED",
+fault:"FAULT — DO NOT START CYCLE",start_cam:"Start camera",stop_cam:"Stop camera",back_live:"Back to live",
+job:"Job",run:"RUN CYCLE CHECK",auto:"Auto every",seconds:"sec",space_hint:"(Space bar also runs a check)",
+last_result:"Last result",orientation:"Orientation",match_score:"Match score",fo:"Foreign objects",verdict:"Verdict",
+door_locked:"Door LOCKED — cycle enabled",door_unlocked:"Door UNLOCKED — cycle inhibited",
+lock_note:"Relay is triggered only when orientation matches and no foreign object is found.",
+new_job:"New job",job_setup:"Job setup",job_name:"Job name",capture_master:"Capture master from camera",
+no_master:"No master image yet",master_set:"Master image captured ✓",
+roi_hint:"Drag a box on the master image to mark the inspection zone (die / fixture area). The check runs only inside this zone.",
+orient_thresh:"Orientation match required",diff_sens:"Foreign-object sensitivity",min_area:"Minimum object size (% of zone)",
+save_job:"Save job",cancel:"Cancel",delete_job:"Delete job",camera:"Camera",cam_source:"Source",
+cam_device:"Device / USB camera (CCTV via USB capture)",cam_ip:"IP camera snapshot URL",cam_pick:"Camera",
+ip_note:"The snapshot URL must return a JPEG and allow cross-origin access (CORS). Most DVR/IP cameras expose one (e.g. /snapshot.jpg, /cgi-bin/snapshot.cgi). If blocked, serve this page from the same gateway or use a USB capture dongle on the CCTV's analogue/HDMI output.",
+door_relay:"Door-lock relay",lock_url:"Lock URL (all clear)",unlock_url:"Unlock / inhibit URL (fault)",
+http_method:"HTTP method",test_lock:"Test lock",test_unlock:"Test unlock",
+relay_note:"Works with any relay that accepts an HTTP call: Shelly, Tasmota/Sonoff, ESP8266/ESP32 sketch. Wire the relay to the door solenoid lock. Leave blank to use the on-screen indicator only.",
+safety:"⚠️ Safety: FOD Guard is a process-assist check, not a certified safety device. The door interlock must still go through a proper safety relay / guard switch as per your machine's safety standard. Never bypass it with this system alone.",
+data:"Data",export:"Export backup (JSON)",import:"Import",history:"Cycle history",time:"Time",detail:"Detail",
+no_log:"No cycles yet.",clear_log:"Clear history",ok_txt:"PASS",bad_txt:"FAIL",
+orient_ok:"OK",misoriented:"Misoriented ~{a}°",job_missing:"Job missing / wrong job",fo_none:"None",fo_n:"{n} found",
+need_cam:"Start the camera first",need_master:"Capture a master image first",need_name:"Enter a job name",
+cam_err:"Camera error: ",snap_err:"Snapshot failed (URL/CORS): ",relay_sent:"Relay call sent",relay_err:"Relay call failed: ",
+confirm_del:"Delete this job?",confirm_clear:"Clear all history?",no_jobs:"— no jobs —",saved:"Saved ✓",
+cell_head:"Central mode — this machine's endpoints",
+cell_note:"Optional — fill these when one computer supervises several machines over the network: this machine's camera snapshot URL, then its lock and unlock relay URLs. Blank fields fall back to Settings.",
+check_all:"CHECK ALL MACHINES",need_cells:"No machine has its own camera URL yet — set one in each job's Central-mode fields",
+checked_n:"{n} machines checked",
+test_cam:"Test camera",
+cam_diag_ok:"Camera OK — frame {w}×{h} read successfully",
+cam_diag_nofeed:"No frame — start the camera first (device mode) or fill the snapshot URL (IP mode)",
+cam_diag_cors:"The browser could not read the image (CORS, mixed content, or camera unreachable). Open the URL in a new browser tab: if a photo shows, run  python3 fod/snapshot_proxy.py  on THIS computer and use  http://localhost:8090/?u=<camera URL>  here; if no photo shows, fix the URL/network first",
+cam_diag_auth:"Camera needs a login — put it inside the proxy URL:  http://localhost:8090/?u=http://user:password@<camera-ip>/…",
+cam_diag_http:"Camera answered {s} — the snapshot path is wrong; check the camera manual (CP Plus/Dahua: /cgi-bin/snapshot.cgi, Hikvision: /ISAPI/Streaming/channels/101/picture)"},
+kn:{subtitle:"CCTV ಪರಕೀಯ ವಸ್ತು & ದಿಕ್ಕು ಪರಿಶೀಲನೆ",monitor:"ಮಾನಿಟರ್",jobs:"ಜಾಬ್‌ಗಳು",settings:"ಸೆಟ್ಟಿಂಗ್ಸ್",log:"ಲಾಗ್",
+ready:"ಸಿದ್ಧ — ಜಾಬ್ ಆಯ್ಕೆಮಾಡಿ ಚೆಕ್ ನಡೆಸಿ",checking:"ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ…",clear:"ಎಲ್ಲವೂ ಸರಿ — ಬಾಗಿಲು ಲಾಕ್",
+fault:"ದೋಷ — ಸೈಕಲ್ ಪ್ರಾರಂಭಿಸಬೇಡಿ",start_cam:"ಕ್ಯಾಮೆರಾ ಪ್ರಾರಂಭಿಸಿ",stop_cam:"ಕ್ಯಾಮೆರಾ ನಿಲ್ಲಿಸಿ",back_live:"ಲೈವ್‌ಗೆ ಹಿಂತಿರುಗಿ",
+job:"ಜಾಬ್",run:"ಸೈಕಲ್ ಚೆಕ್ ನಡೆಸಿ",auto:"ಪ್ರತಿ",seconds:"ಸೆಕೆಂಡ್",space_hint:"(Space ಕೀ ಸಹ ಚೆಕ್ ನಡೆಸುತ್ತದೆ)",
+last_result:"ಕೊನೆಯ ಫಲಿತಾಂಶ",orientation:"ದಿಕ್ಕು",match_score:"ಹೊಂದಾಣಿಕೆ ಅಂಕ",fo:"ಪರಕೀಯ ವಸ್ತುಗಳು",verdict:"ತೀರ್ಪು",
+door_locked:"ಬಾಗಿಲು ಲಾಕ್ — ಸೈಕಲ್ ಅನುಮತಿ",door_unlocked:"ಬಾಗಿಲು ತೆರೆದಿದೆ — ಸೈಕಲ್ ತಡೆ",
+lock_note:"ದಿಕ್ಕು ಸರಿಯಿದ್ದು ಪರಕೀಯ ವಸ್ತು ಇಲ್ಲದಿದ್ದಾಗ ಮಾತ್ರ ರಿಲೇ ಚಾಲನೆಯಾಗುತ್ತದೆ.",
+new_job:"ಹೊಸ ಜಾಬ್",job_setup:"ಜಾಬ್ ಸೆಟಪ್",job_name:"ಜಾಬ್ ಹೆಸರು",capture_master:"ಕ್ಯಾಮೆರಾದಿಂದ ಮಾಸ್ಟರ್ ಸೆರೆಹಿಡಿಯಿರಿ",
+no_master:"ಮಾಸ್ಟರ್ ಚಿತ್ರ ಇನ್ನೂ ಇಲ್ಲ",master_set:"ಮಾಸ್ಟರ್ ಚಿತ್ರ ಸೆರೆಹಿಡಿಯಲಾಗಿದೆ ✓",
+roi_hint:"ಪರಿಶೀಲನಾ ವಲಯ (ಡೈ/ಫಿಕ್ಚರ್ ಪ್ರದೇಶ) ಗುರುತಿಸಲು ಮಾಸ್ಟರ್ ಚಿತ್ರದ ಮೇಲೆ ಚೌಕ ಎಳೆಯಿರಿ. ಆ ವಲಯದೊಳಗೆ ಮಾತ್ರ ಚೆಕ್ ನಡೆಯುತ್ತದೆ.",
+orient_thresh:"ಬೇಕಾದ ದಿಕ್ಕು ಹೊಂದಾಣಿಕೆ",diff_sens:"ಪರಕೀಯ ವಸ್ತು ಸೂಕ್ಷ್ಮತೆ",min_area:"ಕನಿಷ್ಠ ವಸ್ತು ಗಾತ್ರ (% ವಲಯ)",
+save_job:"ಜಾಬ್ ಉಳಿಸಿ",cancel:"ರದ್ದುಮಾಡಿ",delete_job:"ಜಾಬ್ ಅಳಿಸಿ",camera:"ಕ್ಯಾಮೆರಾ",cam_source:"ಮೂಲ",
+cam_device:"ಸಾಧನ / USB ಕ್ಯಾಮೆರಾ (USB ಕ್ಯಾಪ್ಚರ್ ಮೂಲಕ CCTV)",cam_ip:"IP ಕ್ಯಾಮೆರಾ ಸ್ನಾಪ್‌ಶಾಟ್ URL",cam_pick:"ಕ್ಯಾಮೆರಾ",
+ip_note:"ಸ್ನಾಪ್‌ಶಾಟ್ URL JPEG ನೀಡಬೇಕು ಮತ್ತು CORS ಅನುಮತಿಸಬೇಕು. ಹೆಚ್ಚಿನ DVR/IP ಕ್ಯಾಮೆರಾಗಳಲ್ಲಿ ಇದೆ (ಉದಾ. /snapshot.jpg). ತಡೆಯಾದರೆ ಗೇಟ್‌ವೇಯಿಂದಲೇ ಈ ಪುಟ ನೀಡಿ ಅಥವಾ USB ಕ್ಯಾಪ್ಚರ್ ಡಾಂಗಲ್ ಬಳಸಿ.",
+door_relay:"ಬಾಗಿಲು-ಲಾಕ್ ರಿಲೇ",lock_url:"ಲಾಕ್ URL (ಎಲ್ಲವೂ ಸರಿ)",unlock_url:"ಅನ್‌ಲಾಕ್ / ತಡೆ URL (ದೋಷ)",
+http_method:"HTTP ವಿಧಾನ",test_lock:"ಲಾಕ್ ಪರೀಕ್ಷೆ",test_unlock:"ಅನ್‌ಲಾಕ್ ಪರೀಕ್ಷೆ",
+relay_note:"HTTP ಕರೆ ಸ್ವೀಕರಿಸುವ ಯಾವುದೇ ರಿಲೇ ಜೊತೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ: Shelly, Tasmota/Sonoff, ESP8266/ESP32. ರಿಲೇಯನ್ನು ಬಾಗಿಲ ಸೊಲೆನಾಯ್ಡ್ ಲಾಕ್‌ಗೆ ಜೋಡಿಸಿ. ಖಾಲಿ ಬಿಟ್ಟರೆ ಪರದೆಯ ಸೂಚಕ ಮಾತ್ರ.",
+safety:"⚠️ ಸುರಕ್ಷತೆ: FOD Guard ಪ್ರಕ್ರಿಯಾ-ಸಹಾಯಕ ಪರಿಶೀಲನೆ ಮಾತ್ರ, ಪ್ರಮಾಣೀಕೃತ ಸುರಕ್ಷತಾ ಸಾಧನವಲ್ಲ. ಬಾಗಿಲ ಇಂಟರ್‌ಲಾಕ್ ಯಂತ್ರದ ಸುರಕ್ಷತಾ ಮಾನದಂಡದ ಪ್ರಕಾರ ಸರಿಯಾದ ಸೇಫ್ಟಿ ರಿಲೇ/ಗಾರ್ಡ್ ಸ್ವಿಚ್ ಮೂಲಕವೇ ಇರಬೇಕು.",
+data:"ಡೇಟಾ",export:"ಬ್ಯಾಕಪ್ ರಫ್ತು (JSON)",import:"ಆಮದು",history:"ಸೈಕಲ್ ಇತಿಹಾಸ",time:"ಸಮಯ",detail:"ವಿವರ",
+no_log:"ಇನ್ನೂ ಸೈಕಲ್‌ಗಳಿಲ್ಲ.",clear_log:"ಇತಿಹಾಸ ಅಳಿಸಿ",ok_txt:"ಪಾಸ್",bad_txt:"ಫೇಲ್",
+orient_ok:"ಸರಿ",misoriented:"ದಿಕ್ಕು ತಪ್ಪಿದೆ ~{a}°",job_missing:"ಜಾಬ್ ಇಲ್ಲ / ತಪ್ಪು ಜಾಬ್",fo_none:"ಇಲ್ಲ",fo_n:"{n} ಪತ್ತೆ",
+need_cam:"ಮೊದಲು ಕ್ಯಾಮೆರಾ ಪ್ರಾರಂಭಿಸಿ",need_master:"ಮೊದಲು ಮಾಸ್ಟರ್ ಚಿತ್ರ ಸೆರೆಹಿಡಿಯಿರಿ",need_name:"ಜಾಬ್ ಹೆಸರು ನಮೂದಿಸಿ",
+cam_err:"ಕ್ಯಾಮೆರಾ ದೋಷ: ",snap_err:"ಸ್ನಾಪ್‌ಶಾಟ್ ವಿಫಲ (URL/CORS): ",relay_sent:"ರಿಲೇ ಕರೆ ಕಳುಹಿಸಲಾಗಿದೆ",relay_err:"ರಿಲೇ ಕರೆ ವಿಫಲ: ",
+confirm_del:"ಈ ಜಾಬ್ ಅಳಿಸುವುದೇ?",confirm_clear:"ಎಲ್ಲಾ ಇತಿಹಾಸ ಅಳಿಸುವುದೇ?",no_jobs:"— ಜಾಬ್‌ಗಳಿಲ್ಲ —",saved:"ಉಳಿಸಲಾಗಿದೆ ✓",
+cell_head:"ಸೆಂಟ್ರಲ್ ಮೋಡ್ — ಈ ಯಂತ್ರದ ಎಂಡ್‌ಪಾಯಿಂಟ್‌ಗಳು",
+cell_note:"ಐಚ್ಛಿಕ — ಒಂದೇ ಕಂಪ್ಯೂಟರ್ ನೆಟ್‌ವರ್ಕ್ ಮೂಲಕ ಹಲವು ಯಂತ್ರಗಳನ್ನು ನೋಡಿಕೊಳ್ಳುವಾಗ ಇವನ್ನು ಭರ್ತಿ ಮಾಡಿ: ಈ ಯಂತ್ರದ ಕ್ಯಾಮೆರಾ ಸ್ನಾಪ್‌ಶಾಟ್ URL, ನಂತರ ಲಾಕ್ ಮತ್ತು ಅನ್‌ಲಾಕ್ ರಿಲೇ URL. ಖಾಲಿ ಇದ್ದರೆ ಸೆಟ್ಟಿಂಗ್ಸ್ ಬಳಕೆ.",
+check_all:"ಎಲ್ಲಾ ಯಂತ್ರ ಪರಿಶೀಲಿಸಿ",need_cells:"ಯಾವ ಯಂತ್ರಕ್ಕೂ ಕ್ಯಾಮೆರಾ URL ಇಲ್ಲ — ಪ್ರತಿ ಜಾಬ್‌ನ ಸೆಂಟ್ರಲ್-ಮೋಡ್ ಕ್ಷೇತ್ರಗಳಲ್ಲಿ ಹೊಂದಿಸಿ",
+checked_n:"{n} ಯಂತ್ರ ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
+test_cam:"ಕ್ಯಾಮೆರಾ ಪರೀಕ್ಷೆ",
+cam_diag_ok:"ಕ್ಯಾಮೆರಾ ಸರಿ — {w}×{h} ಫ್ರೇಮ್ ಯಶಸ್ವಿಯಾಗಿ ಓದಲಾಗಿದೆ",
+cam_diag_nofeed:"ಫ್ರೇಮ್ ಇಲ್ಲ — ಮೊದಲು ಕ್ಯಾಮೆರಾ ಪ್ರಾರಂಭಿಸಿ (ಸಾಧನ ಮೋಡ್) ಅಥವಾ ಸ್ನಾಪ್‌ಶಾಟ್ URL ಭರ್ತಿ ಮಾಡಿ (IP ಮೋಡ್)",
+cam_diag_cors:"ಬ್ರೌಸರ್ ಚಿತ್ರ ಓದಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ (CORS, ಮಿಶ್ರ ವಿಷಯ, ಅಥವಾ ಕ್ಯಾಮೆರಾ ತಲುಪುತ್ತಿಲ್ಲ). URL ಅನ್ನು ಹೊಸ ಟ್ಯಾಬ್‌ನಲ್ಲಿ ತೆರೆಯಿರಿ: ಫೋಟೋ ಕಂಡರೆ ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ  python3 fod/snapshot_proxy.py  ಚಲಾಯಿಸಿ ಇಲ್ಲಿ  http://localhost:8090/?u=<ಕ್ಯಾಮೆರಾ URL>  ಬಳಸಿ; ಫೋಟೋ ಕಾಣದಿದ್ದರೆ ಮೊದಲು URL/ನೆಟ್‌ವರ್ಕ್ ಸರಿಪಡಿಸಿ",
+cam_diag_auth:"ಕ್ಯಾಮೆರಾಗೆ ಲಾಗಿನ್ ಬೇಕು — ಪ್ರಾಕ್ಸಿ URL ಒಳಗೆ ಸೇರಿಸಿ:  http://localhost:8090/?u=http://user:password@<ಕ್ಯಾಮೆರಾ-ip>/…",
+cam_diag_http:"ಕ್ಯಾಮೆರಾ {s} ಉತ್ತರಿಸಿದೆ — ಸ್ನಾಪ್‌ಶಾಟ್ ಪಥ ತಪ್ಪು; ಕ್ಯಾಮೆರಾ ಕೈಪಿಡಿ ನೋಡಿ (CP Plus/Dahua: /cgi-bin/snapshot.cgi, Hikvision: /ISAPI/Streaming/channels/101/picture)"},
+hi:{subtitle:"CCTV बाहरी वस्तु व दिशा जाँच",monitor:"मॉनिटर",jobs:"जॉब",settings:"सेटिंग्स",log:"लॉग",
+ready:"तैयार — जॉब चुनें और साइकिल जाँच चलाएँ",checking:"जाँच हो रही है…",clear:"सब ठीक — दरवाज़ा लॉक",
+fault:"त्रुटि — साइकिल शुरू न करें",start_cam:"कैमरा शुरू करें",stop_cam:"कैमरा बंद करें",back_live:"लाइव पर लौटें",
+job:"जॉब",run:"साइकिल जाँच चलाएँ",auto:"हर",seconds:"सेकंड",space_hint:"(Space कुंजी से भी जाँच चलती है)",
+last_result:"अंतिम परिणाम",orientation:"दिशा",match_score:"मिलान स्कोर",fo:"बाहरी वस्तुएँ",verdict:"निर्णय",
+door_locked:"दरवाज़ा लॉक — साइकिल सक्षम",door_unlocked:"दरवाज़ा खुला — साइकिल अवरुद्ध",
+lock_note:"रिले तभी चलती है जब दिशा सही हो और कोई बाहरी वस्तु न मिले।",
+new_job:"नया जॉब",job_setup:"जॉब सेटअप",job_name:"जॉब का नाम",capture_master:"कैमरे से मास्टर छवि लें",
+no_master:"मास्टर छवि अभी नहीं",master_set:"मास्टर छवि ले ली गई ✓",
+roi_hint:"निरीक्षण क्षेत्र (डाई/फिक्स्चर) चिह्नित करने के लिए मास्टर छवि पर बॉक्स खींचें। जाँच केवल उसी क्षेत्र में होती है।",
+orient_thresh:"आवश्यक दिशा मिलान",diff_sens:"बाहरी वस्तु संवेदनशीलता",min_area:"न्यूनतम वस्तु आकार (% क्षेत्र)",
+save_job:"जॉब सहेजें",cancel:"रद्द करें",delete_job:"जॉब हटाएँ",camera:"कैमरा",cam_source:"स्रोत",
+cam_device:"डिवाइस / USB कैमरा (USB कैप्चर से CCTV)",cam_ip:"IP कैमरा स्नैपशॉट URL",cam_pick:"कैमरा",
+ip_note:"स्नैपशॉट URL से JPEG मिलना चाहिए और CORS की अनुमति होनी चाहिए। अधिकांश DVR/IP कैमरों में यह होता है (जैसे /snapshot.jpg)। ब्लॉक हो तो यह पेज गेटवे से ही सर्व करें या USB कैप्चर डोंगल उपयोग करें।",
+door_relay:"दरवाज़ा-लॉक रिले",lock_url:"लॉक URL (सब ठीक)",unlock_url:"अनलॉक / अवरोध URL (त्रुटि)",
+http_method:"HTTP विधि",test_lock:"लॉक परीक्षण",test_unlock:"अनलॉक परीक्षण",
+relay_note:"HTTP कॉल स्वीकारने वाली किसी भी रिले के साथ काम करता है: Shelly, Tasmota/Sonoff, ESP8266/ESP32। रिले को दरवाज़े के सोलेनॉइड लॉक से जोड़ें। खाली छोड़ने पर केवल स्क्रीन संकेतक।",
+safety:"⚠️ सुरक्षा: FOD Guard केवल प्रक्रिया-सहायक जाँच है, प्रमाणित सुरक्षा उपकरण नहीं। दरवाज़े का इंटरलॉक मशीन के सुरक्षा मानक के अनुसार उचित सेफ्टी रिले/गार्ड स्विच से ही होना चाहिए।",
+data:"डेटा",export:"बैकअप निर्यात (JSON)",import:"आयात",history:"साइकिल इतिहास",time:"समय",detail:"विवरण",
+no_log:"अभी कोई साइकिल नहीं।",clear_log:"इतिहास साफ़ करें",ok_txt:"पास",bad_txt:"फेल",
+orient_ok:"ठीक",misoriented:"दिशा गलत ~{a}°",job_missing:"जॉब गायब / गलत जॉब",fo_none:"कोई नहीं",fo_n:"{n} मिलीं",
+need_cam:"पहले कैमरा शुरू करें",need_master:"पहले मास्टर छवि लें",need_name:"जॉब का नाम भरें",
+cam_err:"कैमरा त्रुटि: ",snap_err:"स्नैपशॉट विफल (URL/CORS): ",relay_sent:"रिले कॉल भेजी गई",relay_err:"रिले कॉल विफल: ",
+confirm_del:"यह जॉब हटाएँ?",confirm_clear:"पूरा इतिहास साफ़ करें?",no_jobs:"— कोई जॉब नहीं —",saved:"सहेजा गया ✓",
+cell_head:"सेंट्रल मोड — इस मशीन के एंडपॉइंट",
+cell_note:"वैकल्पिक — जब एक कंप्यूटर नेटवर्क से कई मशीनें देखता है तो ये भरें: इस मशीन का कैमरा स्नैपशॉट URL, फिर उसके लॉक और अनलॉक रिले URL। खाली रहने पर सेटिंग्स उपयोग होंगी।",
+check_all:"सभी मशीनें जाँचें",need_cells:"किसी मशीन का कैमरा URL सेट नहीं है — हर जॉब के सेंट्रल-मोड फ़ील्ड में सेट करें",
+checked_n:"{n} मशीनें जाँची गईं",
+test_cam:"कैमरा परीक्षण",
+cam_diag_ok:"कैमरा ठीक — {w}×{h} फ्रेम सफलतापूर्वक पढ़ा गया",
+cam_diag_nofeed:"फ्रेम नहीं — पहले कैमरा शुरू करें (डिवाइस मोड) या स्नैपशॉट URL भरें (IP मोड)",
+cam_diag_cors:"ब्राउज़र छवि नहीं पढ़ सका (CORS, मिश्रित सामग्री, या कैमरा अनुपलब्ध)। URL को नए टैब में खोलें: फोटो दिखे तो इसी कंप्यूटर पर  python3 fod/snapshot_proxy.py  चलाएँ और यहाँ  http://localhost:8090/?u=<कैमरा URL>  डालें; फोटो न दिखे तो पहले URL/नेटवर्क ठीक करें",
+cam_diag_auth:"कैमरे को लॉगिन चाहिए — प्रॉक्सी URL के अंदर डालें:  http://localhost:8090/?u=http://user:password@<कैमरा-ip>/…",
+cam_diag_http:"कैमरे ने {s} जवाब दिया — स्नैपशॉट पथ गलत है; कैमरा मैनुअल देखें (CP Plus/Dahua: /cgi-bin/snapshot.cgi, Hikvision: /ISAPI/Streaming/channels/101/picture)"}
+};
+let lang = "en";
+const t = (k,v)=>{let s=(L[lang]&&L[lang][k])||L.en[k]||k;if(v)for(const p in v)s=s.replace("{"+p+"}",v[p]);return s;};
+function applyLang(){
+  document.querySelectorAll("[data-i]").forEach(el=>{el.textContent=t(el.dataset.i);});
+  document.documentElement.lang = lang==="kn"?"kn":lang==="hi"?"hi":"en";
+}
+
+/* ============================== state ============================== */
+const KEY="fodguard_v1";
+let S = {jobs:[],settings:{camMode:"device",deviceId:"",snapUrl:"",lockUrl:"",unlockUrl:"",relayMethod:"GET",lang:"en",theme:""},log:[]};
+try{const raw=localStorage.getItem(KEY);if(raw)S=Object.assign(S,JSON.parse(raw));}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){alert("Storage full — delete old jobs or clear history. ("+e.message+")");}}
+
+const $=id=>document.getElementById(id);
+const CAP_W=640;                 // capture resolution
+const ANA=144;                   // max analysis dimension inside ROI
+let stream=null, ipTimer=null, autoTimer=null, checking=false;
+let editingJobId=null, editorMaster=null, editorRoi=null, roiDrag=null;
+let lastFrame=null;              // {canvas} latest grabbed full frame
+const masterCache={};            // jobId -> {g,w,h}
+
+/* ============================== theme / lang / tabs ============================== */
+if(S.settings.theme)document.documentElement.dataset.theme=S.settings.theme;
+$("themeBtn").onclick=()=>{
+  const cur=document.documentElement.dataset.theme;
+  const dark=cur? cur==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  const next=dark?"light":"dark";
+  document.documentElement.dataset.theme=next; S.settings.theme=next; save();
+};
+lang=S.settings.lang||"en"; $("langSel").value=lang;
+$("langSel").onchange=e=>{lang=e.target.value;S.settings.lang=lang;save();applyLang();renderJobs();renderJobSel();renderLog();};
+document.querySelectorAll("nav.tabs button").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.toggle("on",x===b));
+    document.querySelectorAll("section.tabpage").forEach(p=>p.classList.toggle("on",p.id==="page-"+b.dataset.tab));
+  };
+});
+
+/* ============================== camera ============================== */
+async function startCamera(){
+  stopCamera();
+  if(S.settings.camMode==="ip"){
+    const url=S.settings.snapUrl;
+    if(!url){alert(t("snap_err")+"—");return;}
+    $("ipImg").classList.remove("hidden");$("vid").classList.add("hidden");
+    const poll=async()=>{try{const b=await fetchSnapshot(url);$("ipImg").src=b;}catch(e){}};
+    await poll(); ipTimer=setInterval(poll,2000);
+  }else{
+    try{
+      const c={video:{width:{ideal:1280},height:{ideal:720}}};
+      if(S.settings.deviceId)c.video.deviceId={exact:S.settings.deviceId};
+      stream=await navigator.mediaDevices.getUserMedia(c);
+      $("vid").srcObject=stream;
+      $("vid").classList.remove("hidden");$("ipImg").classList.add("hidden");
+      listDevices();
+    }catch(e){alert(t("cam_err")+e.message);return;}
+  }
+  $("camBtn").innerHTML="⏹ <span>"+t("stop_cam")+"</span>";
+  $("camBtn").dataset.on="1";
+  updateRunEnabled();
+}
+function stopCamera(){
+  if(stream){stream.getTracks().forEach(tr=>tr.stop());stream=null;$("vid").srcObject=null;}
+  if(ipTimer){clearInterval(ipTimer);ipTimer=null;}
+  $("camBtn").innerHTML="📷 <span>"+t("start_cam")+"</span>";
+  delete $("camBtn").dataset.on;
+  updateRunEnabled();
+}
+$("camBtn").onclick=()=>{$("camBtn").dataset.on?stopCamera():startCamera();};
+async function listDevices(){
+  try{
+    const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput");
+    const sel=$("deviceSel");sel.innerHTML="";
+    devs.forEach((d,i)=>{const o=document.createElement("option");o.value=d.deviceId;o.textContent=d.label||("Camera "+(i+1));sel.appendChild(o);});
+    if(S.settings.deviceId)sel.value=S.settings.deviceId;
+  }catch(e){}
+}
+function fetchSnapshot(url){
+  const bust=/^https?:/i.test(url)?(url.includes("?")?"&":"?")+"_t="+Date.now():"";
+  return fetch(url+bust,{cache:"no-store"})
+    .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.blob();})
+    .then(b=>URL.createObjectURL(b));
+}
+/* Grab a full frame onto the work canvas. Returns {canvas,w,h} or null.
+   snapUrl (per-machine, central mode) overrides the global camera source. */
+async function grabFrame(snapUrl){
+  const wk=$("work"),ctx=wk.getContext("2d",{willReadFrequently:true});
+  if(snapUrl||S.settings.camMode==="ip"){
+    const url=snapUrl||S.settings.snapUrl;if(!url)return null;
+    const src=await fetchSnapshot(url);
+    const img=new Image();
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=()=>rej(new Error("load"));img.src=src;});
+    const h=Math.round(CAP_W*img.naturalHeight/img.naturalWidth)||480;
+    wk.width=CAP_W;wk.height=h;ctx.drawImage(img,0,0,CAP_W,h);
+    URL.revokeObjectURL(src);
+  }else{
+    const v=$("vid");
+    if(!stream||!v.videoWidth)return null;
+    const h=Math.round(CAP_W*v.videoHeight/v.videoWidth);
+    wk.width=CAP_W;wk.height=h;ctx.drawImage(v,0,0,CAP_W,h);
+  }
+  lastFrame={canvas:wk,w:wk.width,h:wk.height};
+  return lastFrame;
+}
+
+/* ============================== image math ============================== */
+function toGray(canvas,rx,ry,rw,rh,ow,oh){
+  // draw ROI of canvas scaled into an offscreen ow×oh, return blurred Float32 gray
+  const c=document.createElement("canvas");c.width=ow;c.height=oh;
+  const cx=c.getContext("2d",{willReadFrequently:true});
+  cx.drawImage(canvas,rx,ry,rw,rh,0,0,ow,oh);
+  const d=cx.getImageData(0,0,ow,oh).data,g=new Float32Array(ow*oh);
+  for(let i=0,p=0;i<g.length;i++,p+=4)g[i]=0.299*d[p]+0.587*d[p+1]+0.114*d[p+2];
+  return blur3(blur3(g,ow,oh),ow,oh);
+}
+function blur3(g,w,h){
+  const o=new Float32Array(g.length);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    let s=0,n=0;
+    for(let dy=-1;dy<=1;dy++){const yy=y+dy;if(yy<0||yy>=h)continue;
+      for(let dx=-1;dx<=1;dx++){const xx=x+dx;if(xx<0||xx>=w)continue;s+=g[yy*w+xx];n++;}}
+    o[y*w+x]=s/n;
+  }
+  return o;
+}
+function bilinear(g,w,h,x,y){
+  if(x<0||y<0||x>w-1||y>h-1)return null;
+  const x0=Math.floor(x),y0=Math.floor(y),fx=x-x0,fy=y-y0;
+  const x1=Math.min(x0+1,w-1),y1=Math.min(y0+1,h-1);
+  return g[y0*w+x0]*(1-fx)*(1-fy)+g[y0*w+x1]*fx*(1-fy)+g[y1*w+x0]*(1-fx)*fy+g[y1*w+x1]*fx*fy;
+}
+/* Pearson correlation of master vs current sampled under rotation θ + shift */
+function nccAt(M,C,w,h,th,dx,dy,stride){
+  const cx=w/2,cy=h/2,cos=Math.cos(th*Math.PI/180),sin=Math.sin(th*Math.PI/180);
+  let n=0,sm=0,sc=0,smm=0,scc=0,smc=0,tot=0;
+  for(let y=0;y<h;y+=stride)for(let x=0;x<w;x+=stride){
+    tot++;
+    const xr=cx+(x-cx)*cos-(y-cy)*sin+dx, yr=cy+(x-cx)*sin+(y-cy)*cos+dy;
+    const cv=bilinear(C,w,h,xr,yr);
+    if(cv===null)continue;
+    const mv=M[y*w+x];
+    n++;sm+=mv;sc+=cv;smm+=mv*mv;scc+=cv*cv;smc+=mv*cv;
+  }
+  if(n<tot*0.5||n<30)return -1;
+  const cov=smc/n-(sm/n)*(sc/n);
+  const vm=smm/n-(sm/n)*(sm/n), vc=scc/n-(sc/n)*(sc/n);
+  if(vm<1e-4||vc<1e-4)return 0;
+  return cov/Math.sqrt(vm*vc);
+}
+/* Find best alignment of current C to master M */
+function findAlignment(M,C,w,h){
+  const angles=[-12,-9,-6,-3,0,3,6,9,12,90,180,270];
+  const offs=[-8,-4,0,4,8];
+  let best={th:0,dx:0,dy:0,score:-1};
+  for(const th of angles)for(const dy of offs)for(const dx of offs){
+    const s=nccAt(M,C,w,h,th,dx,dy,3);
+    if(s>best.score)best={th,dx,dy,score:s};
+  }
+  for(let dy=best.dy-2;dy<=best.dy+2;dy++)for(let dx=best.dx-2;dx<=best.dx+2;dx++){
+    const s=nccAt(M,C,w,h,best.th,dx,dy,2);
+    if(s>best.score)best={th:best.th,dx,dy,score:s};
+  }
+  for(let th=best.th-2;th<=best.th+2;th++){
+    const s=nccAt(M,C,w,h,th,best.dx,best.dy,2);
+    if(s>best.score)best={th,dx:best.dx,dy:best.dy,score:s};
+  }
+  const c={...best};
+  for(let th=c.th-1;th<=c.th+1;th+=0.5)for(let dy=c.dy-0.5;dy<=c.dy+0.5;dy+=0.5)for(let dx=c.dx-0.5;dx<=c.dx+0.5;dx+=0.5){
+    const s=nccAt(M,C,w,h,th,dx,dy,2);
+    if(s>best.score)best={th,dx,dy,score:s};
+  }
+  return best;
+}
+/* Diff master vs aligned current, return foreign-object blobs [{x,y,w,h,area}] in analysis coords */
+function findBlobs(M,C,w,h,al,diffThresh,minAreaPx){
+  const cx=w/2,cy=h/2,cos=Math.cos(al.th*Math.PI/180),sin=Math.sin(al.th*Math.PI/180);
+  // normalise illumination on both sides
+  const norm=g=>{let s=0,ss=0;for(let i=0;i<g.length;i++){s+=g[i];ss+=g[i]*g[i];}
+    const m=s/g.length,sd=Math.max(Math.sqrt(Math.max(ss/g.length-m*m,0)),1e-3);
+    const o=new Float32Array(g.length);for(let i=0;i<g.length;i++)o[i]=(g[i]-m)/sd*40+128;return o;};
+  const Mn=norm(M);
+  const A=new Float32Array(w*h).fill(-1);
+  let s=0,ss=0,n=0;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const xr=cx+(x-cx)*cos-(y-cy)*sin+al.dx, yr=cy+(x-cx)*sin+(y-cy)*cos+al.dy;
+    const v=bilinear(C,w,h,xr,yr);
+    if(v===null)continue;
+    A[y*w+x]=v;s+=v;ss+=v*v;n++;
+  }
+  if(!n)return [];
+  const am=s/n,asd=Math.max(Math.sqrt(Math.max(ss/n-am*am,0)),1e-3);
+  const mask=new Uint8Array(w*h);
+  for(let y=2;y<h-2;y++)for(let x=2;x<w-2;x++){
+    const i=y*w+x;if(A[i]<0)continue;
+    const av=(A[i]-am)/asd*40+128;
+    if(Math.abs(av-Mn[i])>diffThresh)mask[i]=1;
+  }
+  // connected components (4-neigh flood fill)
+  const blobs=[],seen=new Uint8Array(w*h),stack=[];
+  for(let i=0;i<mask.length;i++){
+    if(!mask[i]||seen[i])continue;
+    let area=0,minx=w,miny=h,maxx=0,maxy=0;
+    stack.length=0;stack.push(i);seen[i]=1;
+    while(stack.length){
+      const p=stack.pop(),px=p%w,py=(p-px)/w;
+      area++;if(px<minx)minx=px;if(px>maxx)maxx=px;if(py<miny)miny=py;if(py>maxy)maxy=py;
+      if(px>0&&mask[p-1]&&!seen[p-1]){seen[p-1]=1;stack.push(p-1);}
+      if(px<w-1&&mask[p+1]&&!seen[p+1]){seen[p+1]=1;stack.push(p+1);}
+      if(py>0&&mask[p-w]&&!seen[p-w]){seen[p-w]=1;stack.push(p-w);}
+      if(py<h-1&&mask[p+w]&&!seen[p+w]){seen[p+w]=1;stack.push(p+w);}
+    }
+    if(area>=minAreaPx)blobs.push({x:minx,y:miny,w:maxx-minx+1,h:maxy-miny+1,area});
+  }
+  blobs.sort((a,b)=>b.area-a.area);
+  return blobs.slice(0,12);
+}
+
+/* ============================== jobs ============================== */
+function roiPx(job,fw,fh){
+  const r=job.roi||{x:0,y:0,w:1,h:1};
+  return {x:Math.round(r.x*fw),y:Math.round(r.y*fh),w:Math.max(8,Math.round(r.w*fw)),h:Math.max(8,Math.round(r.h*fh))};
+}
+function anaDims(rw,rh){
+  const sc=Math.min(ANA/rw,ANA/rh,1);
+  return {w:Math.max(24,Math.round(rw*sc)),h:Math.max(24,Math.round(rh*sc))};
+}
+async function masterGray(job){
+  if(masterCache[job.id])return masterCache[job.id];
+  const img=new Image();
+  await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=job.master;});
+  const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;
+  c.getContext("2d").drawImage(img,0,0);
+  const r=roiPx(job,c.width,c.height),d=anaDims(r.w,r.h);
+  const g=toGray(c,r.x,r.y,r.w,r.h,d.w,d.h);
+  masterCache[job.id]={g,w:d.w,h:d.h,fw:c.width,fh:c.height};
+  return masterCache[job.id];
+}
+
+function renderJobSel(){
+  const sel=$("jobSel");sel.innerHTML="";
+  if(!S.jobs.length){const o=document.createElement("option");o.textContent=t("no_jobs");o.value="";sel.appendChild(o);}
+  S.jobs.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=j.name;sel.appendChild(o);});
+  if(S.selectedJob&&S.jobs.some(j=>j.id===S.selectedJob))sel.value=S.selectedJob;
+  updateRunEnabled();
+}
+$("jobSel").onchange=e=>{S.selectedJob=e.target.value;save();updateRunEnabled();};
+function updateRunEnabled(){
+  const camOn=!!($("camBtn").dataset.on);
+  const job=S.jobs.find(j=>j.id===$("jobSel").value);
+  // a job with its own snapshot URL (central mode) needs no local camera
+  $("runBtn").disabled=!((camOn||(job&&job.snapUrl))&&job&&job.master)||checking;
+}
+function renderJobs(){
+  const el=$("jobList");el.innerHTML="";
+  S.jobs.forEach(j=>{
+    const d=document.createElement("div");d.className="job";
+    const im=document.createElement("img");im.src=j.master||"";im.alt="";
+    const nm=document.createElement("div");nm.className="nm";
+    nm.textContent=j.name;
+    const sm=document.createElement("small");
+    sm.textContent=(j.snapUrl?"📡 ":"")+(j.master?t("master_set"):t("no_master"));
+    nm.appendChild(sm);
+    const eb=document.createElement("button");eb.className="ghost";eb.textContent="✏️";
+    eb.onclick=()=>openEditor(j.id);
+    d.append(im,nm,eb);el.appendChild(d);
+  });
+}
+
+/* ---- job editor ---- */
+function openEditor(id){
+  editingJobId=id;
+  const j=id?S.jobs.find(x=>x.id===id):null;
+  $("jobEditor").classList.remove("hidden");
+  $("jobName").value=j?j.name:"";
+  editorMaster=j?j.master:null;
+  editorRoi=j&&j.roi?{...j.roi}:null;
+  $("orientThresh").value=j?j.orientThresh:0.60;
+  $("diffThresh").value=j?j.diffThresh:45;
+  $("minArea").value=j?j.minArea:0.5;
+  $("jobSnap").value=(j&&j.snapUrl)||"";
+  $("jobLock").value=(j&&j.lockUrl)||"";
+  $("jobUnlock").value=(j&&j.unlockUrl)||"";
+  $("deleteJobBtn").classList.toggle("hidden",!j);
+  syncSliderLabels();drawRoiCanvas();
+  $("masterState").textContent=editorMaster?t("master_set"):t("no_master");
+}
+$("newJobBtn").onclick=()=>openEditor(null);
+$("cancelJobBtn").onclick=()=>{$("jobEditor").classList.add("hidden");};
+["orientThresh","diffThresh","minArea"].forEach(id=>$(id).oninput=syncSliderLabels);
+function syncSliderLabels(){
+  $("orientThreshVal").textContent=Math.round($("orientThresh").value*100)+"%";
+  $("diffThreshVal").textContent=$("diffThresh").value;
+  $("minAreaVal").textContent=$("minArea").value+"%";
+}
+$("captureMasterBtn").onclick=async()=>{
+  const f=await grabFrame(($("jobSnap").value||"").trim()||null).catch(e=>{alert(t("snap_err")+e.message);return null;});
+  if(!f){alert(t("need_cam"));return;}
+  editorMaster=f.canvas.toDataURL("image/jpeg",0.85);
+  if(!editorRoi)editorRoi={x:0.05,y:0.05,w:0.9,h:0.9};
+  $("masterState").textContent=t("master_set");
+  drawRoiCanvas();
+};
+function drawRoiCanvas(){
+  const c=$("roiCanvas"),ctx=c.getContext("2d");
+  if(!editorMaster){c.width=640;c.height=200;ctx.fillStyle="#000";ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle="#888";ctx.font="16px system-ui";ctx.textAlign="center";
+    ctx.fillText(t("no_master"),c.width/2,c.height/2);return;}
+  const img=new Image();
+  img.onload=()=>{
+    c.width=img.naturalWidth;c.height=img.naturalHeight;
+    ctx.drawImage(img,0,0);
+    const r=editorRoi||{x:0,y:0,w:1,h:1};
+    ctx.save();
+    ctx.fillStyle="rgba(0,0,0,.45)";
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.clearRect(r.x*c.width,r.y*c.height,r.w*c.width,r.h*c.height);
+    ctx.drawImage(img,r.x*c.width,r.y*c.height,r.w*c.width,r.h*c.height,
+                      r.x*c.width,r.y*c.height,r.w*c.width,r.h*c.height);
+    ctx.strokeStyle="#3da2e8";ctx.lineWidth=Math.max(2,c.width/240);
+    ctx.strokeRect(r.x*c.width,r.y*c.height,r.w*c.width,r.h*c.height);
+    ctx.restore();
+  };
+  img.src=editorMaster;
+}
+function roiPoint(ev){
+  const c=$("roiCanvas"),b=c.getBoundingClientRect();
+  const p=ev.touches?ev.touches[0]:ev;
+  return {x:Math.min(Math.max((p.clientX-b.left)/b.width,0),1),
+          y:Math.min(Math.max((p.clientY-b.top)/b.height,0),1)};
+}
+$("roiCanvas").addEventListener("pointerdown",ev=>{
+  if(!editorMaster)return;
+  roiDrag=roiPoint(ev);$("roiCanvas").setPointerCapture(ev.pointerId);
+});
+$("roiCanvas").addEventListener("pointermove",ev=>{
+  if(!roiDrag)return;
+  const p=roiPoint(ev);
+  editorRoi={x:Math.min(roiDrag.x,p.x),y:Math.min(roiDrag.y,p.y),
+             w:Math.abs(p.x-roiDrag.x),h:Math.abs(p.y-roiDrag.y)};
+  drawRoiCanvas();
+});
+$("roiCanvas").addEventListener("pointerup",()=>{
+  if(roiDrag&&editorRoi&&(editorRoi.w<0.03||editorRoi.h<0.03))editorRoi={x:0.05,y:0.05,w:0.9,h:0.9};
+  roiDrag=null;drawRoiCanvas();
+});
+$("saveJobBtn").onclick=()=>{
+  const name=$("jobName").value.trim();
+  if(!name){alert(t("need_name"));return;}
+  if(!editorMaster){alert(t("need_master"));return;}
+  let j=editingJobId?S.jobs.find(x=>x.id===editingJobId):null;
+  if(!j){j={id:"j"+Date.now().toString(36)};S.jobs.push(j);}
+  Object.assign(j,{name,master:editorMaster,roi:editorRoi||{x:0.05,y:0.05,w:0.9,h:0.9},
+    orientThresh:+$("orientThresh").value,diffThresh:+$("diffThresh").value,minArea:+$("minArea").value,
+    snapUrl:$("jobSnap").value.trim(),lockUrl:$("jobLock").value.trim(),unlockUrl:$("jobUnlock").value.trim()});
+  delete masterCache[j.id];
+  S.selectedJob=j.id;save();
+  $("jobEditor").classList.add("hidden");
+  renderJobs();renderJobSel();
+};
+$("deleteJobBtn").onclick=()=>{
+  if(!editingJobId||!confirm(t("confirm_del")))return;
+  S.jobs=S.jobs.filter(j=>j.id!==editingJobId);
+  delete masterCache[editingJobId];
+  if(S.selectedJob===editingJobId)S.selectedJob="";
+  save();$("jobEditor").classList.add("hidden");renderJobs();renderJobSel();
+};
+
+/* ============================== cycle check ============================== */
+function setBanner(cls,txt,sub){
+  $("banner").className=cls;
+  $("bannerTxt").textContent=txt;
+  $("bannerSub").textContent=sub||"";
+}
+function beep(good){
+  try{
+    const ac=beep.ac||(beep.ac=new (window.AudioContext||window.webkitAudioContext)());
+    const tone=(f,at,dur)=>{const o=ac.createOscillator(),g=ac.createGain();
+      o.frequency.value=f;o.connect(g);g.connect(ac.destination);
+      g.gain.setValueAtTime(0.15,ac.currentTime+at);g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+at+dur);
+      o.start(ac.currentTime+at);o.stop(ac.currentTime+at+dur);};
+    if(good)tone(1200,0,0.15);else{tone(300,0,0.25);tone(300,0.35,0.4);}
+  }catch(e){}
+}
+function setLock(locked,job){
+  const box=$("lockBox");
+  box.className="lockbox "+(locked?"locked":"unlocked");
+  $("lockIcon").textContent=locked?"🔒":"🔓";
+  $("lockTxt").textContent=locked?t("door_locked"):t("door_unlocked");
+  const url=locked?((job&&job.lockUrl)||S.settings.lockUrl):((job&&job.unlockUrl)||S.settings.unlockUrl);
+  if(url)fireRelay(url).then(()=>{$("lockNote").textContent=t("relay_sent")+" → "+url;})
+                       .catch(e=>{$("lockNote").textContent=t("relay_err")+e.message;});
+  else $("lockNote").textContent=t("lock_note");
+}
+function fireRelay(url){
+  return fetch(url,{method:S.settings.relayMethod||"GET",mode:"no-cors",cache:"no-store"});
+}
+$("testLockBtn").onclick=()=>{saveSettingsFromUI();if(S.settings.lockUrl)fireRelay(S.settings.lockUrl).then(()=>alert(t("relay_sent"))).catch(e=>alert(t("relay_err")+e.message));};
+$("testUnlockBtn").onclick=()=>{saveSettingsFromUI();if(S.settings.unlockUrl)fireRelay(S.settings.unlockUrl).then(()=>alert(t("relay_sent"))).catch(e=>alert(t("relay_err")+e.message));};
+
+async function runCheck(){
+  if(checking)return false;
+  const job=S.jobs.find(j=>j.id===$("jobSel").value);
+  if(!job||!job.master){alert(t("need_master"));return false;}
+  checking=true;updateRunEnabled();
+  setBanner("busy",t("checking"),job.name);
+  let pass=false;
+  try{
+    const f=await grabFrame(job.snapUrl||null);
+    if(!f)throw new Error(t("need_cam"));
+    const M=await masterGray(job);
+    // ROI in the live frame, scaled from master frame size in case resolutions differ
+    const r=roiPx(job,f.w,f.h);
+    const C=toGray(f.canvas,r.x,r.y,r.w,r.h,M.w,M.h);
+    const al=findAlignment(M.g,C,M.w,M.h);
+    const orientOk=al.score>=job.orientThresh&&Math.abs(al.th)<=6;
+    const present=al.score>=job.orientThresh;
+    let blobs=[];
+    if(orientOk){
+      const minAreaPx=Math.max(6,Math.round(M.w*M.h*job.minArea/100));
+      blobs=findBlobs(M.g,C,M.w,M.h,al,job.diffThresh,minAreaPx);
+    }
+    const ok=orientOk&&blobs.length===0;
+    showResult(job,f,r,M,al,orientOk,present,blobs,ok);
+    pass=ok;
+  }catch(e){
+    setBanner("bad",t("fault"),String(e.message||e));
+    setLock(false,job);
+  }
+  checking=false;updateRunEnabled();
+  return pass;
+}
+function showResult(job,f,r,M,al,orientOk,present,blobs,ok){
+  // annotate snapshot
+  const rc=$("resultCanvas"),ctx=rc.getContext("2d");
+  rc.width=f.w;rc.height=f.h;
+  ctx.drawImage(f.canvas,0,0);
+  ctx.lineWidth=Math.max(2,f.w/320);
+  ctx.strokeStyle=ok?"#28c76f":"#ff5252";
+  ctx.strokeRect(r.x,r.y,r.w,r.h);
+  // map analysis-space blob boxes back into frame coords through the alignment transform
+  const sx=r.w/M.w,sy=r.h/M.h,cx=M.w/2,cy=M.h/2;
+  const cos=Math.cos(al.th*Math.PI/180),sin=Math.sin(al.th*Math.PI/180);
+  ctx.strokeStyle="#ff5252";ctx.fillStyle="rgba(255,82,82,.25)";
+  blobs.forEach(b=>{
+    const corners=[[b.x,b.y],[b.x+b.w,b.y],[b.x,b.y+b.h],[b.x+b.w,b.y+b.h]].map(([x,y])=>{
+      const xr=cx+(x-cx)*cos-(y-cy)*sin+al.dx, yr=cy+(x-cx)*sin+(y-cy)*cos+al.dy;
+      return [r.x+xr*sx,r.y+yr*sy];
+    });
+    const xs=corners.map(c=>c[0]),ys=corners.map(c=>c[1]);
+    const bx=Math.min(...xs),by=Math.min(...ys),bw=Math.max(...xs)-bx,bh=Math.max(...ys)-by;
+    ctx.fillRect(bx,by,bw,bh);ctx.strokeRect(bx,by,bw,bh);
+  });
+  rc.classList.remove("hidden");$("vid").classList.add("hidden");$("ipImg").classList.add("hidden");
+  $("backLiveBtn").classList.remove("hidden");
+  $("liveTag").textContent="📸 "+new Date().toLocaleTimeString();
+  // result panel
+  const orientTxt=orientOk?t("orient_ok"):(present?t("misoriented",{a:Math.round(al.th)}):t("job_missing"));
+  $("rOrient").textContent=orientTxt;$("rOrient").className=orientOk?"ok":"bad";
+  $("rScore").textContent=Math.round(Math.max(al.score,0)*100)+"%";
+  $("rFo").textContent=blobs.length?t("fo_n",{n:blobs.length}):(orientOk?t("fo_none"):"—");
+  $("rFo").className=blobs.length?"bad":"ok";
+  $("rVerdict").textContent=ok?t("ok_txt"):t("bad_txt");
+  $("rVerdict").className=ok?"ok":"bad";
+  if(ok)setBanner("ok",t("clear"),job.name);
+  else setBanner("bad",t("fault"),job.name+" — "+orientTxt+(blobs.length?" · "+t("fo_n",{n:blobs.length}):""));
+  setLock(ok,job);beep(ok);
+  // log
+  const th=document.createElement("canvas");th.width=120;th.height=Math.round(120*f.h/f.w);
+  th.getContext("2d").drawImage(rc,0,0,th.width,th.height);
+  S.log.unshift({t:Date.now(),job:job.name,ok,score:Math.round(Math.max(al.score,0)*100),
+    angle:Math.round(al.th),fo:blobs.length,thumb:th.toDataURL("image/jpeg",0.5)});
+  if(S.log.length>60)S.log.length=60;
+  save();renderLog();
+}
+$("backLiveBtn").onclick=()=>{
+  $("resultCanvas").classList.add("hidden");$("backLiveBtn").classList.add("hidden");
+  $("liveTag").textContent="● LIVE";
+  if(S.settings.camMode==="ip")$("ipImg").classList.remove("hidden");else $("vid").classList.remove("hidden");
+};
+$("runBtn").onclick=runCheck;
+$("runAllBtn").onclick=async()=>{
+  if(checking)return;
+  const jobs=S.jobs.filter(j=>j.master&&j.snapUrl);
+  if(!jobs.length){alert(t("need_cells"));return;}
+  const failed=[];
+  for(const j of jobs){
+    $("jobSel").value=j.id;S.selectedJob=j.id;
+    const ok=await runCheck();
+    if(!ok)failed.push(j.name);
+  }
+  save();
+  if(failed.length)setBanner("bad",t("fault"),t("checked_n",{n:jobs.length})+" — "+failed.join(", "));
+  else setBanner("ok",t("checked_n",{n:jobs.length}),"");
+};
+document.addEventListener("keydown",e=>{
+  if(e.code==="Space"&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();runCheck();}
+});
+$("autoChk").onchange=()=>{
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
+  if($("autoChk").checked){
+    const s=Math.max(3,+$("autoSec").value||15);
+    autoTimer=setInterval(runCheck,s*1000);runCheck();
+  }
+};
+
+/* ============================== settings ============================== */
+function loadSettingsUI(){
+  $("camMode").value=S.settings.camMode;
+  $("snapUrl").value=S.settings.snapUrl;
+  $("lockUrl").value=S.settings.lockUrl;
+  $("unlockUrl").value=S.settings.unlockUrl;
+  $("relayMethod").value=S.settings.relayMethod;
+  toggleCamRows();
+}
+function toggleCamRows(){
+  const ip=$("camMode").value==="ip";
+  $("ipRow").classList.toggle("hidden",!ip);
+  $("devRow").classList.toggle("hidden",ip);
+}
+function saveSettingsFromUI(){
+  S.settings.camMode=$("camMode").value;
+  S.settings.snapUrl=$("snapUrl").value.trim();
+  S.settings.lockUrl=$("lockUrl").value.trim();
+  S.settings.unlockUrl=$("unlockUrl").value.trim();
+  S.settings.relayMethod=$("relayMethod").value;
+  S.settings.deviceId=$("deviceSel").value||S.settings.deviceId;
+  save();
+}
+["camMode","snapUrl","lockUrl","unlockUrl","relayMethod"].forEach(id=>$(id).onchange=()=>{saveSettingsFromUI();toggleCamRows();});
+$("testCamBtn").onclick=async()=>{
+  saveSettingsFromUI();
+  const out=$("testCamOut");out.textContent="⏳…";
+  try{
+    const f=await grabFrame(null);
+    if(!f){out.textContent="❌ "+t("cam_diag_nofeed");return;}
+    f.canvas.getContext("2d").getImageData(0,0,4,4); // throws if the canvas is CORS-tainted
+    out.textContent="✅ "+t("cam_diag_ok",{w:f.w,h:f.h});
+  }catch(e){
+    const msg=String((e&&e.message)||e);
+    let hint;
+    if(/HTTP 40[13]/.test(msg))hint=t("cam_diag_auth");
+    else if(/HTTP \d+/.test(msg))hint=t("cam_diag_http",{s:msg});
+    else hint=t("cam_diag_cors");
+    out.textContent="❌ "+msg+" — "+hint;
+  }
+};
+$("deviceSel").onchange=()=>{saveSettingsFromUI();if(stream)startCamera();};
+$("exportBtn").onclick=()=>{
+  const a=document.createElement("a");
+  a.href="data:application/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(S));
+  a.download="fodguard-backup-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();
+};
+$("importFile").onchange=e=>{
+  const file=e.target.files[0];if(!file)return;
+  const rd=new FileReader();
+  rd.onload=()=>{try{S=Object.assign(S,JSON.parse(rd.result));save();location.reload();}catch(err){alert("Import failed: "+err.message);}};
+  rd.readAsText(file);
+};
+
+/* ============================== log ============================== */
+function renderLog(){
+  const tb=$("logBody");tb.innerHTML="";
+  $("noLog").classList.toggle("hidden",!!S.log.length);
+  S.log.forEach(e=>{
+    const tr=document.createElement("tr");
+    const tdI=document.createElement("td");
+    if(e.thumb){const im=document.createElement("img");im.src=e.thumb;tdI.appendChild(im);}
+    const tdT=document.createElement("td");tdT.textContent=new Date(e.t).toLocaleString();
+    const tdJ=document.createElement("td");tdJ.textContent=e.job;
+    const tdV=document.createElement("td");tdV.textContent=e.ok?t("ok_txt"):t("bad_txt");tdV.className=e.ok?"res-ok":"res-bad";
+    const tdD=document.createElement("td");
+    tdD.textContent=e.score+"% · "+(e.angle?("~"+e.angle+"° "):"")+(e.fo?("FO:"+e.fo):"");
+    tr.append(tdI,tdT,tdJ,tdV,tdD);tb.appendChild(tr);
+  });
+}
+$("clearLogBtn").onclick=()=>{if(confirm(t("confirm_clear"))){S.log=[];save();renderLog();}};
+
+/* ============================== boot ============================== */
+applyLang();loadSettingsUI();renderJobs();renderJobSel();renderLog();syncSliderLabels();
+if(navigator.mediaDevices&&navigator.mediaDevices.enumerateDevices)listDevices();
+
+/* exposed for headless self-test */
+window.FOD={toGray,blur3,bilinear,nccAt,findAlignment,findBlobs,state:()=>S};
+</script>
+</body>
+</html>
