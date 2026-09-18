@@ -32,6 +32,9 @@ www/        the UI, served straight off flash
 
 ## Flashing
 
+One command copies everything and resets the board (auto-detects the port, or
+pass it): `sh flash.sh` or `sh flash.sh /dev/ttyACM0`. By hand:
+
 ```sh
 PORT=/dev/cu.usbmodem5A790574951          # yours may differ; ls /dev/cu.*
 mpremote connect $PORT mkdir :www
@@ -39,6 +42,7 @@ for f in config.py servo.py store.py server.py main.py; do
   mpremote connect $PORT cp $f :$f
 done
 mpremote connect $PORT cp www/index.html :www/index.html
+mpremote connect $PORT cp www/control.html :www/control.html
 mpremote connect $PORT reset
 ```
 
@@ -55,7 +59,15 @@ in a meeting room with no guest wifi:
 | SSID | `shopkeeper-NANO` |
 | Password | `AP_PASSWORD` from `secrets.py` |
 | URL | **http://192.168.4.1/** |
+| Control page | **http://192.168.4.1/control** |
 | PIN | `2468` |
+
+`/` is the operator terminal: PIN, tool register, access log. `/control` is the
+bench page for driving the mechanism directly: open and close each bay, jog the
+rack to any point of the stroke with a slider, edit the stroke timing (travel
+and detach, saved to `/data/timing.json` and applied to the next move),
+calibrate the pulse-width endpoints, and switch the scripted demo off while you
+are driving.
 
 Copy `secrets_example.py` to `secrets.py` (gitignored) and set `AP_PASSWORD`;
 the firmware refuses to bring up the AP without one. Set `JOIN = ("ssid",
@@ -99,6 +111,8 @@ Set them by eye against the printed part, not from this table.
 | POST | `/api/lock` | |
 | POST | `/api/drawer` | `{"id":0,"open":true}` → 202, move runs async |
 | POST | `/api/cal` | `{"id":0,"open_us":2350}` or `{"id":0,"jog_us":1500}` |
+| POST | `/api/timing` | `{"travel_ms":1100,"detach_ms":200}` — clamped, persisted, live |
+| POST | `/api/demo` | `{"on":false}` pauses the scripted demo; `true` re-arms it |
 | DELETE | `/api/log` | |
 
 Everything except `/api/state`, `/api/unlock` and `/api/lock` returns **403**

@@ -131,11 +131,13 @@ async def _demo(app):
     while True:
         # Stand down while a person is driving. Two things moving the same
         # drawer for different reasons is how a demo embarrasses you.
-        while getattr(app, "cmd", None):
+        # Also stand down while the control page has switched the demo off.
+        while getattr(app, "cmd", None) or not app.demo_on:
+            app.demo = None
             await asyncio.sleep_ms(300)
         t0 = time.time()
         while True:
-            if getattr(app, "cmd", None):
+            if getattr(app, "cmd", None) or not app.demo_on:
                 break                                # somebody took over
             left = config.DEMO_HOLD_S - (time.time() - t0)
             if left <= 0:
@@ -145,6 +147,8 @@ async def _demo(app):
                         "tag": "%ds" % int(left + 1)}
             await asyncio.sleep_ms(200)
 
+        if getattr(app, "cmd", None) or not app.demo_on:
+            continue                                  # never start a move we were told not to
         for i, dr in enumerate(app.drawers):          # open one, then the other
             app.demo = {"stage": "OPEN", "label": "BAY " + str(i + 1),
                         "pos": dr.pos, "tag": "%d/%d" % (i + 1, len(app.drawers))}
@@ -250,6 +254,7 @@ async def _amain():
     disp = sh1106.attach() if sh1106 else None
 
     drawers = [Servo(spec) for spec in config.DRAWERS]
+    store.load_timing()          # live-edited stroke timing overrides config.py
     cal = store.load_cal()
     for d in drawers:
         got = cal.get(str(d.id))
@@ -269,7 +274,6 @@ async def _amain():
 
     await serve(app)
     asyncio.create_task(_housekeeping(app))
-    app.demo = None
     if getattr(config, "DEMO", False):
         asyncio.create_task(_demo(app))
         print("demo: scripted, %ds hold then both bays" % config.DEMO_HOLD_S)

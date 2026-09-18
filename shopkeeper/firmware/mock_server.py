@@ -24,6 +24,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import config                                            # noqa: E402
+import store                                             # noqa: E402
 
 WWW = os.path.join(HERE, "www")
 BOOT = time.time()
@@ -108,6 +109,7 @@ class Cabinet:
         self.by_id = {d.id: d for d in self.drawers}
         self.log = Log()
         self.unlocked_at = 0
+        self.demo_on = bool(getattr(config, "DEMO", False))
         self.log.add("BOOT", None, "MOCK:" + os.uname().nodename)
 
     @property
@@ -137,7 +139,10 @@ class Cabinet:
                 "drawers": [dict(d.state(), tools=config.TOOLS.get(d.id, []))
                             for d in self.drawers],
                 "log": self.log.entries[:24],
-                "limits": {}}
+                "limits": {},
+                "timing": store.timing(),
+                "demo_on": self.demo_on,
+                "demo": None}
 
 
 CAB = Cabinet()
@@ -179,6 +184,12 @@ class H(BaseHTTPRequestHandler):
                     return self._send(200, fh.read(), "text/html; charset=utf-8")
             except OSError:
                 return self._send(404, {"error": "no index.html"})
+        if p in ("/control", "/control.html"):
+            try:
+                with open(os.path.join(WWW, "control.html"), "rb") as fh:
+                    return self._send(200, fh.read(), "text/html; charset=utf-8")
+            except OSError:
+                return self._send(404, {"error": "no control.html"})
         if p == "/api/state":
             return self._send(200, CAB.state())
         return self._send(404, {"error": "no route"})
@@ -220,6 +231,18 @@ class H(BaseHTTPRequestHandler):
                 return self._send(409, {"ok": False, "error": "moving"})
             d.move(bool(b.get("open")), CAB.log)
             return self._send(202, {"ok": True})
+
+        if p == "/api/timing":
+            got = store.apply_timing({"TRAVEL_MS": b.get("travel_ms"),
+                                      "DETACH_AFTER_MS": b.get("detach_ms")})
+            CAB.log.add("TIMING", None, "travel %d ms, detach %d ms"
+                        % (got["TRAVEL_MS"], got["DETACH_AFTER_MS"]))
+            return self._send(200, {"ok": True, "timing": got})
+
+        if p == "/api/demo":
+            CAB.demo_on = bool(b.get("on"))
+            CAB.log.add("DEMO ON" if CAB.demo_on else "DEMO OFF")
+            return self._send(200, {"ok": True, "demo_on": CAB.demo_on})
 
         if p == "/api/cal":
             d = CAB.by_id.get(int(b.get("id", -1)))

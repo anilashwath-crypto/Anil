@@ -35,6 +35,8 @@ class App:
         self.cmd = None
         self.limits = {}      # {drawer_id: {"low": us, "high": us}}
         self.cal_dir = {}     # which end each drawer is currently searching
+        self.demo = None      # what the scripted demo is doing right now
+        self.demo_on = bool(getattr(config, "DEMO", False))   # control page can pause it
 
     # ── access ────────────────────────────────────────────────────────────
     @property
@@ -77,6 +79,9 @@ class App:
                         for d in self.drawers],
             "log": self.log.entries[:24],
             "limits": {str(k): v for k, v in self.limits.items()},
+            "timing": store.timing(),
+            "demo_on": self.demo_on,
+            "demo": self.demo,
         }
 
 
@@ -152,6 +157,9 @@ async def handle(app, r, w):
         # ── routes ────────────────────────────────────────────────────────
         if path == "/" or path == "/index.html":
             return await _send_file(w, "/www/index.html", _MIME["html"])
+
+        if path == "/control" or path == "/control.html":
+            return await _send_file(w, "/www/control.html", _MIME["html"])
 
         if path == "/api/state":
             return await _send(w, "200 OK", _json(app, app.state()))
@@ -232,6 +240,23 @@ async def handle(app, r, w):
             st["ok"] = True
             st["limits"] = got
             return await _send(w, "200 OK", _json(app, st))
+
+        # ── stroke timing, live ───────────────────────────────────────────
+        if path == "/api/timing" and method == "POST":
+            got = store.apply_timing({
+                "TRAVEL_MS": body.get("travel_ms"),
+                "DETACH_AFTER_MS": body.get("detach_ms")})
+            store.save_timing()
+            app.log.add("TIMING", None, "travel {} ms, detach {} ms"
+                        .format(got["TRAVEL_MS"], got["DETACH_AFTER_MS"]))
+            return await _send(w, "200 OK", _json(app, {"ok": True, "timing": got}))
+
+        # ── scripted demo on/off ──────────────────────────────────────────
+        if path == "/api/demo" and method == "POST":
+            app.demo_on = bool(body.get("on"))
+            app.log.add("DEMO ON" if app.demo_on else "DEMO OFF")
+            return await _send(w, "200 OK",
+                               _json(app, {"ok": True, "demo_on": app.demo_on}))
 
         if path == "/api/log" and method == "DELETE":
             app.log.clear()

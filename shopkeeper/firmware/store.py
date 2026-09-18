@@ -18,6 +18,7 @@ import config
 
 _CAL = config.DATA_DIR + "/cal.json"
 _LOG = config.DATA_DIR + "/log.json"
+_TIM = config.DATA_DIR + "/timing.json"
 
 
 def _ensure_dir():
@@ -60,6 +61,36 @@ def load_cal():
 
 def save_cal(drawers):
     return _write(_CAL, {str(d.id): [d.closed_us, d.open_us] for d in drawers})
+
+
+# ── stroke timing ──────────────────────────────────────────────────────────
+# TRAVEL_MS and DETACH_AFTER_MS start from config.py and can be changed live
+# from the control page. Applied onto the config module so servo.py, which
+# reads config.* at every move, picks them up with no plumbing of its own.
+TIMING_KEYS = ("TRAVEL_MS", "DETACH_AFTER_MS")
+TIMING_LIMITS = {"TRAVEL_MS": (150, 5000), "DETACH_AFTER_MS": (0, 3000)}
+
+
+def timing():
+    return {k: getattr(config, k) for k in TIMING_KEYS}
+
+
+def apply_timing(obj):
+    """Clamp and apply {TRAVEL_MS, DETACH_AFTER_MS}; returns what is now set."""
+    for k in TIMING_KEYS:
+        if k in obj and obj[k] is not None:
+            lo, hi = TIMING_LIMITS[k]
+            v = int(obj[k])
+            setattr(config, k, lo if v < lo else hi if v > hi else v)
+    return timing()
+
+
+def load_timing():
+    return apply_timing(_read(_TIM, {}))
+
+
+def save_timing():
+    return _write(_TIM, timing())
 
 
 # ── log ────────────────────────────────────────────────────────────────────

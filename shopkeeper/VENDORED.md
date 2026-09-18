@@ -29,3 +29,12 @@ Fetch any of these directly from the upstream repository if needed.
 
 `firmware/secrets.py` (Wi-Fi / hotspot credentials) is gitignored upstream and here; copy
 `firmware/secrets_example.py` to `firmware/secrets.py` and fill it in locally.
+
+## Local changes on top of upstream
+
+- `firmware/config.py`: `DETACH_AFTER_MS` 450 → 200.
+- `firmware/www/control.html` (new): bench control page at `/control` — open/close,
+  live jog slider, stroke timing, endpoint calibration, demo switch, log.
+- `firmware/server.py`, `store.py`, `main.py`, `mock_server.py`: `/control` route,
+  `POST /api/timing` (live, persisted to `/data/timing.json`), `POST /api/demo`
+  (pause/re-arm the scripted demo), and `timing` / `demo_on` / `demo` in `/api/state`.
