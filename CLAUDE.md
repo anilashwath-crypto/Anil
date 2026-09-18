@@ -21,6 +21,10 @@ with LoRa sensors, GSM/SMS fallback, and solar-backed controls.
   backup. Same conventions as the dashboard (trilingual `L` dict, theme
   tokens, no build step). Docs in `home/README.md`.
   Branch: `claude/household-inventory-tracker-qje7gi`.
+- `shopkeeper/` — vendored source of https://github.com/Piyushmishra29/shopkeeper
+  (MIT), a motorised PIN-controlled tool crib: ESP32-S3 MicroPython firmware +
+  browser UI, parametric Python CAD, bench tools. Meshes/renders omitted; see
+  `shopkeeper/VENDORED.md`. Branch: `claude/epic-gauss-aimxa1`.
 - `BOM.md` / `Smart_Farm_DIY_BOM.xlsx` — DIY electronics bill of materials (~₹1.67 lakh + 10%)
 - Working branch: `claude/farm-monitoring-dashboard-iorey1`
 - Published artifact: https://claude.ai/code/artifact/9d7580d8-d8bd-4c5d-b23d-61c88dc8a27d
