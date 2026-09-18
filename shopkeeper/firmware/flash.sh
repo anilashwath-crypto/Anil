@@ -37,9 +37,11 @@ if [ -n "$IMAGE" ] && [ ! -f "$IMAGE" ]; then
   echo "MicroPython image not found: $IMAGE" >&2; exit 1
 fi
 
-if ! command -v mpremote >/dev/null 2>&1; then
-  echo "mpremote not found: pip install mpremote" >&2; exit 1
-fi
+# The tools may be on PATH, or only reachable as python modules (a plain
+# "pip install --user" on macOS often lands them outside PATH). Take either.
+if command -v mpremote >/dev/null 2>&1; then MPR=mpremote
+elif python3 -m mpremote --help >/dev/null 2>&1; then MPR="python3 -m mpremote"
+else echo "mpremote not found: python3 -m pip install mpremote" >&2; exit 1; fi
 
 if [ -z "$PORT" ]; then
   for p in /dev/cu.usbmodem* /dev/ttyACM* /dev/ttyUSB*; do
@@ -49,12 +51,13 @@ fi
 [ -n "$PORT" ] || { echo "no board found: pass the port, e.g. sh flash.sh /dev/ttyACM0" >&2; exit 1; }
 echo "board: $PORT"
 
-M="mpremote connect $PORT"
+M="$MPR connect $PORT"
 
 if [ -n "$IMAGE" ]; then
   if command -v esptool.py >/dev/null 2>&1; then ESPTOOL=esptool.py
   elif command -v esptool >/dev/null 2>&1; then ESPTOOL=esptool
-  else echo "esptool not found: pip install esptool" >&2; exit 1; fi
+  elif python3 -m esptool --help >/dev/null 2>&1; then ESPTOOL="python3 -m esptool"
+  else echo "esptool not found: python3 -m pip install esptool" >&2; exit 1; fi
   echo "erasing the whole chip"
   $ESPTOOL --chip esp32s3 --port "$PORT" erase_flash
   echo "writing MicroPython: $IMAGE"
@@ -94,4 +97,4 @@ done
 echo "reset"
 $M reset
 echo "done: join shopkeeper-NANO and open http://192.168.4.1/control"
-echo "      watch it boot with: mpremote connect $PORT repl"
+echo "      watch it boot with: $MPR connect $PORT repl"
