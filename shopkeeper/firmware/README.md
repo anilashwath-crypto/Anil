@@ -35,7 +35,11 @@ www/        the UI, served straight off flash
 One command copies everything and resets the board (auto-detects the port, or
 pass it): `sh flash.sh` or `sh flash.sh /dev/ttyACM0`. Add `--wipe` to empty
 the board's filesystem first, including saved calibration, timing and the log
-under `/data`, for a clean install of exactly this folder. By hand:
+under `/data`, for a clean install of exactly this folder. For the deepest
+reset, `sh flash.sh --micropython ESP32_GENERIC_S3-xxxxxxxx-v1.28.0.bin` erases
+the whole chip with esptool, writes that fresh MicroPython image (download it
+from https://micropython.org/download/ESP32_GENERIC_S3/) and then installs the
+firmware onto it. By hand:
 
 ```sh
 PORT=/dev/cu.usbmodem5A790574951          # yours may differ; ls /dev/cu.*

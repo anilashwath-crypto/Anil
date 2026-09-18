@@ -4,6 +4,9 @@
 #   sh firmware/flash.sh                 # auto-detects the port
 #   sh firmware/flash.sh /dev/ttyACM0    # or name it
 #   sh firmware/flash.sh --wipe          # DELETE everything on the board first
+#   sh firmware/flash.sh --micropython ESP32_GENERIC_S3-xxxxxxxx-v1.28.0.bin
+#                                        # erase the chip, reinstall MicroPython,
+#                                        # then install this firmware on it
 #
 # Copies every .py the board runs plus both pages under www/, then resets so
 # main.py starts fresh. Without --wipe, calibration, stroke timing and the log
@@ -11,17 +14,28 @@
 # board's whole filesystem is emptied first (old code, /data, stray files), so
 # what runs afterwards is exactly this folder and nothing else. secrets.py is
 # copied if you have made one (it is gitignored) so the AP password comes
-# along. MicroPython itself is not touched either way.
+# along. MicroPython itself is not touched by either of those.
+#
+# --micropython <image.bin> is the deepest reset there is: esptool erases the
+# whole chip (MicroPython, every file, the wifi calibration partition) and
+# writes a fresh MicroPython, then the firmware is installed onto it. Get the
+# image for the ESP32-S3 from https://micropython.org/download/ESP32_GENERIC_S3/
+# (the board in hand runs 1.28.0). Needs esptool: pip install esptool.
 set -e
 cd "$(dirname "$0")"
 
-WIPE=""
-for a in "$@"; do
-  case "$a" in
+WIPE=""; IMAGE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
     --wipe) WIPE=1 ;;
-    *) PORT="$a" ;;
+    --micropython) shift; IMAGE="$1" ;;
+    *) PORT="$1" ;;
   esac
+  shift
 done
+if [ -n "$IMAGE" ] && [ ! -f "$IMAGE" ]; then
+  echo "MicroPython image not found: $IMAGE" >&2; exit 1
+fi
 
 if ! command -v mpremote >/dev/null 2>&1; then
   echo "mpremote not found: pip install mpremote" >&2; exit 1
@@ -36,6 +50,22 @@ fi
 echo "board: $PORT"
 
 M="mpremote connect $PORT"
+
+if [ -n "$IMAGE" ]; then
+  if command -v esptool.py >/dev/null 2>&1; then ESPTOOL=esptool.py
+  elif command -v esptool >/dev/null 2>&1; then ESPTOOL=esptool
+  else echo "esptool not found: pip install esptool" >&2; exit 1; fi
+  echo "erasing the whole chip"
+  $ESPTOOL --chip esp32s3 --port "$PORT" erase_flash
+  echo "writing MicroPython: $IMAGE"
+  # the S3 image is a complete flash image (bootloader + partitions + app), so
+  # it goes at 0x0, unlike the original ESP32 which flashes at 0x1000
+  $ESPTOOL --chip esp32s3 --port "$PORT" --baud 460800 write_flash -z 0x0 "$IMAGE"
+  echo "waiting for MicroPython to boot and format its filesystem"
+  sleep 6
+  $M exec "import sys; print('MicroPython', sys.version)"
+  WIPE=""                     # nothing left on the board to wipe
+fi
 
 if [ -n "$WIPE" ]; then
   echo "wiping the board's filesystem (everything except boot.py)"
@@ -64,3 +94,4 @@ done
 echo "reset"
 $M reset
 echo "done: join shopkeeper-NANO and open http://192.168.4.1/control"
+echo "      watch it boot with: mpremote connect $PORT repl"
