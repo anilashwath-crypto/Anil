@@ -112,6 +112,6 @@ time rather than where you'd look:
 - `{**a, "b": 1}` — dict unpacking inside a display is a `SyntaxError`
 - `str.ljust` does not exist
 
-The servo is deliberately de-energised 450 ms after each move. A hobby servo
+The servo is deliberately de-energised 200 ms after each move. A hobby servo
 holds position by hunting, so it buzzes and warms up indefinitely otherwise,
 and the rack and pinion is not backdriveable enough for a drawer to creep.

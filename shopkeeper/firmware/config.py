@@ -70,7 +70,7 @@ TRAVEL_MS = 1100
 # An SG90 hunts audibly when it is holding position and gets warm doing it. The
 # rack and pinion is not backdriveable enough to matter over a demo, so cut the
 # signal once the move has settled.
-DETACH_AFTER_MS = 450
+DETACH_AFTER_MS = 200
 
 # ── scripted demo ──────────────────────────────────────────────────────────
 # An unattended performance for a table: hold a card, open one bay, open the
