@@ -33,7 +33,9 @@ www/        the UI, served straight off flash
 ## Flashing
 
 One command copies everything and resets the board (auto-detects the port, or
-pass it): `sh flash.sh` or `sh flash.sh /dev/ttyACM0`. By hand:
+pass it): `sh flash.sh` or `sh flash.sh /dev/ttyACM0`. Add `--wipe` to empty
+the board's filesystem first, including saved calibration, timing and the log
+under `/data`, for a clean install of exactly this folder. By hand:
 
 ```sh
 PORT=/dev/cu.usbmodem5A790574951          # yours may differ; ls /dev/cu.*

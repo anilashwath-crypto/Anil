@@ -3,19 +3,30 @@
 #
 #   sh firmware/flash.sh                 # auto-detects the port
 #   sh firmware/flash.sh /dev/ttyACM0    # or name it
+#   sh firmware/flash.sh --wipe          # DELETE everything on the board first
 #
 # Copies every .py the board runs plus both pages under www/, then resets so
-# main.py starts fresh. Calibration and stroke timing saved on the board in
-# /data survive this: only code is replaced. secrets.py is copied if you have
-# made one (it is gitignored) so the AP password comes along.
+# main.py starts fresh. Without --wipe, calibration, stroke timing and the log
+# saved on the board in /data survive: only code is replaced. With --wipe the
+# board's whole filesystem is emptied first (old code, /data, stray files), so
+# what runs afterwards is exactly this folder and nothing else. secrets.py is
+# copied if you have made one (it is gitignored) so the AP password comes
+# along. MicroPython itself is not touched either way.
 set -e
 cd "$(dirname "$0")"
+
+WIPE=""
+for a in "$@"; do
+  case "$a" in
+    --wipe) WIPE=1 ;;
+    *) PORT="$a" ;;
+  esac
+done
 
 if ! command -v mpremote >/dev/null 2>&1; then
   echo "mpremote not found: pip install mpremote" >&2; exit 1
 fi
 
-PORT="$1"
 if [ -z "$PORT" ]; then
   for p in /dev/cu.usbmodem* /dev/ttyACM* /dev/ttyUSB*; do
     [ -e "$p" ] && PORT="$p" && break
@@ -25,6 +36,23 @@ fi
 echo "board: $PORT"
 
 M="mpremote connect $PORT"
+
+if [ -n "$WIPE" ]; then
+  echo "wiping the board's filesystem (everything except boot.py)"
+  $M exec "
+import os
+def rm(p):
+    for n, t, *_ in os.ilistdir(p):
+        q = p.rstrip('/') + '/' + n
+        if t == 0x4000:
+            rm(q); os.rmdir(q)
+        elif q != '/boot.py':
+            os.remove(q)
+rm('/')
+print('wiped:', os.listdir('/'))
+"
+fi
+
 $M mkdir :www 2>/dev/null || true
 for f in config.py servo.py store.py server.py main.py sh1106.py hud.py; do
   echo "  $f"; $M cp "$f" ":$f"
