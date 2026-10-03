@@ -25,6 +25,21 @@ jobs, settings and history persist in `localStorage` and can be exported/importe
 Trilingual (EN / ಕನ್ನಡ / हिंदी), light/dark theme, mobile-first — same conventions as the
 rest of this repo.
 
+## One-command home server
+
+The simplest deployment: on any computer on the same network as the camera, run
+
+```sh
+python3 fod/home_server.py <camera-ip> admin PASSWORD
+```
+
+It checks the camera (camera_doctor), serves the app to **every device on the
+network**, and serves the camera at `/snapshot.jpg` on the **same address** — same
+origin as the app, so CORS and mixed-content rules never apply, and the camera's
+Basic/Digest login is handled server-side. Open the URL it prints from any phone or
+PC and set the app's camera snapshot URL to `/snapshot.jpg`. Port 8000 busy? Set
+`FOD_PORT=8010` in the environment.
+
 ## Field manual
 
 `fod/GUIDE.html` is the full commissioning reference: how the detection works in depth,
