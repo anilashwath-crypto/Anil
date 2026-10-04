@@ -1,0 +1,70 @@
+diff --git a/server.py b/server.py
+index a5c7160..a821b71 100644
+--- a/server.py
++++ b/server.py
+@@ -14,6 +14,9 @@ import serial
+ 
+ PORT_DEV = os.environ.get("NPK_PORT", "/dev/cu.usbserial-1440")
+ HTTP_PORT = int(os.environ.get("NPK_HTTP_PORT", "8090"))
++# 127.0.0.1 keeps the server off the network by default. Set NPK_BIND=0.0.0.0
++# to reach it from a phone on the same LAN.
++BIND_HOST = os.environ.get("NPK_BIND", "127.0.0.1")
+ POLL_SEC = float(os.environ.get("NPK_POLL", "2.0"))
+ BAUDS = (4800, 9600, 2400, 19200, 38400, 115200)
+ HIST_MAX = int(os.environ.get("NPK_HIST", "4000"))
+@@ -48,6 +51,20 @@ STATE = {"status": "starting", "detail": "initialising",
+ LOCK = threading.Lock()
+ 
+ 
++def lan_ip():
++    """Best-guess LAN address to print for phones. No packet is actually sent -
++    connect() on a UDP socket just picks the interface that would be used."""
++    import socket
++    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
++    try:
++        s.connect(("8.8.8.8", 80))
++        return s.getsockname()[0]
++    except Exception:
++        return "your-lan-ip"
++    finally:
++        s.close()
++
++
+ def crc16(d):
+     c = 0xFFFF
+     for b in d:
+@@ -345,6 +362,9 @@ class Handler(BaseHTTPRequestHandler):
+         self.send_header("Content-Type", ctype)
+         self.send_header("Content-Length", str(len(body)))
+         self.send_header("Cache-Control", "no-store")
++        # Lets npk-live.html read this server when it isn't same-origin - opened
++        # from disk, or installed to a phone's home screen. Read-only GET API.
++        self.send_header("Access-Control-Allow-Origin", "*")
+         self.end_headers()
+         self.wfile.write(body)
+ 
+@@ -361,6 +381,9 @@ class Handler(BaseHTTPRequestHandler):
+         elif path == "/chart.js":
+             with open(os.path.join(HERE, "chart.js"), "rb") as f:
+                 self._send(200, f.read(), "text/javascript; charset=utf-8")
++        elif path in ("/live", "/npk-live.html"):
++            with open(os.path.join(HERE, "npk-live.html"), "rb") as f:
++                self._send(200, f.read(), "text/html; charset=utf-8")
+         elif path in ("/", "/index.html"):
+             with open(os.path.join(HERE, "index.html"), "rb") as f:
+                 self._send(200, f.read(), "text/html; charset=utf-8")
+@@ -373,8 +396,13 @@ if __name__ == "__main__":
+     threading.Thread(target=demo_poller if DEMO else poller, daemon=True).start()
+     if DEMO:
+         print("  ** DEMO MODE - simulated readings, no probe attached **")
+-    srv = ThreadingHTTPServer(("127.0.0.1", HTTP_PORT), Handler)
++    srv = ThreadingHTTPServer((BIND_HOST, HTTP_PORT), Handler)
+     print(f"NPK dashboard  ->  http://localhost:{HTTP_PORT}")
++    print(f"  mobile app    ->  http://localhost:{HTTP_PORT}/live")
++    if BIND_HOST not in ("127.0.0.1", "localhost"):
++        print(f"  on this LAN   ->  http://{lan_ip()}:{HTTP_PORT}/live")
++    else:
++        print("  (bound to localhost only - set NPK_BIND=0.0.0.0 to reach it from a phone)")
+     try:
+         srv.serve_forever()
+     except KeyboardInterrupt:

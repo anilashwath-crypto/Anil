@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d0c">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Soil NPK">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0d0c'/%3E%3Cpath d='M32 50c0-13 7-21 15-24-1 12-7 20-15 24z' fill='%237ee08a'/%3E%3Cpath d='M32 50c0-11-6-18-13-21 1 10 6 17 13 21z' fill='%235fb0ff'/%3E%3Crect x='30.5' y='30' width='3' height='22' rx='1.5' fill='%23e8efe9'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0d0c'/%3E%3Cpath d='M32 50c0-13 7-21 15-24-1 12-7 20-15 24z' fill='%237ee08a'/%3E%3Cpath d='M32 50c0-11-6-18-13-21 1 10 6 17 13 21z' fill='%235fb0ff'/%3E%3Crect x='30.5' y='30' width='3' height='22' rx='1.5' fill='%23e8efe9'/%3E%3C/svg%3E">
+<link rel="manifest" href='data:application/manifest+json,{"name": "Soil NPK \u2014 FST100", "short_name": "Soil NPK", "display": "standalone", "orientation": "any", "background_color": "#0b0d0c", "theme_color": "#0b0d0c", "icons": [{"src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0d0c'/%3E%3Cpath d='M32 50c0-13 7-21 15-24-1 12-7 20-15 24z' fill='%237ee08a'/%3E%3Cpath d='M32 50c0-11-6-18-13-21 1 10 6 17 13 21z' fill='%235fb0ff'/%3E%3Crect x='30.5' y='30' width='3' height='22' rx='1.5' fill='%23e8efe9'/%3E%3C/svg%3E", "sizes": "any", "type": "image/svg+xml"}]}'>
+<title>Soil NPK — FST100</title>
+<style>
+  :root{
+    --bg:#0b0d0c; --panel:#121614; --panel2:#171c19; --line:#232a26; --line2:#2f3a34;
+    --ink:#e8efe9; --mut:#7c8a81; --dim:#55625a;
+    --n:#5fb0ff; --p:#ffb454; --k:#7ee08a; --ec:#c99bff;
+    --good:#4ecb71; --low:#4a90d9; --high:#ff9f43; --warn:#ff6b5a;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--mono);
+       padding:26px 22px 60px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto}
+
+  header{display:flex;justify-content:space-between;align-items:baseline;gap:16px;
+         flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  h1{font-size:15px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+  h1 span{color:var(--dim);font-weight:400}
+  .link{font-size:11px;color:var(--mut);letter-spacing:.06em}
+
+  .status{display:flex;align-items:center;gap:10px;margin:16px 0 14px;padding:11px 15px;
+          border:1px solid var(--line);border-radius:3px;background:var(--panel);
+          font-size:12px;letter-spacing:.04em}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex:none}
+  .dot.live{background:var(--good);animation:pulse 2.4s ease-out infinite}
+  .dot.bad{background:var(--warn)} .dot.wait{background:var(--high);animation:pulse 1.2s ease-out infinite}
+  @keyframes pulse{from{box-shadow:0 0 0 0 rgba(78,203,113,.45)}to{box-shadow:0 0 0 9px rgba(78,203,113,0)}}
+  .status b{font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+  .status .msg{color:var(--mut)}
+
+  .verdict{border:1px solid var(--line);border-left:2px solid var(--good);
+           border-radius:3px;background:var(--panel);padding:15px 18px;margin-bottom:16px}
+  .verdict h2{font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+              color:var(--mut);margin-bottom:9px;font-weight:600}
+  .verdict p{font-size:13px;line-height:1.7;color:var(--ink)}
+  .verdict p em{color:var(--mut);font-style:normal}
+
+  .npk{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:16px 17px 15px}
+  .head{display:flex;justify-content:space-between;align-items:baseline}
+  .tag{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+  .chip{font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:3px 7px;
+        border-radius:2px;font-weight:600;background:var(--line2);color:var(--mut)}
+  .chip.good{background:rgba(78,203,113,.15);color:var(--good)}
+  .chip.low{background:rgba(74,144,217,.15);color:var(--low)}
+  .chip.high{background:rgba(255,159,67,.15);color:var(--high)}
+  .val{font-size:40px;line-height:1.05;margin-top:11px;font-variant-numeric:tabular-nums;
+       transition:opacity .3s}
+  .unit{font-size:11px;color:var(--dim);margin-left:6px;letter-spacing:.08em}
+  .card.n .val{color:var(--n)} .card.p .val{color:var(--p)}
+  .card.k .val{color:var(--k)} .card.ec .val{color:var(--ec)}
+
+  /* meter */
+  .meter{margin-top:14px}
+  .track{position:relative;height:6px;border-radius:3px;overflow:hidden;display:flex;background:var(--line2)}
+  .track i{height:100%;display:block}
+  .z-low{background:rgba(74,144,217,.35)} .z-good{background:rgba(78,203,113,.45)}
+  .z-high{background:rgba(255,159,67,.35)}
+  .needle{position:absolute;top:-3px;width:2px;height:12px;background:var(--ink);
+          border-radius:1px;transition:left .6s cubic-bezier(.4,0,.2,1);
+          box-shadow:0 0 0 2px var(--panel)}
+  .scale{display:flex;justify-content:space-between;margin-top:6px;
+         font-size:9px;color:var(--dim);letter-spacing:.06em}
+  .band{margin-top:7px;font-size:10px;color:var(--mut);letter-spacing:.04em}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .mini .val{font-size:26px}
+
+  .notes{margin-top:20px;border:1px solid var(--line);border-radius:3px;
+         background:var(--panel);padding:15px 18px;font-size:12px;line-height:1.8;color:var(--mut)}
+  .notes h2{font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+            color:var(--mut);margin-bottom:9px;font-weight:600}
+  .notes b{color:var(--ink);font-weight:600}
+  .notes .caveat{border-left:2px solid var(--high);padding-left:12px;margin-top:11px;color:var(--mut)}
+
+  .diag{margin-top:18px;border:1px solid var(--line);border-radius:3px;background:var(--panel);
+        padding:15px 18px;font-size:12px;line-height:1.75}
+  .diag h2{font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+           color:var(--warn);margin-bottom:9px;font-weight:600}
+  .diag ol{margin-left:16px;color:var(--mut)} .diag li{margin-bottom:6px}
+  .diag li b{color:var(--ink);font-weight:600}
+  .raw{margin-top:16px;font-size:11px;color:var(--dim);word-break:break-all;line-height:1.7}
+  .raw b{color:var(--mut);font-weight:400}
+  /* charts */
+  .charts{margin-top:22px}
+  .chead{display:flex;justify-content:space-between;align-items:center;
+         gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .chead h2{font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+            color:var(--mut);font-weight:600}
+  .ctrls{display:flex;gap:6px;align-items:center}
+  .btn{font:inherit;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+       padding:5px 10px;border:1px solid var(--line2);background:transparent;
+       color:var(--mut);border-radius:2px;cursor:pointer;transition:all .18s}
+  .btn:hover{color:var(--ink);border-color:var(--dim)}
+  .btn.on{background:var(--line2);color:var(--ink);border-color:var(--dim)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:3px;
+         padding:14px 16px 8px;margin-bottom:12px;position:relative}
+  .ptitle{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+  .legend{display:flex;gap:14px;margin:8px 0 2px;flex-wrap:wrap}
+  .lg{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mut)}
+  .sw{width:9px;height:2px;border-radius:1px;display:inline-block}
+  .chart{width:100%;height:auto;display:block;overflow:visible}
+  .grid{stroke:var(--line2);stroke-width:1;opacity:.55}
+  .axis{fill:var(--dim);font-size:9px;font-family:var(--mono);letter-spacing:.04em}
+  .endlab{font-size:10px;font-family:var(--mono);font-weight:600}
+  .crosshair{stroke:var(--dim);stroke-width:1;stroke-dasharray:2 3}
+  .hit{stroke:var(--panel);stroke-width:2}
+  .chart-empty{padding:52px 0;text-align:center;font-size:11px;
+               color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
+  .tip{position:absolute;top:14px;pointer-events:none;background:#0c0f0d;
+       border:1px solid var(--line2);border-radius:3px;padding:8px 10px;
+       font-size:11px;min-width:170px;transition:opacity .12s;z-index:5}
+  .tip-t{color:var(--dim);font-size:10px;margin-bottom:5px;letter-spacing:.06em}
+  .tip-r{display:flex;align-items:center;gap:6px;line-height:1.7}
+  .tip-l{color:var(--mut);flex:1} .tip-r b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .tip-u{color:var(--dim);font-size:9px}
+  table.tv{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px}
+  table.tv th{text-align:right;color:var(--mut);font-weight:600;padding:5px 8px;
+              border-bottom:1px solid var(--line2);font-size:9px;
+              letter-spacing:.12em;text-transform:uppercase}
+  table.tv th:first-child,table.tv td:first-child{text-align:left}
+  table.tv td{text-align:right;padding:4px 8px;color:var(--ink);
+              font-variant-numeric:tabular-nums;border-bottom:1px solid var(--line)}
+  .demo-badge{display:none;vertical-align:middle;font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+              padding:3px 8px;border-radius:2px;font-weight:600;margin-left:10px;
+              background:rgba(255,159,67,.16);color:var(--high);border:1px solid rgba(255,159,67,.3)}
+  .demo .demo-badge{display:inline-block}
+
+  .hide{display:none}
+  .stale .val{opacity:.35}
+  @media(max-width:860px){.npk{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
+
+  /* ---- connection bar ---------------------------------------------------- */
+  .hostbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+           font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+  .hostbar input{font:inherit;font-size:16px;letter-spacing:normal;text-transform:none;
+           color:var(--ink);background:var(--panel2);border:1px solid var(--line2);
+           border-radius:2px;padding:8px 10px;width:210px;outline:none;min-height:40px}
+  /* 16px keeps iOS Safari from zooming the whole page when the field is focused */
+  .hostbar input:focus{border-color:var(--dim)}
+  .offline{display:none;margin:16px 0 0;padding:13px 16px;
+           border:1px solid rgba(255,107,90,.35);border-left:2px solid var(--warn);
+           border-radius:3px;background:rgba(255,107,90,.06);font-size:12px;line-height:1.7}
+  .offline.on{display:block}
+  .offline b{color:var(--warn);font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+           display:block;margin-bottom:6px;font-size:10px}
+  .offline code{color:var(--ink);background:var(--panel2);border:1px solid var(--line2);
+           border-radius:2px;padding:1px 5px;word-break:break-all}
+  .offline .retry{color:var(--mut);margin-top:7px;font-size:11px}
+  .btn[hidden]{display:none}
+
+  /* ---- touch ------------------------------------------------------------- */
+  .btn{min-height:40px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .chart{touch-action:pan-y}          /* let the page scroll; crosshair reads the X */
+
+  /* ---- phone ------------------------------------------------------------- */
+  @media(max-width:640px){
+    body{padding:0 14px calc(40px + env(safe-area-inset-bottom));
+         padding-left:calc(14px + env(safe-area-inset-left));
+         padding-right:calc(14px + env(safe-area-inset-right))}
+    /* status stays visible while scrolling a long dashboard one-handed */
+    header{position:sticky;top:0;z-index:20;background:var(--bg);
+           padding-top:calc(14px + env(safe-area-inset-top));padding-bottom:10px}
+    h1{font-size:13px}
+    .link{width:100%;order:3}
+    .hostbar{width:100%;order:4;margin-top:4px}
+    .hostbar input{flex:1;min-width:0;width:auto}
+    .hostbar label{display:none}
+    .status{position:sticky;top:56px;z-index:19;margin:10px 0 12px;font-size:11px}
+    .npk,.grid{grid-template-columns:1fr;gap:10px}
+    .card{padding:14px 15px 13px}
+    .val{font-size:34px}
+    .mini .val{font-size:24px}
+    .verdict{padding:13px 15px}
+    .verdict p{font-size:12.5px;line-height:1.65}
+    .panel{padding:12px 12px 6px}
+    .ctrls{width:100%;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+    .btn{padding:9px 4px;font-size:9px;letter-spacing:.08em}
+    .chead{gap:8px}
+    .tip{min-width:0;width:150px;font-size:10.5px;padding:7px 9px}
+    .notes,.diag{padding:13px 15px;font-size:11.5px;line-height:1.7}
+    table.tv{font-size:10.5px}
+    table.tv td,table.tv th{padding:4px 5px}
+    .raw{font-size:10px}
+  }
+  /* two-up meters on the awkward 640-860 band rather than one tall column */
+  @media(min-width:641px) and (max-width:860px){
+    .npk{grid-template-columns:repeat(2,1fr)}
+  }
+  /* Landscape phone: a 390px-tall viewport can't spare 230px of header before
+     the first reading, so everything above the meters gets compressed. */
+  @media(max-width:900px) and (max-height:520px) and (orientation:landscape){
+    body{padding-top:10px}
+    header,.status{position:static}
+    header{padding-bottom:8px}
+    h1{font-size:12px}
+    .hostbar input{padding:5px 8px;min-height:32px;width:170px}
+    .btn{min-height:32px;padding:6px 9px}
+    .status{margin:9px 0 9px;padding:8px 13px}
+    .verdict{padding:11px 14px;margin-bottom:10px}
+    .verdict h2{margin-bottom:6px}
+    .verdict p{font-size:12px;line-height:1.55}
+    .npk{grid-template-columns:repeat(3,1fr)}
+    .card{padding:12px 13px 11px}
+    .val{font-size:27px;margin-top:8px}
+    .meter{margin-top:10px}
+  }
+  /* installed to the home screen — no browser chrome to scroll away */
+  @media(display-mode:standalone){
+    body{padding-top:calc(8px + env(safe-area-inset-top))}
+  }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Soil NPK <span>/ FST100-2006E1111</span><span class="demo-badge">demo data</span></h1>
+    <div class="link" id="link">—</div>
+    <div class="hostbar" id="hostbar">
+      <label for="host">server</label>
+      <input id="host" type="url" inputmode="url" spellcheck="false"
+             autocapitalize="off" autocomplete="off" enterkeyhint="go">
+      <button class="btn" id="host-apply">connect</button>
+      <button class="btn" id="awake" hidden>screen on</button>
+    </div>
+  </header>
+
+  <div class="status">
+    <span class="dot" id="dot"></span><b id="st">connecting</b><span class="msg" id="msg"></span>
+  </div>
+
+  <div class="offline" id="offline">
+    <b>Can't reach the probe server</b>
+    <div>Run <code>python server.py</code> on the machine with the probe, then put
+      its address above — e.g. <code>http://192.168.1.42:8090</code>.</div>
+    <div class="retry" id="retry-msg">retrying…</div>
+  </div>
+
+  <div class="verdict" id="verdict">
+    <h2>Soil assessment</h2>
+    <p id="verdict-text">waiting for a reading…</p>
+  </div>
+
+  <div class="npk" id="npk-row"></div>
+  <div class="grid" id="sec-row"></div>
+
+  <div class="charts">
+    <div class="chead">
+      <h2>Readings over time</h2>
+      <div class="ctrls">
+        <button class="btn on" data-range="300">5 min</button>
+        <button class="btn" data-range="1800">30 min</button>
+        <button class="btn" data-range="0">all</button>
+        <button class="btn" id="tv-toggle">table</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">Nutrients — mg/kg</div>
+      <div class="legend">
+        <span class="lg"><i class="sw" style="background:#3987e5"></i>Nitrogen</span>
+        <span class="lg"><i class="sw" style="background:#d95926"></i>Phosphorus</span>
+        <span class="lg"><i class="sw" style="background:#199e70"></i>Potassium</span>
+      </div>
+      <div id="chart-npk"></div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">Conductivity — uS/cm</div>
+      <div id="chart-ec"></div>
+    </div>
+
+    <div class="panel">
+      <div class="ptitle">Soil temperature — &deg;C</div>
+      <div id="chart-temp"></div>
+    </div>
+
+    <div class="panel hide" id="tableview">
+      <div class="ptitle">Last 20 samples</div>
+      <div style="overflow-x:auto"><table class="tv" id="tv"></table></div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h2>How to read this</h2>
+    <div>Bands are general horticultural guidance for potting soil and garden beds,
+      in mg/kg (ppm) of plant-available nutrient. Optimal ranges vary widely by crop —
+      leafy greens want more nitrogen, fruiting plants more potassium.</div>
+    <div class="caveat"><b>Important accuracy caveat.</b> Low-cost RS-485 NPK probes do not
+      chemically measure N, P and K. They measure bulk electrical conductivity and derive all
+      three numbers from that single signal through a fixed factory curve. The three values
+      therefore move together and are <b>indicative, not quantitative</b>. Use them to track
+      change over time in one pot, not as absolute soil chemistry. A lab soil test is the
+      only way to get real N-P-K figures.</div>
+  </div>
+
+  <div class="diag hide" id="diag">
+    <h2>No reply from the probe</h2>
+    <ol>
+      <li><b>Check the terminal screws first.</b> Loose wires in the green block caused a
+          total silence once already — no data, no error frames, no noise.</li>
+      <li><b>Green &rarr; D+/A+ and White &rarr; D&minus;/B&minus;</b>, per the probe's label
+          (<i>Green:RS485A, White:RS485B</i>). A swapped pair is silent.</li>
+      <li><b>Black &rarr; GND, Red &rarr; 5V.</b> Supply spec is 5&ndash;30&nbsp;VDC so the
+          adapter's 5&nbsp;V rail is fine.</li>
+    </ol>
+  </div>
+
+  <div class="raw">
+    <b>last frame</b> <span id="raw">—</span><br>
+    <b>polls</b> <span id="cnt">—</span>
+  </div>
+</div>
+
+<script>
+/* Inline-SVG time series for the NPK dashboard.
+   Palette: reference categorical slots 1-3, dark-mode steps, validated against
+   surface #121614 (lightness band, chroma, CVD sep, normal-vision, contrast: all pass).
+   One axis per chart - NPK share mg/kg, EC and temperature get their own panels. */
+
+const SERIES = {
+  n:    {label:'Nitrogen',     color:'#3987e5', unit:'mg/kg'},
+  p:    {label:'Phosphorus',   color:'#d95926', unit:'mg/kg'},
+  k:    {label:'Potassium',    color:'#199e70', unit:'mg/kg'},
+  ec:   {label:'Conductivity', color:'#3987e5', unit:'uS/cm'},
+  temp: {label:'Temperature',  color:'#199e70', unit:'°C'},
+};
+
+// Shared with the page: while someone is reading a value off a chart, the
+// 3-second data refresh must not rebuild the SVG out from under them.
+const HOLD = {t: 0, MS: 6000, touch: 0};
+// Browsers replay a synthetic mouse sequence after a tap. Without this guard the
+// compat mouseleave fires straight after touchend and wipes the reading the tap
+// just placed - which is exactly what a tap on a phone looked like.
+const ghostMouse = () => Date.now() - HOLD.touch < 700;
+const chartHeld = () => Date.now() - HOLD.t < HOLD.MS;
+
+const NS = 'http://www.w3.org/2000/svg';
+const el = (n, a={}) => { const e = document.createElementNS(NS, n);
+  for (const k in a) e.setAttribute(k, a[k]); return e; };
+
+function tickStep(lo, hi, count=4){
+  if (lo === hi){ lo -= 1; hi += 1; }
+  const raw = (hi - lo) / count;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  return [1,2,2.5,5,10].map(m=>m*mag).find(s=>s>=raw) || 10*mag;
+}
+function stepDecimals(step){
+  return Math.min(2, Math.max(0, -Math.floor(Math.log10(step))));
+}
+function niceTicks(lo, hi, count=4){
+  if (!isFinite(lo) || !isFinite(hi)) return [0,1];
+  if (lo === hi){ lo -= 1; hi += 1; }
+  const span = hi - lo;
+  const raw = span / count;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1,2,2.5,5,10].map(m=>m*mag).find(s=>s>=raw) || 10*mag;
+  const start = Math.floor(lo/step)*step;
+  const out = [];
+  for (let v=start; v<=hi+step*0.5; v+=step) out.push(+v.toFixed(6));
+  return out;
+}
+
+const fmtTime = t => new Date(t*1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const fmtVal  = v => Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(1);
+
+/**
+ * Render one chart panel.
+ * @param {HTMLElement} host   container
+ * @param {Array}       pts    [{t, n, p, k, ec, temp}]
+ * @param {string[]}    keys   which series to draw on this shared axis
+ */
+function drawChart(host, pts, keys){
+  host.innerHTML = '';
+  // Geometry follows the container so SVG units track CSS pixels — otherwise a
+  // fixed 900-unit viewBox squashed onto a 360 px phone renders 9 px axis text
+  // at under 4 px. Narrow layouts also get tighter gutters and shorter end
+  // labels, since a 60-unit right margin is 17% of a phone's width.
+  const cw = host.clientWidth || 900;
+  const NARROW = cw < 560;
+  const W  = Math.round(Math.min(Math.max(cw, 300), 900));
+  const H  = NARROW ? 200 : 210;
+  const PL = NARROW ? 34 : 52;
+  const PR = NARROW ? 30 : 60;
+  const PT = 14;
+  const PB = NARROW ? 24 : 26;
+
+  const rows = pts.filter(p => keys.some(k => p[k] != null));
+  if (rows.length < 2){
+    host.innerHTML = '<div class="chart-empty">collecting data…</div>';
+    return;
+  }
+
+  const t0 = rows[0].t, t1 = rows[rows.length-1].t;
+  const span = Math.max(t1 - t0, 1);
+  let lo = Infinity, hi = -Infinity;
+  for (const r of rows) for (const k of keys){
+    const v = r[k]; if (v == null) continue;
+    if (v < lo) lo = v; if (v > hi) hi = v;
+  }
+  if (lo === hi){ lo -= 1; hi += 1; }
+  const pad = (hi - lo) * 0.15;
+  lo -= pad; hi += pad;
+  const yLo = lo, yHi = hi;                 // tight to the data - do NOT snap out to ticks
+  const step = tickStep(yLo, yHi);
+  const dec = stepDecimals(step);
+  const ticks = niceTicks(yLo, yHi).filter(t => t >= yLo && t <= yHi);
+
+  const X = t => PL + ((t - t0) / span) * (W - PL - PR);
+  const Y = v => PT + (1 - (v - yLo) / (yHi - yLo)) * (H - PT - PB);
+
+  const svg = el('svg', {viewBox:`0 0 ${W} ${H}`, class:'chart', role:'img',
+                         'aria-label': keys.map(k=>SERIES[k].label).join(', ') + ' over time'});
+
+  // recessive grid + y labels
+  for (const tk of ticks){
+    if (tk < yLo || tk > yHi) continue;
+    const y = Y(tk);
+    svg.appendChild(el('line', {x1:PL, x2:W-PR, y1:y, y2:y, class:'grid'}));
+    const lab = el('text', {x:PL-(NARROW?5:9), y:y+3.5, class:'axis', 'text-anchor':'end'});
+    lab.textContent = tk.toFixed(dec);
+    svg.appendChild(lab);
+  }
+  // x labels: start / middle / end
+  for (const frac of (NARROW ? [0, 1] : [0, 0.5, 1])){
+    const tt = t0 + span*frac;
+    const tx = el('text', {x:X(tt), y:H-8, class:'axis',
+      'text-anchor': frac===0?'start':frac===1?'end':'middle'});
+    tx.textContent = fmtTime(tt);
+    svg.appendChild(tx);
+  }
+
+  // one 2px line per series, plus a direct label at its end
+  for (const k of keys){
+    const s = SERIES[k];
+    const seg = rows.filter(r => r[k] != null);
+    if (seg.length < 2) continue;
+    const d = seg.map((r,i) => `${i?'L':'M'}${X(r.t).toFixed(2)},${Y(r[k]).toFixed(2)}`).join(' ');
+    svg.appendChild(el('path', {d, fill:'none', stroke:s.color, 'stroke-width':2,
+      'stroke-linejoin':'round', 'stroke-linecap':'round',
+      'vector-effect':'non-scaling-stroke'}));
+    const last = seg[seg.length-1];
+    const lb = el('text', {x:X(last.t)+7, y:Y(last[k])+3.5, class:'endlab', fill:s.color});
+    lb.textContent = fmtVal(last[k]);
+    svg.appendChild(lb);
+  }
+
+  // crosshair layer
+  const cross = el('line', {x1:0,x2:0,y1:PT,y2:H-PB, class:'crosshair', opacity:0});
+  svg.appendChild(cross);
+  const dots = keys.map(() => { const c = el('circle',{r:4, class:'hit', opacity:0}); svg.appendChild(c); return c; });
+  const hit = el('rect', {x:PL, y:PT, width:W-PL-PR, height:H-PT-PB, fill:'transparent'});
+  svg.appendChild(hit);
+  host.appendChild(svg);
+
+  const tip = document.createElement('div');
+  tip.className = 'tip'; tip.style.opacity = 0;
+  host.appendChild(tip);
+
+  function move(ev){
+    const box = svg.getBoundingClientRect();
+    const px = (ev.clientX - box.left) / box.width * W;
+    const tt = t0 + ((px - PL) / (W - PL - PR)) * span;
+    let best = rows[0], bd = Infinity;
+    for (const r of rows){ const d = Math.abs(r.t - tt); if (d < bd){ bd = d; best = r; } }
+    const bx = X(best.t);
+    cross.setAttribute('x1', bx); cross.setAttribute('x2', bx); cross.setAttribute('opacity', 1);
+    keys.forEach((k,i) => {
+      const v = best[k];
+      if (v == null){ dots[i].setAttribute('opacity', 0); return; }
+      dots[i].setAttribute('cx', bx); dots[i].setAttribute('cy', Y(v));
+      dots[i].setAttribute('fill', SERIES[k].color);
+      dots[i].setAttribute('opacity', 1);
+    });
+    tip.innerHTML = `<div class="tip-t">${fmtTime(best.t)}</div>` +
+      keys.filter(k => best[k] != null).map(k =>
+        `<div class="tip-r"><span class="sw" style="background:${SERIES[k].color}"></span>` +
+        `<span class="tip-l">${SERIES[k].label}</span>` +
+        `<b>${fmtVal(best[k])}</b> <span class="tip-u">${SERIES[k].unit}</span></div>`).join('');
+    const hostBox = host.getBoundingClientRect();
+    const leftPx = (bx / W) * hostBox.width;
+    const tw = Math.min(NARROW ? 150 : 190, hostBox.width - 16);
+    // flip the tooltip to the left of the crosshair when it would run off the edge
+    const want = leftPx + 12 + tw > hostBox.width ? leftPx - 12 - tw : leftPx + 12;
+    tip.style.left = Math.min(Math.max(want, 8), Math.max(hostBox.width - tw - 8, 8)) + 'px';
+    tip.style.opacity = 1;
+  }
+  function leave(){ cross.setAttribute('opacity',0); dots.forEach(d=>d.setAttribute('opacity',0)); tip.style.opacity = 0; }
+  hit.addEventListener('mousemove', e => { if (ghostMouse()) return; HOLD.t = Date.now(); move(e); });
+  hit.addEventListener('mouseleave', () => { if (ghostMouse()) return; HOLD.t = 0; leave(); });
+  // Touch has no hover, so a tap must leave the reading on screen - clearing on
+  // touchend made a tap show nothing at all. The crosshair persists until the
+  // next tap moves it, or HOLD_MS of no interaction lets the redraw resume.
+  const touch = e => { HOLD.touch = Date.now();
+                       if (e.touches[0]) { HOLD.t = HOLD.touch; move(e.touches[0]); } };
+  svg.addEventListener('touchstart', touch, {passive:true});
+  svg.addEventListener('touchmove',  touch, {passive:true});
+  svg.addEventListener('touchend',  () => { HOLD.t = HOLD.touch = Date.now(); }, {passive:true});
+  svg.addEventListener('touchcancel', leave, {passive:true});
+  hit.addEventListener('mouseenter', () => { if (!ghostMouse()) HOLD.t = Date.now(); });
+}
+
+</script>
+<script>
+// Interpretation bands, in the sensor's own mg/kg units. Edit freely.
+const SPEC = {
+  n:  {label:'Nitrogen',     unit:'mg/kg', cls:'n',  scale:150,  low:25,  high:75},
+  p:  {label:'Phosphorus',   unit:'mg/kg', cls:'p',  scale:150,  low:25,  high:60},
+  k:  {label:'Potassium',    unit:'mg/kg', cls:'k',  scale:400,  low:120, high:280},
+  ec: {label:'Conductivity', unit:'uS/cm', cls:'ec', scale:2500, low:200, high:1200},
+};
+const ADVICE = {
+  n: {low:'nitrogen is low — leaves may yellow on older growth',
+      high:'nitrogen is high — expect leafy growth at the expense of flowers'},
+  p: {low:'phosphorus is low — can stunt roots and flowering',
+      high:'phosphorus is high — usually harmless, but can lock out iron and zinc'},
+  k: {low:'potassium is low — watch for browning leaf edges',
+      high:'potassium is high — may compete with magnesium uptake'},
+  ec:{low:'conductivity is low — the soil is lightly fertilised or freshly flushed',
+      high:'conductivity is high — salt build-up, consider flushing with clean water'},
+};
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+function grade(key, v){
+  const s = SPEC[key];
+  if (v < s.low) return 'low';
+  if (v > s.high) return 'high';
+  return 'good';
+}
+
+function cardHTML(key, mini){
+  const s = SPEC[key];
+  const lowPct  = (s.low / s.scale) * 100;
+  const goodPct = ((s.high - s.low) / s.scale) * 100;
+  const highPct = 100 - lowPct - goodPct;
+  return `<div class="card ${s.cls} ${mini?'mini':''}" id="card-${key}">
+    <div class="head"><div class="tag">${s.label}</div><div class="chip" id="chip-${key}">—</div></div>
+    <div class="val"><span id="v-${key}">--</span><span class="unit">${s.unit}</span></div>
+    <div class="meter">
+      <div class="track">
+        <i class="z-low"  style="width:${lowPct}%"></i>
+        <i class="z-good" style="width:${goodPct}%"></i>
+        <i class="z-high" style="width:${highPct}%"></i>
+        <span class="needle" id="ndl-${key}" style="left:0%"></span>
+      </div>
+      <div class="scale"><span>0</span><span>${s.low}</span><span>${s.high}</span><span>${s.scale}</span></div>
+      <div class="band">optimal ${s.low}–${s.high} ${s.unit}</div>
+    </div>
+  </div>`;
+}
+
+$('npk-row').innerHTML = ['n','p','k'].map(k => cardHTML(k,false)).join('');
+$('sec-row').innerHTML = cardHTML('ec',true) +
+  `<div class="card mini" id="card-temp">
+     <div class="head"><div class="tag">Temperature</div><div class="chip" id="chip-temp">—</div></div>
+     <div class="val"><span id="v-temp">--</span><span class="unit">&deg;C</span></div>
+     <div class="band" style="margin-top:26px">soil temperature at probe depth</div>
+   </div>`;
+
+function paint(s){
+  document.body.classList.toggle('demo', !!s.demo);
+  const live = s.status === 'live';
+  $('dot').className = 'dot ' + (live ? 'live'
+      : (s.status==='scanning'||s.status==='starting'||s.status==='exception') ? 'wait' : 'bad');
+  $('st').textContent = s.status.replace(/_/g,' ');
+  $('msg').textContent = s.detail || '';
+
+  const L = s.link || {};
+  $('link').textContent = L.baud
+    ? `${L.port} · ${L.baud} 8N1 · addr ${L.addr} · 0x${(L.base||0).toString(16).padStart(4,'0')} ×${L.qty}`
+    : (L.port || '—');
+
+  const v = s.values || {};
+  const issues = [];
+
+  for (const key of Object.keys(SPEC)){
+    const card = $('card-'+key), chip = $('chip-'+key), f = v[key];
+    card.classList.toggle('stale', !live || !f);
+    if (!(live && f)){ $('v-'+key).textContent='--'; chip.className='chip'; chip.textContent='—'; continue; }
+    $('v-'+key).textContent = f.value;
+    const g = grade(key, f.value);
+    chip.className = 'chip ' + g;
+    chip.textContent = g;
+    $('ndl-'+key).style.left = clamp((f.value / SPEC[key].scale) * 100, 0, 100) + '%';
+    if (g !== 'good') issues.push(ADVICE[key][g]);
+  }
+
+  const t = v.temp;
+  $('card-temp').classList.toggle('stale', !live || !t);
+  $('v-temp').textContent = (live && t) ? t.value : '--';
+  const tc = $('chip-temp');
+  if (live && t){
+    const g = t.value < 10 ? 'low' : t.value > 32 ? 'high' : 'good';
+    tc.className = 'chip ' + g; tc.textContent = g === 'good' ? 'normal' : g;
+  } else { tc.className='chip'; tc.textContent='—'; }
+
+  const vt = $('verdict-text'), vb = $('verdict');
+  if (!live){ vt.textContent = 'waiting for a reading…'; vb.style.borderLeftColor='var(--dim)'; }
+  else if (!issues.length){
+    vt.innerHTML = 'All four measures sit inside their optimal bands. ' +
+      '<em>Nothing needs correcting right now.</em>';
+    vb.style.borderLeftColor = 'var(--good)';
+  } else {
+    vt.innerHTML = issues.map(i => '&bull; ' + i).join('<br>') +
+      '<br><em>Everything else is within range.</em>';
+    vb.style.borderLeftColor = 'var(--high)';
+  }
+
+  $('diag').classList.toggle('hide', s.status!=='no_response' && s.status!=='no_adapter');
+  $('raw').textContent = s.raw || '(nothing received)';
+  $('cnt').textContent = s.ok_count === 0
+      ? 'no valid frame received yet'
+      : `${s.ok_count} ok / ${s.fail_count} failed`;
+}
+
+/* ---------- live connection layer ---------------------------------------
+   Standalone: this file can be served by server.py, opened from disk, or
+   installed to a phone's home screen, and pointed at any host running the
+   probe server. Cross-origin reads need the CORS header server.py now sends.
+------------------------------------------------------------------------- */
+const DEFAULT_BASE = 'http://localhost:8090';
+
+function initialBase(){
+  const q = new URLSearchParams(location.search).get('host');
+  if (q) return q;
+  try { const s = localStorage.getItem('npk-host'); if (s) return s; } catch(e){}
+  if (location.protocol === 'http:' || location.protocol === 'https:') return location.origin;
+  return DEFAULT_BASE;
+}
+let BASE = initialBase().replace(/\/+$/, '');
+$('host').value = BASE;
+
+function setBase(v){
+  BASE = (v || DEFAULT_BASE).trim().replace(/\/+$/, '');
+  if (!/^https?:\/\//.test(BASE)) BASE = 'http://' + BASE;
+  $('host').value = BASE;
+  try { localStorage.setItem('npk-host', BASE); } catch(e){}
+  $('host').blur();                       // drop the phone keyboard
+  fails = 0; lastOk = 0;
+  tick(); fetchHistory();
+}
+$('host-apply').addEventListener('click', () => setBase($('host').value));
+$('host').addEventListener('keydown', e => { if (e.key === 'Enter') setBase($('host').value); });
+
+let fails = 0, lastOk = 0;
+
+async function grab(path){
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), 4000);
+  try {
+    const r = await fetch(BASE + path, {signal: c.signal, cache: 'no-store'});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+
+function markOffline(err){
+  fails++;
+  $('dot').className = 'dot bad';
+  $('st').textContent = 'no server';
+  $('msg').textContent = err && err.name === 'AbortError' ? 'timed out' : String(err.message || err);
+  $('offline').classList.add('on');
+  document.body.classList.add('stale');
+  $('retry-msg').textContent = lastOk
+    ? `retrying · last good reading ${new Date(lastOk).toLocaleTimeString()}`
+    : `retrying · ${fails} attempt${fails === 1 ? '' : 's'} to ${BASE}`;
+}
+
+function markOnline(){
+  fails = 0; lastOk = Date.now();
+  $('offline').classList.remove('on');
+  document.body.classList.remove('stale');
+}
+
+async function tick(){
+  try { const s = await grab('/api/reading'); markOnline(); paint(s); }
+  catch(e){ markOffline(e); }
+}
+let RANGE = 300, HIST = [];
+
+let heldRedraw = null;
+function renderCharts(){
+  // Redrawing replaces the SVG and destroys the active crosshair. If someone is
+  // scrubbing, defer until they stop rather than yanking the tooltip away.
+  if (chartHeld()){
+    clearTimeout(heldRedraw);
+    heldRedraw = setTimeout(renderCharts, 800);
+    return;
+  }
+  const now = HIST.length ? HIST[HIST.length-1].t : 0;
+  const pts = RANGE ? HIST.filter(p => p.t >= now - RANGE) : HIST;
+  drawChart($('chart-npk'),  pts, ['n','p','k']);
+  drawChart($('chart-ec'),   pts, ['ec']);
+  drawChart($('chart-temp'), pts, ['temp']);
+
+  const last = HIST.slice(-20).reverse();
+  $('tv').innerHTML =
+    '<tr><th>time</th><th>N</th><th>P</th><th>K</th><th>EC</th><th>&deg;C</th></tr>' +
+    last.map(r => `<tr><td>${new Date(r.t*1000).toLocaleTimeString()}</td>` +
+      ['n','p','k','ec','temp'].map(k => `<td>${r[k] ?? '—'}</td>`).join('') + '</tr>').join('');
+}
+
+async function fetchHistory(){
+  try { const d = await grab('/api/history'); HIST = d.points || []; renderCharts(); }
+  catch(e){}
+}
+
+document.querySelectorAll('[data-range]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-range]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  RANGE = +b.dataset.range;
+  renderCharts();
+}));
+$('tv-toggle').addEventListener('click', () => {
+  const on = $('tableview').classList.toggle('hide');
+  $('tv-toggle').classList.toggle('on', !on);
+});
+
+/* ---------- mobile runtime ---------------------------------------------- */
+
+// Charts size themselves to the container, so a rotate or a keyboard opening
+// needs a redraw. Debounced: iOS fires resize repeatedly during the animation.
+let rzT;
+function onResize(){ clearTimeout(rzT); rzT = setTimeout(renderCharts, 180); }
+addEventListener('resize', onResize);
+addEventListener('orientationchange', onResize);
+
+// Don't poll a server over the network while the phone is in a pocket.
+let timers = [];
+function startPolling(){
+  stopPolling();
+  tick(); fetchHistory();
+  timers = [setInterval(tick, 2000), setInterval(fetchHistory, 3000)];
+}
+function stopPolling(){ timers.forEach(clearInterval); timers = []; }
+document.addEventListener('visibilitychange', () => {
+  document.hidden ? stopPolling() : startPolling();
+});
+
+// Optional: keep the screen lit when the phone is propped up next to the plant.
+let lock = null;
+if ('wakeLock' in navigator){
+  const btn = $('awake');
+  btn.hidden = false;
+  btn.addEventListener('click', async () => {
+    try {
+      if (lock){ await lock.release(); lock = null; btn.classList.remove('on'); return; }
+      lock = await navigator.wakeLock.request('screen');
+      btn.classList.add('on');
+      lock.addEventListener('release', () => { lock = null; btn.classList.remove('on'); });
+    } catch(e){ btn.hidden = true; }   // denied (low battery, no gesture) — drop it
+  });
+  // the OS drops the lock on tab switch; take it back on return
+  document.addEventListener('visibilitychange', async () => {
+    if (!document.hidden && lock === null && $('awake').classList.contains('on')){
+      try { lock = await navigator.wakeLock.request('screen'); } catch(e){}
+    }
+  });
+}
+
+startPolling();
+</script>
+</body>
+</html>
