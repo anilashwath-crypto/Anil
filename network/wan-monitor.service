@@ -1,0 +1,13 @@
+[Unit]
+Description=Dual Wi-Fi WAN load balancer / failover monitor (farm gateway)
+After=network-online.target NetworkManager.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/wan-monitor.sh @IF_A@ @IF_B@ @WEIGHT_A@ @WEIGHT_B@
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

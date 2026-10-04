@@ -138,3 +138,9 @@ the click handler, so wiring them to gateway commands (`POST /zones/:id/valve`
 etc.) is a small change. The dashboard is deliberately read-mostly: per the
 design's offline-first principle, schedules always run locally on the gateway
 even when this page can't reach the farm.
+
+## Gateway connectivity: dual Wi-Fi WAN load balancer
+
+`network/` contains a ready-to-run setup that gives the Pi gateway two Wi-Fi
+internet uplinks (the dual-SIM 4G router + a second SSID) with per-connection
+load balancing and automatic failover — see `network/README.md`.
