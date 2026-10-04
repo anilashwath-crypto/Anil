@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>FOD Guard — Foreign Object Detection</title>
+<title>FOD Guard</title>
 <style>
   :root{
     --bg:#f4f6f8; --panel:#ffffff; --ink:#16212b; --muted:#5b6b7a;
@@ -921,10 +921,18 @@ $("testCamBtn").onclick=async()=>{
   }
 };
 $("deviceSel").onchange=()=>{saveSettingsFromUI();if(stream)startCamera();};
-$("exportBtn").onclick=()=>{
+$("exportBtn").onclick=async()=>{
+  const json=JSON.stringify(S);
+  const name="fodguard-backup-"+new Date().toISOString().slice(0,10)+".json";
+  if(window.claude&&window.claude.use){ // published artifact: saves go through the viewer runtime
+    try{
+      const dl=await window.claude.use("downloads");
+      if(dl){await dl.save({filename:name,data:json});return;}
+    }catch(e){if(e&&e.code==="declined")return;}
+  }
   const a=document.createElement("a");
-  a.href="data:application/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(S));
-  a.download="fodguard-backup-"+new Date().toISOString().slice(0,10)+".json";
+  a.href="data:application/json;charset=utf-8,"+encodeURIComponent(json);
+  a.download=name;
   a.click();
 };
 $("importFile").onchange=e=>{
