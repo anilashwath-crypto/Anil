@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B0D0F">
+<title>shopkeeper NANO — tool access control</title>
+<!-- The mark, inline. Without a declared icon every browser asks the ESP32 for
+     /favicon.ico on every load, takes a 404 and logs a console error on a
+     screen that is supposed to have none. A data URI costs no request and no
+     second file on flash. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><path d='M6 31 L20 6 L34 31 Z' fill='none' stroke='%23FF9933' stroke-width='2.6' stroke-linejoin='round'/><path d='M13.5 31 L20 19 L26.5 31 Z' fill='%23FF5533'/></svg>">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   shopkeeper NANO — operator terminal
+
+   Built as a machine HMI, not a web page. The reference points are the
+   screens already bolted to the equipment in this room: dense, hairline-
+   ruled, monospaced, one accent colour reserved for LIVE and nothing else.
+   Ommi Forge saffron is that accent; everything around it stays graphite so
+   that when a drawer is moving, the only warm thing on the screen is the
+   drawer that is moving.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#0B0D0F; --panel:#121517; --panel2:#171B1E; --sunk:#0E1113;
+  --rule:#22272B; --rule2:#2E353B;
+  --t1:#E6E9EC; --t2:#97A0A8; --t3:#5F686F; --t4:#3E464C;
+  --acc:#FF9933; --acc2:#FF5533; --ember:#C2381C;
+  --ok:#3FB950; --warn:#D29922; --bad:#D24B2E;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  --rail:46px; --foot:30px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);color:var(--t1);
+  font:13px/1.45 var(--sans);-webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;overscroll-behavior:none;
+}
+.mono{font-family:var(--mono)}
+/* every field label on the screen is this: 10px, wide, quiet */
+.lbl{font:500 9.5px/1 var(--mono);letter-spacing:.19em;text-transform:uppercase;
+     color:var(--t3)}
+
+/* ── top rail ────────────────────────────────────────────────────────── */
+.rail{position:fixed;inset:0 0 auto 0;height:var(--rail);z-index:20;
+  display:flex;align-items:center;gap:14px;padding:0 14px;
+  background:linear-gradient(180deg,#15191C,#101315);
+  border-bottom:1px solid var(--rule2)}
+.rail .brand{display:flex;align-items:center;gap:9px;padding-right:14px;
+  border-right:1px solid var(--rule);height:100%}
+.rail svg{width:19px;height:19px;flex:none}
+.rail .nm{font:700 12.5px/1.15 var(--sans);letter-spacing:-.01em}
+.rail .nm i{font-style:normal;color:var(--t3);font-weight:400}
+.rail .sub{font:500 8.5px/1 var(--mono);letter-spacing:.17em;color:var(--acc);
+  text-transform:uppercase;margin-top:3px}
+.idblock{display:flex;flex-direction:column;gap:3px}
+.idblock b{font:600 11px/1 var(--mono);letter-spacing:.06em}
+.grow{flex:1}
+.chips{display:flex;gap:7px;align-items:center}
+.chip{display:flex;align-items:center;gap:6px;height:25px;padding:0 9px;
+  border:1px solid var(--rule2);background:var(--sunk);
+  font:500 9.5px/1 var(--mono);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--t2);white-space:nowrap}
+.led{width:6px;height:6px;border-radius:50%;background:var(--t4);flex:none}
+.chip.on{color:var(--t1)} .chip.on .led{background:var(--ok);
+  box-shadow:0 0 7px rgba(63,185,80,.75)}
+.chip.hot{color:#FFD9A8;border-color:rgba(255,153,51,.4)}
+.chip.hot .led{background:var(--acc);box-shadow:0 0 7px rgba(255,153,51,.8);
+  animation:blink 1.05s steps(2,end) infinite}
+.chip.err{color:#F0A08C;border-color:rgba(210,75,46,.45)}
+.chip.err .led{background:var(--bad);box-shadow:0 0 7px rgba(210,75,46,.7)}
+@keyframes blink{50%{opacity:.32}}
+
+/* ── shell ───────────────────────────────────────────────────────────── */
+.shell{padding:calc(var(--rail) + 12px) 14px calc(var(--foot) + 20px);
+  max-width:1320px;margin:0 auto}
+.cols{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:1040px){.cols{grid-template-columns:minmax(0,1.06fr) minmax(0,1fr)}}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+
+.panel{background:var(--panel);border:1px solid var(--rule);min-width:0}
+.phead{display:flex;align-items:center;gap:10px;height:33px;padding:0 12px;
+  border-bottom:1px solid var(--rule);background:var(--panel2)}
+.phead h2{margin:0;font:600 10px/1 var(--mono);letter-spacing:.19em;
+  text-transform:uppercase;color:var(--t2)}
+.phead .tag{font:500 9.5px/1 var(--mono);letter-spacing:.12em;color:var(--t3)}
+
+/* ── bay ─────────────────────────────────────────────────────────────── */
+.bay .phead h2{color:var(--t1)}
+.bay.live .phead{background:linear-gradient(90deg,rgba(255,153,51,.13),transparent)}
+.bay.live .phead h2{color:var(--acc)}
+.elev{background:var(--sunk);border-bottom:1px solid var(--rule);padding:6px 0 0}
+.elev svg{display:block;width:100%;height:auto}
+.tele{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--rule)}
+.tele div{padding:8px 12px;border-right:1px solid var(--rule);min-width:0}
+.tele div:last-child{border-right:0}
+.tele b{display:block;font:600 15px/1.15 var(--mono);letter-spacing:-.01em;
+  margin-top:5px;white-space:nowrap}
+.tele b.dim{color:var(--t3);font-weight:500}
+.tele b.hot{color:var(--acc)}
+.act{display:flex;gap:1px;background:var(--rule)}
+.act button{flex:1;height:44px;border:0;background:var(--panel2);color:var(--t1);
+  font:600 10.5px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;
+  cursor:pointer;transition:background .12s,color .12s}
+.act button:hover:not(:disabled){background:#1E2429}
+.act button.primary{background:var(--acc);color:#17120A}
+.act button.primary:hover:not(:disabled){background:#FFA84D}
+.act button:disabled{color:var(--t4);cursor:not-allowed;background:var(--panel2)}
+.act button:focus-visible{outline:2px solid var(--acc);outline-offset:-3px}
+
+/* ── tables ──────────────────────────────────────────────────────────── */
+.tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
+.tbl th{text-align:left;padding:7px 12px;background:var(--sunk);
+  font:500 9px/1 var(--mono);letter-spacing:.17em;text-transform:uppercase;
+  color:var(--t3);border-bottom:1px solid var(--rule);white-space:nowrap}
+.tbl td{padding:7px 12px;border-bottom:1px solid var(--rule);color:var(--t2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.k{color:var(--acc);width:44px}
+.tbl td.d{color:var(--t1);white-space:normal;min-width:130px}
+.tbl td.r{text-align:right;color:var(--t3)}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;
+  letter-spacing:.13em;text-transform:uppercase}
+.st::before{content:"";width:5px;height:5px;background:currentColor;flex:none}
+.st.in{color:var(--t3)} .st.out{color:var(--acc)}
+.scroll{max-height:246px;overflow:auto;overscroll-behavior:contain}
+/* The register is a fixed list out of config.TOOLS, and its own header counts
+   the rows. At 246px the eighth tool sat below the fold of a panel captioned
+   "8 items", so the cap is raised to clear the register the machine ships with
+   and the scroll is left as the overflow path, not the normal case. */
+.scroll.reg{max-height:420px}
+.scroll::-webkit-scrollbar{width:9px}
+.scroll::-webkit-scrollbar-thumb{background:var(--rule2)}
+
+/* ── ledger ──────────────────────────────────────────────────────────── */
+/* 74px, not 62: "15m 25s" measures 64px in this face and every single row in
+   the ledger was being ellipsised to "15m 2...". An audit log whose timestamps
+   are truncated is not an audit log. */
+.led-row{display:grid;grid-template-columns:8px 74px 104px 1fr;gap:0;
+  border-bottom:1px solid var(--rule);align-items:stretch}
+.led-row:last-child{border-bottom:0}
+.led-row i{background:var(--t4)}
+.led-row.e-open i{background:var(--acc)} .led-row.e-unlock i{background:var(--ok)}
+.led-row.e-rej i{background:var(--bad)}  .led-row.e-cal i{background:var(--warn)}
+.led-row span{padding:6.5px 10px;font:400 10.5px/1.3 var(--mono);color:var(--t3);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.led-row .w{color:var(--t1);letter-spacing:.09em}
+.led-row.e-rej .w{color:var(--bad)}
+.led-row.e-open .w{color:var(--acc)}
+/* Entries carried over from an earlier power-on. Their age cannot be stated
+   against this boot's clock, so the row says so instead of guessing. */
+.led-row.pre span{color:var(--t4)}
+.led-row.pre .w{color:var(--t3)}
+.empty{padding:20px;text-align:center;color:var(--t4);font:400 10.5px/1 var(--mono);
+  letter-spacing:.14em;text-transform:uppercase}
+
+/* ── calibration ─────────────────────────────────────────────────────── */
+.cal{padding:12px;display:none;flex-direction:column;gap:12px}
+.cal.show{display:flex}
+.crow{display:grid;grid-template-columns:104px 1fr 74px;gap:11px;align-items:center}
+.crow input{width:100%;accent-color:var(--acc);height:3px}
+.crow output{text-align:right;font:600 11px/1 var(--mono);color:var(--acc)}
+.finder{border:1px solid var(--rule2);background:var(--sunk);padding:11px 12px;
+  display:flex;flex-direction:column;gap:9px}
+.finder .hdr{display:flex;align-items:center;gap:9px}
+.finder .hdr b{font:600 10.5px/1 var(--mono);letter-spacing:.14em;
+  text-transform:uppercase}
+.finder .live{font:600 20px/1 var(--mono);color:var(--acc);
+  font-variant-numeric:tabular-nums}
+.finder .btns{display:flex;gap:1px;background:var(--rule)}
+.finder .btns button{flex:1;height:36px;border:0;background:var(--panel2);
+  color:var(--t1);font:600 9.5px/1 var(--mono);letter-spacing:.15em;
+  text-transform:uppercase;cursor:pointer}
+.finder .btns button:hover{background:#1E2429}
+.finder .btns button.stop{background:var(--bad);color:#fff;
+  animation:blink 1s steps(2,end) infinite}
+.finder .got{display:flex;gap:14px;font:400 10px/1 var(--mono);color:var(--t3);
+  letter-spacing:.1em;text-transform:uppercase}
+.finder .got b{color:var(--ok);font-weight:600}
+.warnbox{border-left:2px solid var(--warn);padding:8px 11px;background:var(--sunk);
+  font:400 10.5px/1.5 var(--mono);color:var(--t2)}
+.warnbox b{color:var(--warn);font-weight:600}
+
+/* ── lock screen ─────────────────────────────────────────────────────── */
+.auth{position:fixed;inset:0;z-index:40;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;padding:16px}
+.auth.hide{display:none}
+.authbox{width:100%;max-width:376px;border:1px solid var(--rule2);
+  background:var(--panel);animation:in .3s cubic-bezier(.2,.7,.3,1) both}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.authhead{padding:16px 18px;border-bottom:1px solid var(--rule);
+  background:var(--panel2)}
+.authhead h1{margin:0 0 3px;font:700 15px/1.2 var(--sans);letter-spacing:-.015em}
+.authhead p{margin:0;font:400 10.5px/1.5 var(--mono);color:var(--t3)}
+.authid{display:flex;gap:0;border-bottom:1px solid var(--rule)}
+.authid div{flex:1;padding:9px 12px;border-right:1px solid var(--rule)}
+.authid div:last-child{border-right:0}
+.authid b{display:block;font:600 11px/1 var(--mono);margin-top:5px}
+.pinbox{padding:20px 18px 14px;display:flex;flex-direction:column;
+  align-items:center;gap:14px}
+.segs{display:flex;gap:7px}
+.segs i{width:38px;height:44px;border:1px solid var(--rule2);background:var(--sunk);
+  display:flex;align-items:center;justify-content:center;
+  font:600 19px/1 var(--mono);color:var(--acc);transition:.13s}
+.segs i.f{border-color:var(--acc);box-shadow:inset 0 0 12px rgba(255,153,51,.14)}
+.segs.bad i{border-color:var(--bad);color:var(--bad);animation:nudge .3s}
+@keyframes nudge{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.msg{font:500 9.5px/1 var(--mono);letter-spacing:.15em;text-transform:uppercase;
+  color:var(--t4);height:11px}
+.msg.bad{color:var(--bad)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);
+  border-top:1px solid var(--rule)}
+.keys button{height:56px;border:0;background:var(--panel2);color:var(--t1);
+  font:500 17px/1 var(--mono);cursor:pointer;transition:.1s}
+.keys button:active{background:var(--acc);color:#17120A}
+.keys button.a{font-size:9.5px;letter-spacing:.16em;color:var(--t3)}
+.keys button:focus-visible{outline:2px solid var(--acc);outline-offset:-3px}
+
+/* ── bottom rail ─────────────────────────────────────────────────────── */
+.foot{position:fixed;inset:auto 0 0 0;height:var(--foot);z-index:20;
+  display:flex;align-items:center;gap:0;padding:0 14px;background:#0E1113;
+  border-top:1px solid var(--rule2);overflow-x:auto}
+.foot span{font:400 9.5px/1 var(--mono);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--t3);padding-right:16px;margin-right:16px;
+  border-right:1px solid var(--rule);white-space:nowrap}
+.foot span:last-child{border-right:0}
+/* The LABEL is uppercased, never the VALUE. CSS text-transform:uppercase maps
+   U+00B5 MICRO SIGN onto U+039C GREEK CAPITAL MU, which paints as a Latin M -
+   so "650-2350 us" was being displayed as "650-2350 MS". A servo pulse band
+   reported in milliseconds instead of microseconds is wrong by a factor of a
+   thousand, and it is the kind of wrong an engineer reads straight past. Units
+   are case-sensitive; the footer is not allowed to recase them. */
+.foot b{color:var(--t2);font-weight:500;text-transform:none}
+.hide{display:none!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:520px){
+  .tele{grid-template-columns:repeat(2,1fr)}
+  .tele div:nth-child(2){border-right:0}
+  .rail .sub,.authid div:nth-child(3){display:none}
+}
+</style></head>
+<body>
+
+<!-- ── authentication ──────────────────────────────────────────────────── -->
+<div class="auth" id="auth">
+  <div class="authbox">
+    <div class="authhead">
+      <h1>Tool access control</h1>
+      <p>Authorisation required. Every movement is recorded.</p>
+    </div>
+    <div class="authid">
+      <div><div class="lbl">Unit</div><b id="a-unit">&mdash;</b></div>
+      <div><div class="lbl">Firmware</div><b id="a-fw">&mdash;</b></div>
+      <div><div class="lbl">Link</div><b id="a-net">&mdash;</b></div>
+    </div>
+    <div class="pinbox">
+      <div class="lbl">Operator PIN</div>
+      <div class="segs" id="segs"><i></i><i></i><i></i><i></i></div>
+      <div class="msg" id="msg"></div>
+    </div>
+    <div class="keys" id="keys"></div>
+  </div>
+</div>
+
+<!-- ── terminal ────────────────────────────────────────────────────────── -->
+<header class="rail">
+  <div class="brand">
+    <svg viewBox="0 0 40 40" aria-hidden="true">
+      <path d="M6 31 L20 6 L34 31 Z" fill="none" stroke="#FF9933" stroke-width="2.6"
+            stroke-linejoin="round"/>
+      <path d="M13.5 31 L20 19 L26.5 31 Z" fill="#FF5533"/>
+    </svg>
+    <div>
+      <div class="nm">shopkeeper <i>NANO</i></div>
+      <div class="sub">Ommi Forge</div>
+    </div>
+  </div>
+  <div class="idblock">
+    <div class="lbl">Unit</div><b id="t-unit">&mdash;</b>
+  </div>
+  <div class="idblock">
+    <div class="lbl">Site</div><b id="t-site">&mdash;</b>
+  </div>
+  <div class="grow"></div>
+  <div class="chips">
+    <div class="chip" id="c-net"><i class="led"></i><span>link</span></div>
+    <div class="chip" id="c-drv"><i class="led"></i><span>drive</span></div>
+    <div class="chip" id="c-ses"><i class="led"></i><span id="c-ses-t">session</span></div>
+  </div>
+</header>
+
+<div class="shell">
+  <div class="cols">
+    <div class="stack" id="bays"></div>
+    <div class="stack">
+
+      <div class="panel">
+        <div class="phead"><h2>Tool register</h2><div class="grow"></div>
+          <span class="tag" id="reg-n">&mdash;</span></div>
+        <div class="scroll reg"><table class="tbl" id="reg"></table></div>
+      </div>
+
+      <div class="panel">
+        <div class="phead"><h2>Event ledger</h2><div class="grow"></div>
+          <span class="tag" id="led-n">&mdash;</span></div>
+        <div class="scroll" id="ledger"></div>
+      </div>
+
+      <div class="panel">
+        <div class="phead"><h2>Service</h2><div class="grow"></div></div>
+        <div class="act" style="background:var(--rule)">
+          <button id="b-cal">Calibrate</button>
+          <button id="b-clr">Clear ledger</button>
+          <button id="b-lock">End session</button>
+        </div>
+        <div class="cal" id="cal"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer class="foot">
+  <span>FW <b id="f-fw">&mdash;</b></span>
+  <span>Drive <b>SG90 &times;2</b></span>
+  <span>Gear <b id="f-gear">&mdash;</b></span>
+  <span>Case <b id="f-case">&mdash;</b></span>
+  <span>Stroke <b id="f-stroke">&mdash;</b></span>
+  <span>Pulse <b id="f-pulse">&mdash;</b></span>
+  <span>Heap <b id="f-mem">&mdash;</b></span>
+  <span>Uptime <b id="f-up">&mdash;</b></span>
+</footer>
+
+<script>
+"use strict";
+var S = null, entry = "", calOpen = false, calBuilt = false;
+
+function $(id){ return document.getElementById(id); }
+function api(p, o){ return fetch(p, o).then(function(r){
+  return r.json().then(function(j){ j._c = r.status; return j; }); }); }
+function post(p, b){ return api(p, {method:"POST",
+  headers:{"Content-Type":"application/json"}, body:JSON.stringify(b||{})}); }
+function esc(s){ return String(s).replace(/[&<>]/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
+function dur(s){ s = Math.max(0, s|0);
+  var h = (s/3600)|0, m = ((s%3600)/60)|0, x = s%60;
+  return h ? h+"h "+(m<10?"0":"")+m+"m" : m ? m+"m "+(x<10?"0":"")+x+"s" : x+"s"; }
+function clock(s){ s = Math.max(0, s|0);
+  var m = (s/60)|0, x = s%60; return m+":"+(x<10?"0":"")+x; }
+
+/* ── keypad ──────────────────────────────────────────────────────────── */
+["1","2","3","4","5","6","7","8","9","CLR","0","ENT"].forEach(function(k){
+  var b = document.createElement("button");
+  b.textContent = k;
+  if (k === "CLR" || k === "ENT") b.className = "a";
+  b.onclick = function(){ key(k); };
+  $("keys").appendChild(b);
+});
+function segs(bad){
+  var e = $("segs");
+  e.className = "segs" + (bad ? " bad" : "");
+  [].forEach.call(e.children, function(i, n){
+    i.textContent = n < entry.length ? "•" : "";
+    i.className = n === entry.length && !bad ? "f" : "";
+  });
+}
+function key(k){
+  if (k === "CLR"){ entry = ""; $("msg").className = "msg"; $("msg").textContent = ""; segs(false); return; }
+  if (k === "ENT"){ submit(); return; }
+  if (entry.length < 4){ entry += k; segs(false); }
+  if (entry.length === 4) setTimeout(submit, 120);
+}
+function submit(){
+  if (!entry) return;
+  var p = entry;
+  post("/api/unlock", {pin:p}).then(function(r){
+    entry = "";
+    var m = $("msg");
+    if (r.ok){ m.className = "msg"; m.textContent = "granted"; segs(false); refresh(); }
+    else {
+      m.className = "msg bad"; m.textContent = "denied — logged";
+      segs(true); setTimeout(function(){ segs(false); }, 460);
+    }
+  });
+}
+document.addEventListener("keydown", function(e){
+  if (!S || !S.locked) return;
+  if (e.key >= "0" && e.key <= "9") key(e.key);
+  else if (e.key === "Enter") key("ENT");
+  else if (e.key === "Backspace"){ e.preventDefault(); key("CLR"); }
+});
+
+/* ── cabinet geometry ────────────────────────────────────────────────────
+   The section below is a SECTION, not an illustration, so every figure in it
+   has to be the CAD's. This block is the only place a millimetre is written
+   down; each line names the symbol it was taken from in cad/nano.py, and
+   everything else on the screen is derived from here. If nano.py's P dict
+   moves, this block is the one thing to re-sync.
+
+   Verified against cad/nano.py P dict, 2026-08-09.                        */
+var GEO = {
+  /* MEASURED AGAINST cad/nano.py, 2026-08-09. Five of these had drifted and
+     the section drew a machine that does not exist: ch 58 (really 66), deck_z
+     29.5 (39.5), dr_h 20 (18), dr_floor 4.0 (1.8), pin_y 12.3 (17.6). With the
+     deck 10 mm low and the case 8 mm short, the drawer rendered outside its own
+     outline and the pinion hung off the bottom edge. checkGeo() below only
+     compares travel, which agreed the whole time - it was never going to catch
+     a wrong case height. */
+  cd:       74.0,   /* P["cd"]       case depth - the axis the drawer runs on */
+  ch:       66.0,   /* P["ch"]       case height                              */
+  deck_z:   39.5,   /* P["deck_z"]   deck underside                           */
+  deck_t:    2.5,   /* P["deck_t"]                                            */
+  dr_d:     59.0,   /* P["dr_d"]     drawer depth                             */
+  dr_h:     18.0,   /* P["dr_h"]                                              */
+  dr_floor:  1.8,   /* P["dr_floor"] the rack teeth are cut UP into this      */
+  module:   1.25,   /* P["module"]                                            */
+  teeth:      10,   /* P["teeth"]                                             */
+  add_f:     0.8,   /* P["add_f"]    stub addendum, 0.8m not 1.0m             */
+  pin_y:    17.6    /* PIN_Y         pinion axis, measured back from the mouth */
+};
+/* the same derivations nano.py does, in the same order */
+GEO.deck    = GEO.deck_z + GEO.deck_t;              /* 42.0  deck top face    */
+GEO.dr_und  = GEO.deck + 0.2;                       /* 42.2  DR_UND           */
+GEO.r_p     = GEO.module * GEO.teeth / 2;           /*  6.25 R_P              */
+GEO.add     = GEO.add_f * GEO.module;               /*  1.0  ADD              */
+GEO.r_tip   = GEO.r_p + GEO.add;                    /*  7.25 R_TIP            */
+GEO.pitch_z = GEO.dr_und + GEO.add;                 /* 43.2  PITCH_Z          */
+GEO.axis_z  = GEO.pitch_z - GEO.r_p;                /* 36.95 AXIS_Z           */
+GEO.travel  = Math.PI * GEO.r_p;                    /* 19.63 TRAVEL, full     */
+/* The drawer's front face is FLUSH with the case mouth at rest - nano.py's
+   drawer() sets y0=0.0, "front face flush with the case". The 15 mm the case
+   has over the drawer is the electronics bay BEHIND it, not a gap in front. */
+GEO.bay     = GEO.cd - GEO.dr_d;                    /* 15.0  electronics bay  */
+
+/* servo.py keeps its OWN copy of pi * R_P to turn a pulse span into millimetres.
+   That means the pinion is written down in three places - nano.py, servo.py and
+   here - and a tooth count that changes in one of them is exactly how this page
+   came to be drawing a cabinet that no longer existed. The firmware reports
+   both travel_mm and the degrees it represents, so the full 180 deg travel it
+   believes in can be recovered and compared with this block. Console only: it
+   is a note for whoever next changes the gear, not an operator-facing alarm. */
+var geoChecked = false;
+function checkGeo(d){
+  if (geoChecked || !d || !d.deg) return;
+  geoChecked = true;
+  var fwFull = d.travel_mm / (d.deg / 180);
+  if (Math.abs(fwFull - GEO.travel) > 0.1)
+    console.warn("shopkeeper: geometry drift. Firmware implies " +
+      fwFull.toFixed(2) + " mm of travel at 180°; this page's GEO says " +
+      GEO.travel.toFixed(2) + " mm. Re-sync GEO/servo.py with cad/nano.py.");
+}
+
+/* ── bay elevation ───────────────────────────────────────────────────────
+   A section through the cabinet with the drawer where it actually is, and a
+   dimension line under it carrying the live figure. This is the difference
+   between a status word and a machine: an engineer reads the drawing, checks
+   the number against it, and believes both - which only holds if the drawing
+   is true. ONE scale, used on both axes; the case at its real 74 x 58; the
+   drawer at the mouth where it actually sits; the deck it rides on and the
+   pinion lying under it with its axis horizontal, which is the whole of the
+   current drive.                                                          */
+function elevation(d){
+  var K = 2.15;                       /* px per mm - THE SAME IN BOTH AXES */
+  var x0 = 26, y0 = 20;               /* case rear-top corner, in SVG units */
+  var tr = d.travel_mm;               /* commanded stroke, live from the servo */
+  var cw = GEO.cd * K, chh = GEO.ch * K;
+  var floorY = y0 + chh;
+  /* height above the case floor -> SVG y */
+  function Z(h){ return floorY - h * K; }
+  /* depth back from the mouth -> SVG x. The mouth is on the RIGHT. */
+  function X(y){ return x0 + (GEO.cd - y) * K; }
+
+  var off  = (d.pos || 0) * tr * K;
+  var drX  = X(GEO.dr_d), drW = GEO.dr_d * K;
+  var drY  = Z(GEO.dr_und + GEO.dr_h), drH = GEO.dr_h * K;
+  var deckY = Z(GEO.deck), deckH = GEO.deck_t * K;
+  var pinX = X(GEO.pin_y), pinY = Z(GEO.axis_z);
+  var dimY = floorY + 9, W = 360, H = 172;
+
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Section through '+
+      esc(d.name)+': '+GEO.cd+' by '+GEO.ch+' mm case, drawer '+
+      ((d.pos||0)*tr).toFixed(1)+' mm out of '+tr.toFixed(1)+' mm">'+
+    '<defs><linearGradient id="g'+d.id+'" x1="0" y1="0" x2="0" y2="1">'+
+      '<stop offset="0" stop-color="#FFB259"/><stop offset="1" stop-color="#D97F14"/>'+
+    '</linearGradient></defs>'+
+    /* mech bay floor datum, run out past the case so it reads as a datum */
+    '<line x1="'+(x0-8)+'" y1="'+floorY+'" x2="'+(x0+cw+66)+'" y2="'+floorY+'" '+
+      'stroke="#2E353B" stroke-width="1"/>'+
+    /* THE MECH BAY IS NOT EMPTY. It read as a large void under the deck,
+       which is neither true nor useful - a section that leaves out half of
+       what it cuts through is a diagram, not a section. Both of these are
+       drawn at their measured size in the same scale as everything else. */
+    /* SG90, upright, shaft vertical, 12.2 deep x 22.7 tall on a 6 mm pedestal */
+    '<rect x="'+X(GEO.pin_y+6.1).toFixed(2)+'" y="'+Z(6.0+22.7).toFixed(2)+
+      '" width="'+(12.2*K).toFixed(2)+'" height="'+(22.7*K).toFixed(2)+
+      '" fill="#171D2E" stroke="#39445E" stroke-width="0.9" rx="1"/>'+
+    '<text x="'+X(GEO.pin_y).toFixed(2)+'" y="'+Z(14).toFixed(2)+
+      '" fill="#4E5A78" font-family="ui-monospace,Menlo,monospace" '+
+      'font-size="7" text-anchor="middle">SG90</text>'+
+    /* the electronics bay: the 15 mm the case has behind the drawer */
+    '<rect x="'+(x0+1).toFixed(2)+'" y="'+Z(27.0).toFixed(2)+
+      '" width="'+((GEO.cd-GEO.dr_d-1)*K).toFixed(2)+'" height="'+(27.0*K-1).toFixed(2)+
+      '" fill="#14181B" stroke="#2E353B" stroke-width="0.8" rx="1"/>'+
+    '<text x="'+(x0+3).toFixed(2)+'" y="'+Z(11).toFixed(2)+
+      '" fill="#4A545B" font-family="ui-monospace,Menlo,monospace" '+
+      'font-size="7">ESP</text>'+
+    /* deck: the drawer rides on this, and it is slotted for the pinion */
+    '<rect x="'+x0+'" y="'+deckY.toFixed(2)+'" width="'+cw.toFixed(2)+
+      '" height="'+deckH.toFixed(2)+'" fill="#1B2024" stroke="#2E353B" '+
+      'stroke-width="0.8"/>'+
+    /* the lying pinion. Axis HORIZONTAL, under the drawer, rolling on teeth
+       cut into the drawer's own floor - so it is drawn where it meshes, and
+       it does not travel with the drawer. */
+    '<g transform="translate('+pinX.toFixed(2)+','+pinY.toFixed(2)+')">'+
+      '<circle r="'+(GEO.r_tip*K).toFixed(2)+'" fill="#14181B" stroke="#59636B" '+
+        'stroke-width="1"/>'+
+      '<circle r="'+(GEO.r_p*K).toFixed(2)+'" fill="none" stroke="#3E464C" '+
+        'stroke-width="0.8" stroke-dasharray="3 3"/>'+
+      '<line x1="-5" y1="0" x2="5" y2="0" stroke="#5F686F" stroke-width="0.8"/>'+
+      '<line x1="0" y1="-5" x2="0" y2="5" stroke="#5F686F" stroke-width="0.8"/>'+
+    '</g>'+
+    /* drawer, flush with the mouth at rest and sliding out toward it */
+    '<g transform="translate('+off.toFixed(2)+',0)">'+
+      '<rect x="'+drX.toFixed(2)+'" y="'+drY.toFixed(2)+'" width="'+drW.toFixed(2)+
+        '" height="'+drH.toFixed(2)+'" rx="1" fill="url(#g'+d.id+')"/>'+
+      /* the floor that carries the teeth - the part that replaced the rack */
+      '<rect x="'+drX.toFixed(2)+'" y="'+(drY+drH-GEO.dr_floor*K).toFixed(2)+
+        '" width="'+drW.toFixed(2)+'" height="'+(GEO.dr_floor*K).toFixed(2)+
+        '" fill="rgba(20,18,10,.30)"/>'+
+      /* moulded finger pull, on the front face */
+      '<rect x="'+(drX+drW-11).toFixed(2)+'" y="'+(drY+drH/2-2.5).toFixed(2)+
+        '" width="7" height="5" fill="rgba(20,18,10,.45)"/>'+
+    '</g>'+
+    /* Case outline last, so it rules over everything inside it. Drawn as an
+       open path rather than a rect with a patch over the mouth: the mouth is a
+       real gap in the front wall, and masking it meant the patch also painted
+       over the drawer's front face, which is flush with that wall at rest. */
+    '<path d="M'+x0+' '+y0+'H'+(x0+cw).toFixed(2)+
+      'M'+x0+' '+y0+'V'+floorY.toFixed(2)+
+      'M'+x0+' '+floorY.toFixed(2)+'H'+(x0+cw).toFixed(2)+
+      'M'+(x0+cw).toFixed(2)+' '+y0+'V'+(drY-1).toFixed(2)+
+      'M'+(x0+cw).toFixed(2)+' '+(drY+drH+1).toFixed(2)+'V'+floorY.toFixed(2)+
+      '" fill="none" stroke="#59636B" stroke-width="1.6"/>'+
+    /* dimension line: the stroke the firmware actually commands */
+    '<g stroke="#5F686F" stroke-width="1" fill="none">'+
+      '<line x1="'+(x0+cw).toFixed(2)+'" y1="'+dimY+'" x2="'+(x0+cw).toFixed(2)+'" y2="'+(dimY+12)+'"/>'+
+      '<line x1="'+(x0+cw+tr*K).toFixed(2)+'" y1="'+dimY+'" x2="'+(x0+cw+tr*K).toFixed(2)+'" y2="'+(dimY+12)+'"/>'+
+      '<line x1="'+(x0+cw).toFixed(2)+'" y1="'+(dimY+6)+'" x2="'+(x0+cw+tr*K).toFixed(2)+'" y2="'+(dimY+6)+'"/>'+
+    '</g>'+
+    '<text x="'+(x0+cw+tr*K+7).toFixed(2)+'" y="'+(dimY+9.5)+'" fill="#97A0A8" '+
+      'font-family="ui-monospace,Menlo,monospace" font-size="9.5">'+
+      tr.toFixed(1)+' mm</text>'+
+    '<text x="'+x0+'" y="'+(y0-7)+'" fill="#5F686F" '+
+      'font-family="ui-monospace,Menlo,monospace" font-size="9" '+
+      'letter-spacing="1.6">SECTION A-A &#183; '+GEO.cd+' &#215; '+GEO.ch+' mm</text>'+
+    '</svg>';
+}
+
+function bay(d, i){
+  var moving = d.busy, mm = (d.pos || 0) * d.travel_mm;
+  return '<section class="panel bay'+(moving?" live":"")+'" data-id="'+d.id+'">'+
+    '<div class="phead"><h2>Bay 0'+(i+1)+' &nbsp;&middot;&nbsp; '+esc(d.name)+'</h2>'+
+      '<div class="grow"></div><span class="tag">GPIO '+d.pin+'</span></div>'+
+    '<div class="elev">'+elevation(d)+'</div>'+
+    '<div class="tele">'+
+      '<div><div class="lbl">Position</div><b class="'+(moving?"hot":(d.open?"":"dim"))+'">'+
+        mm.toFixed(1)+'<span style="font-size:10px;color:var(--t3)"> mm</span></b></div>'+
+      '<div><div class="lbl">State</div><b class="'+(moving?"hot":(d.open?"":"dim"))+'">'+
+        (moving ? "MOVING" : d.open ? "OPEN" : "SECURED")+'</b></div>'+
+      '<div><div class="lbl">Cycles</div><b class="dim">'+d.cycles+'</b></div>'+
+      '<div><div class="lbl">Pulse</div><b class="dim">'+d.us+
+        '<span style="font-size:10px;color:var(--t3)"> µs</span></b></div>'+
+    '</div>'+
+    '<div class="act">'+
+      '<button class="'+(d.open?"":"primary")+'" data-act="1"'+(moving?" disabled":"")+'>'+
+        (moving ? "Working" : d.open ? "Secure bay" : "Release bay")+'</button>'+
+    '</div></section>';
+}
+
+/* ── render ──────────────────────────────────────────────────────────── */
+function render(){
+  $("auth").classList.toggle("hide", !S.locked);
+  $("a-unit").textContent = S.unit; $("t-unit").textContent = S.unit;
+  $("a-fw").textContent = S.fw;     $("f-fw").textContent = S.fw;
+  $("a-net").textContent = (S.net||"").split(":")[0] || "—";
+  $("t-site").textContent = S.site;
+
+  var moving = S.drawers.some(function(d){ return d.busy; });
+  var powered = S.drawers.some(function(d){ return d.powered; });
+  $("c-net").className = "chip on";
+  $("c-net").lastElementChild.textContent = (S.net||"link").replace(":", " ");
+  $("c-drv").className = "chip" + (powered ? " hot" : "");
+  $("c-drv").lastElementChild.textContent = powered ? "drive live" : "drive idle";
+  if (S.bypass) {
+    /* Impossible to miss on purpose: showing this cabinet with the lock off
+       would undo the entire argument it is built on. */
+    $("c-ses").className = "chip err";
+    $("c-ses-t").textContent = "pin bypassed — bench mode";
+  } else {
+    $("c-ses").className = "chip" + (S.locked ? " err" : " on");
+    $("c-ses-t").textContent = S.locked ? "locked" : "session " + clock(S.left);
+  }
+
+  if (S.locked) return;
+
+  $("bays").innerHTML = S.drawers.map(bay).join("");
+  [].forEach.call(document.querySelectorAll(".bay"), function(sec){
+    var id = +sec.dataset.id, d = S.drawers[id];
+    var b = sec.querySelector("[data-act]");
+    if (!b || b.disabled) return;
+    b.onclick = function(){
+      b.disabled = true; b.textContent = "Working";
+      b.classList.remove("primary"); sec.classList.add("live");
+      post("/api/drawer", {id:id, open:!d.open}).then(function(){
+        setTimeout(refresh, 200);
+      });
+    };
+  });
+
+  /* tool register — one table across both bays, because a shop asks "where is
+     the 12H7 reamer", not "what is in bay two" */
+  var rows = "", n = 0;
+  S.drawers.forEach(function(d, i){
+    d.tools.forEach(function(t){
+      n++;
+      rows += '<tr><td class="k">'+esc(t.slot)+'</td>'+
+        '<td class="d">'+esc(t.tool)+'</td>'+
+        '<td>'+esc(t.code)+'</td>'+
+        '<td>BAY 0'+(i+1)+'</td>'+
+        '<td class="r"><span class="st '+(d.open?"out":"in")+'">'+
+          (d.open ? "accessible" : "secured")+'</span></td></tr>';
+    });
+  });
+  $("reg").innerHTML = '<thead><tr><th>Slot</th><th>Designation</th><th>Code</th>'+
+    '<th>Location</th><th style="text-align:right">Status</th></tr></thead><tbody>'+
+    rows + '</tbody>';
+  $("reg-n").textContent = n + " items";
+
+  var cls = {"OPENED":"e-open","CLOSED":"e-close","UNLOCKED":"e-unlock",
+             "LOCKED":"e-close","PIN REJECTED":"e-rej","CALIBRATED":"e-cal",
+             "BOOT":"e-close"};
+  $("ledger").innerHTML = S.log.length ? S.log.map(function(e){
+    var d = (e.drawer === null || e.drawer === undefined) ? ""
+          : "BAY 0" + (e.drawer + 1);
+    /* store.py stamps every entry with ticks-since-boot and the log SURVIVES a
+       power cut, so entries carried over from an earlier power-on carry an
+       older boot's clock. Subtracting those from this boot's uptime goes
+       negative, and dur() used to clamp it to "0s" - which dated half the
+       ledger to "just now". The cabinet has no RTC, so the honest answer for
+       those rows is that their age is not knowable, not a fabricated zero. */
+    var pre = e.up > S.uptime + 2;
+    return '<div class="led-row '+(cls[e.what]||"")+(pre?" pre":"")+'"><i></i>'+
+      '<span'+(pre?' title="logged before this power-on"':'')+'>'+
+        (pre ? "pre-boot" : dur(S.uptime - e.up))+'</span>'+
+      '<span class="w">'+esc(e.what)+'</span>'+
+      '<span>'+esc(d + (e.detail ? (d ? " · " : "") + e.detail : "") || "—")+'</span>'+
+      '</div>';
+  }).join("") : '<div class="empty">no events</div>';
+  $("led-n").textContent = S.log.length + " events";
+
+  renderFinders();
+  var d0 = S.drawers[0];
+  checkGeo(d0);
+  /* derived, never typed: if nano.py's pinion changes, GEO changes, and the
+     footer follows. It used to read "m1.25 x 16T" as literal text. */
+  $("f-gear").textContent = "m" + GEO.module + " × " + GEO.teeth + "T";
+  $("f-case").textContent = GEO.cd + " × " + GEO.ch + " mm";
+  $("f-stroke").textContent = d0.travel_mm + " mm / " + d0.deg + "°";
+  $("f-pulse").textContent = d0.closed_us + "–" + d0.open_us + " µs";
+  $("f-mem").textContent = ((S.mem/1024)|0) + " KiB";
+  $("f-up").textContent = dur(S.uptime);
+  buildCal();
+}
+
+/* ── calibration ─────────────────────────────────────────────────────── */
+$("b-cal").onclick = function(){
+  calOpen = !calOpen;
+  $("cal").classList.toggle("show", calOpen);
+  $("b-cal").style.color = calOpen ? "var(--acc)" : "";
+  buildCal();
+};
+function buildCal(){
+  if (!calOpen || calBuilt || !S || S.locked) return;
+  calBuilt = true;
+  $("cal").innerHTML = S.drawers.map(function(d, i){
+    return ["closed_us","open_us"].map(function(k){
+      return '<div class="crow"><div class="lbl">Bay 0'+(i+1)+' '+
+        (k === "closed_us" ? "secured" : "released")+'</div>'+
+        '<input type="range" min="600" max="2400" step="10" value="'+d[k]+
+        '" data-id="'+d.id+'" data-k="'+k+'"><output>'+d[k]+' µs</output></div>';
+    }).join("");
+  }).join("") +
+  '<div id="finders"></div>' +
+  '<div class="warnbox">Dragging jogs the drive live. Endpoints commit to flash '+
+  'on release. <b>Stop before the drawer strains:</b> the mechanism has '+
+  GEO.travel.toFixed(1)+' mm of travel at a full 180&deg; (&pi; &times; the '+
+  GEO.r_p.toFixed(1)+' mm pitch radius), and most SG90 units stall against '+
+  'their own end stop before reaching it.</div>';
+  /* The sliders run 600..2400, not the servo's full 500..2500. Every input
+     event writes to flash, so the extremes of this control were reachable by
+     one stray drag - and 500..2500 is 180 degrees, which drives an SG90 into
+     its own end stop and holds it there at stall current. That setting came
+     back four separate times during the build and had to be deleted each
+     time. The range no longer contains a value that can cook the servo. */
+  [].forEach.call($("cal").querySelectorAll("input"), function(r){
+    var out = r.nextElementSibling;
+    r.oninput = function(){
+      out.textContent = r.value + " µs";
+      post("/api/cal", {id:+r.dataset.id, jog_us:+r.value});
+    };
+    r.onchange = function(){
+      var b = {id:+r.dataset.id}; b[r.dataset.k] = +r.value;
+      post("/api/cal", b).then(function(){ calBuilt = false; setTimeout(refresh, 180); });
+    };
+  });
+}
+/* ── limit finder ────────────────────────────────────────────────────────
+   The ESP32 cannot sense a stall — an SG90 is open loop, no encoder, no
+   shunt — so the machine creeps outward 25us at a time and the operator
+   supplies the single bit the hardware cannot: "that is as far as it goes".
+   Everything after that is automatic: 60us backoff, both ends stored,
+   endpoints applied, travel recomputed, written to flash.               */
+function renderFinders(){
+  var host = $("finders");
+  if (!host) return;
+  host.innerHTML = S.drawers.map(function(d, i){
+    var got = (S.limits || {})[String(d.id)] || {};
+    var btns = d.walking
+      ? '<button class="stop" data-stop="'+d.id+'">Stop — that is the limit</button>'
+      : '<button data-find="'+d.id+'" data-up="0">Find low end</button>' +
+        '<button data-find="'+d.id+'" data-up="1">Find high end</button>';
+    return '<div class="finder">'+
+      '<div class="hdr"><b>Bay 0'+(i+1)+' limits</b><div class="grow"></div>'+
+        (d.walking ? '<span class="live">'+d.us+' µs</span>' : '')+'</div>'+
+      '<div class="btns">'+btns+'</div>'+
+      '<div class="got"><span>low <b>'+(got.low||"—")+'</b></span>'+
+        '<span>high <b>'+(got.high||"—")+'</b></span>'+
+        '<span>in use <b>'+d.closed_us+'–'+d.open_us+'</b></span>'+
+        '<span>travel <b>'+d.travel_mm+' mm</b></span></div></div>';
+  }).join("");
+  [].forEach.call(host.querySelectorAll("[data-find]"), function(b){
+    b.onclick = function(){
+      post("/api/autocal", {id:+b.dataset.find, up:b.dataset.up === "1"})
+        .then(function(){ setTimeout(refresh, 150); });
+    };
+  });
+  [].forEach.call(host.querySelectorAll("[data-stop]"), function(b){
+    b.onclick = function(){
+      post("/api/autocal/mark", {id:+b.dataset.stop})
+        .then(function(){ calBuilt = false; setTimeout(refresh, 200); });
+    };
+  });
+}
+
+$("b-lock").onclick = function(){ post("/api/lock").then(refresh); };
+$("b-clr").onclick = function(){ api("/api/log", {method:"DELETE"}).then(refresh); };
+
+/* ── poll ────────────────────────────────────────────────────────────── */
+var timer = null;
+function schedule(){
+  clearTimeout(timer);
+  /* A drawer mid-stroke wants a fast tick so the elevation tracks it; an idle
+     cabinet does not, and the ESP32 has a servo loop to run. */
+  var moving = S && S.drawers && S.drawers.some(function(d){ return d.busy; });
+  var walking = S && S.drawers && S.drawers.some(function(d){ return d.walking; });
+  timer = setTimeout(refresh, (moving || walking) ? 220
+                              : (S && S.locked ? 2000 : 1000));
+}
+function refresh(){
+  return api("/api/state").then(function(j){
+    S = j; render();
+  }).catch(function(){
+    $("c-net").className = "chip err";
+    $("c-net").lastElementChild.textContent = "no link";
+  }).then(schedule);
+}
+refresh();
+</script>
+</body></html>

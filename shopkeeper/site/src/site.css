@@ -1,0 +1,210 @@
+/* shopkeeper NANO — DOCUMENT OF RECORD
+   The grid is the operator terminal's own .led-row promoted to page scale:
+   the marketing page and the HMI are provably the same chassis, and it costs
+   one declaration. No border-radius, no shadow, no gradient as decoration —
+   depth comes from rules and ground, the way it does on a drawing. */
+:root{
+  --ink:#0B0D0F; --panel:#121517; --panel2:#171B1E; --sunk:#0E1113;
+  --rule:#22272B; --rule2:#2E353B;
+  --t1:#E6E9EC; --t2:#97A0A8; --t3:#808A92; --t4:#5F686F; --t5:#3E464C;
+  --acc:#FF9933; --ok:#3FB950; --warn:#D29922; --bad-t:#E56A4A; --ember:#C2381C;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,"Roboto Mono","DejaVu Sans Mono",Consolas,monospace;
+  --prose:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,sans-serif;
+  --head:44px; --foot:32px;
+}
+*{box-sizing:border-box;border-radius:0!important}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}
+  *{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--ink);color:var(--t1);
+  font:16px/1.62 var(--prose);-webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums}
+b,strong{font-weight:650;color:var(--t1)}
+.lbl{font:500 9.5px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--t3)}
+.grow{flex:1}
+
+/* ── running head ─────────────────────────────────────────────────────── */
+.head{position:fixed;inset:0 0 auto 0;height:var(--head);z-index:30;display:flex;
+  align-items:center;gap:14px;padding:0 20px;background:#101315;
+  border-bottom:1px solid var(--rule2)}
+.mark{width:19px;height:19px;flex:none}
+.hn{font:700 11px/1 var(--mono);letter-spacing:.14em}
+.hv{font:500 9.5px/1 var(--mono);letter-spacing:.16em;color:var(--acc)}
+.hd2{font:400 9.5px/1 var(--mono);letter-spacing:.14em;color:var(--t4)}
+.led{width:6px;height:6px;background:var(--ok);flex:none;
+  box-shadow:0 0 7px rgba(63,185,80,.7)}
+@media(max-width:760px){.hd2{display:none}}
+
+/* ── the ledger grid ──────────────────────────────────────────────────── */
+.doc{padding-top:var(--head);padding-bottom:calc(var(--foot) + 40px)}
+.entry{display:grid;
+  grid-template-columns:2px 84px 132px minmax(0,1fr) 108px;
+  column-gap:20px;max-width:1240px;margin-inline:auto;padding:64px 24px 64px;
+  border-bottom:1px solid var(--rule);align-items:start}
+.entry:last-child{border-bottom:0}
+.rail{align-self:stretch;position:relative}
+.rail i{position:sticky;top:calc(var(--head) + 12px);display:block;width:2px;
+  height:52px;background:var(--t4);transition:background .18s linear}
+.entry.on .rail i{background:var(--acc)}
+.entry.warn .rail i{background:var(--warn)}
+.stamp{display:flex;flex-direction:column;gap:6px;position:sticky;
+  top:calc(var(--head) + 12px)}
+.stamp b{font:600 26px/1 var(--mono);letter-spacing:-.02em;color:var(--t2)}
+.entry.on .stamp b{color:var(--t1)}
+.stamp .of{font:400 9.5px/1 var(--mono);color:var(--t5);letter-spacing:.1em}
+.verb{font:500 9.5px/1.5 var(--mono);letter-spacing:.2em;text-transform:uppercase;
+  color:var(--t3);padding-top:5px;position:sticky;top:calc(var(--head) + 12px)}
+.detail{min-width:0}
+.note{font:400 10.5px/1.6 var(--mono);color:var(--t4);letter-spacing:.04em;
+  padding-top:6px}
+
+.entry-title{margin:0 0 20px;font:650 clamp(27px,3.2vw,42px)/1.14 var(--prose);
+  letter-spacing:-.021em;text-wrap:balance;max-width:19ch}
+.detail p{margin:0 0 15px;max-width:640px;color:var(--t2)}
+.detail p.lede{font-size:18px;color:var(--t1);max-width:660px}
+.detail p.prov{font:400 12.5px/1.62 var(--mono);color:var(--t4);
+  border-left:1px solid var(--rule2);padding-left:14px;max-width:600px}
+.src{font:400 .62em/1 var(--mono);color:var(--t3);vertical-align:.42em;
+  letter-spacing:0}
+ul.lim{margin:0;padding:0;list-style:none;max-width:660px}
+ul.lim li{padding:13px 0;border-bottom:1px solid var(--rule);color:var(--t2)}
+ul.lim li:last-child{border-bottom:0}
+
+/* ── tables ───────────────────────────────────────────────────────────── */
+.tw{overflow-x:auto;border:1px solid var(--rule);margin-top:22px}
+table.spec{width:100%;border-collapse:collapse;font-family:var(--mono);
+  font-size:12.5px;min-width:480px}
+table.spec th{text-align:left;padding:9px 14px;background:var(--sunk);
+  font:500 9px/1 var(--mono);letter-spacing:.17em;text-transform:uppercase;
+  color:var(--t3);border-bottom:1px solid var(--rule2);white-space:nowrap}
+table.spec td{padding:10px 14px;border-bottom:1px solid var(--rule);
+  color:var(--t2);vertical-align:baseline}
+table.spec tr:last-child td{border-bottom:0}
+table.spec tr:hover td{background:var(--panel2)}
+td.k{color:var(--t1);white-space:nowrap}
+td.v{color:var(--t1);font-weight:600;white-space:nowrap}
+td.c{color:var(--t4);font-size:11.5px}
+td.was{color:var(--bad-t);white-space:nowrap;text-decoration:line-through;
+  text-decoration-color:var(--rule2)}
+td.now{color:var(--ok);font-weight:600;white-space:nowrap}
+
+/* ── stages ───────────────────────────────────────────────────────────── */
+.stage{margin-top:26px;border:1px solid var(--rule2);background:var(--sunk);
+  min-height:200px;position:relative}
+.stage-elev{padding:16px 12px;display:flex;justify-content:center}
+.elev{width:100%;max-width:520px;height:auto}
+.elev .dim{font:400 11px/1 var(--mono);fill:var(--t3)}
+.elev .stamp-svg{font:400 9px/1 var(--mono);fill:var(--t4);letter-spacing:1.6px}
+.stage-ph{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center}
+.stage .v3d{--gold:var(--acc);--accent:var(--acc);--bg-secondary:var(--panel);
+  --bg-tertiary:var(--panel2);--border:var(--rule2);--text-primary:var(--t1);
+  --text-secondary:var(--t2);--text-tertiary:var(--t4)}
+
+/* ── foot ─────────────────────────────────────────────────────────────── */
+.foot{position:fixed;inset:auto 0 0 0;height:var(--foot);z-index:30;display:flex;
+  align-items:center;padding:0 20px;background:#0E1113;
+  border-top:1px solid var(--rule2);overflow-x:auto;gap:0}
+.foot span{font:400 9.5px/1 var(--mono);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--t4);padding-right:16px;margin-right:16px;
+  border-right:1px solid var(--rule);white-space:nowrap}
+.foot span:last-child{border-right:0;color:var(--t3)}
+.foot b{color:var(--t2);font-weight:500}
+
+/* ── responsive: order NEVER changes, the rail is grid-placed ─────────── */
+@media(max-width:1180px){
+  .entry{grid-template-columns:2px 84px 132px minmax(0,1fr);padding-inline:20px}
+  .note{grid-column:4;font-size:10px;padding-top:16px;color:var(--t5)}
+}
+@media(max-width:900px){
+  .entry{grid-template-columns:2px 96px minmax(0,1fr);column-gap:16px}
+  .verb{grid-column:3;padding-top:0;margin-bottom:10px;position:static}
+  .detail{grid-column:3}
+  .note{grid-column:3}
+}
+@media(max-width:640px){
+  .entry{grid-template-columns:1fr;border-left:2px solid var(--t4);
+    padding:40px 18px;column-gap:0}
+  .entry.on{border-left-color:var(--acc)}
+  .entry.warn{border-left-color:var(--warn)}
+  .rail{display:none}
+  .stamp{flex-direction:row;align-items:baseline;gap:9px;position:static}
+  .stamp b{font-size:17px}
+  .verb{margin:6px 0 12px}
+  .entry-title{max-width:none;margin-bottom:16px}
+  .detail p{font-size:15px}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOBILE — paged. Below 760px each entry becomes a card the width of the
+   screen and scroll-snaps, so the document reads as a deck under a thumb
+   instead of an endless column. Snap is PROXIMITY, not mandatory: three of
+   these entries are taller than a phone screen and mandatory snap fights
+   the user the whole way down one of those.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+  :root { --head: 40px; --foot: 28px; }
+
+  html, body { overscroll-behavior-y: none; }
+  .doc {
+    scroll-snap-type: y proximity;
+    scroll-padding-top: var(--head);
+  }
+  .entry {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    min-height: calc(100svh - var(--head) - var(--foot));
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 28px 18px 34px;
+    border-bottom: 0;
+    border-left: 2px solid var(--t4);
+    position: relative;
+  }
+  .entry.on   { border-left-color: var(--acc); }
+  .entry.warn { border-left-color: var(--warn); }
+  /* a hairline between pages so the deck still reads as one document */
+  .entry::after {
+    content: ""; position: absolute; left: 18px; right: 18px; bottom: 0;
+    height: 1px; background: var(--rule);
+  }
+  .entry:last-child::after { display: none; }
+
+  .stamp { flex-direction: row; align-items: baseline; gap: 10px; position: static; }
+  .stamp b { font-size: 15px; }
+  .verb { position: static; margin: 8px 0 14px; font-size: 9px; }
+  .entry-title { font-size: clamp(25px, 7.4vw, 34px); line-height: 1.1;
+                 max-width: none; margin-bottom: 14px; }
+  .detail p { font-size: 15.5px; max-width: none; }
+  .detail p.lede { font-size: 17px; }
+  .note { font-size: 10px; padding-top: 18px; color: var(--t5); }
+
+  /* the model gets real estate on a phone - it is the reason to be here */
+  .stage { margin-top: 18px; min-height: 260px; }
+  .stage-elev { padding: 10px 4px; }
+
+  /* tables: let them scroll, and make the scroll obvious */
+  .tw { margin-top: 16px;
+        -webkit-overflow-scrolling: touch;
+        background:
+          linear-gradient(90deg, var(--panel) 30%, transparent) left / 22px 100% no-repeat,
+          linear-gradient(270deg, var(--panel) 30%, transparent) right / 22px 100% no-repeat; }
+  table.spec { font-size: 11.5px; min-width: 420px; }
+  table.spec td, table.spec th { padding: 8px 11px; }
+
+  ul.lim li { padding: 11px 0; font-size: 15px; }
+
+  /* page position, bottom-left, replaces the desktop entry readout */
+  .pager { position: fixed; left: 0; bottom: var(--foot); z-index: 25;
+           display: flex; gap: 4px; padding: 7px 18px;
+           pointer-events: none; }
+  .pager i { width: 5px; height: 5px; background: var(--t5);
+             transition: background .15s linear, transform .15s linear; }
+  .pager i.on { background: var(--acc); transform: scale(1.5); }
+  .foot span:nth-child(n+4) { display: none; }
+}
+@media (min-width: 761px) { .pager { display: none; } }
+
+/* HiDPI: keep hairlines truly hairline instead of letting them fatten */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .entry::after, .foot, .head { border-width: 0.5px; }
+}

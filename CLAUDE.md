@@ -29,6 +29,10 @@ with LoRa sensors, GSM/SMS fallback, and solar-backed controls.
   supervise many machines. Same conventions (trilingual `L` dict, theme tokens, no
   build step). Docs in `fod/README.md`, hardware in `fod/BOM.md`.
   Branch: `claude/foreign-object-detection-cctv-d3tjm7`.
+- `shopkeeper/` — vendored source of https://github.com/Piyushmishra29/shopkeeper
+  (MIT), a motorised PIN-controlled tool crib: ESP32-S3 MicroPython firmware +
+  browser UI, parametric Python CAD, bench tools. Meshes/renders omitted; see
+  `shopkeeper/VENDORED.md`. Branch: `claude/epic-gauss-aimxa1`.
 - `BOM.md` / `Smart_Farm_DIY_BOM.xlsx` — DIY electronics bill of materials (~₹1.67 lakh + 10%)
 - Working branch: `claude/farm-monitoring-dashboard-iorey1`
 - Published artifact: https://claude.ai/code/artifact/9d7580d8-d8bd-4c5d-b23d-61c88dc8a27d

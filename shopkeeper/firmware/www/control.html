@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B0D0F">
+<title>shopkeeper NANO — control</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><path d='M6 31 L20 6 L34 31 Z' fill='none' stroke='%23FF9933' stroke-width='4'/></svg>">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   shopkeeper NANO — control page
+
+   The operator terminal (index.html) is the pitch: PIN, tool register,
+   access log. This page is the bench: drive the rack directly, jog it to
+   any point of the stroke, tune the stroke timing and calibrate the ends,
+   all live against the board. Same tokens as the terminal so it reads as
+   the same machine.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#0B0D0F; --panel:#121517; --panel2:#171B1E; --sunk:#0E1113;
+  --rule:#22272B; --rule2:#2E353B;
+  --t1:#E6E9EC; --t2:#97A0A8; --t3:#5F686F; --t4:#3E464C;
+  --acc:#FF9933; --ok:#3FB950; --warn:#D29922; --bad:#D24B2E;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  --rail:46px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--t1);font:13px/1.45 var(--sans);
+  -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;overscroll-behavior:none}
+.lbl{font:500 9.5px/1 var(--mono);letter-spacing:.19em;text-transform:uppercase;color:var(--t3)}
+
+.rail{position:fixed;inset:0 0 auto 0;height:var(--rail);z-index:20;display:flex;
+  align-items:center;gap:12px;padding:0 14px;background:linear-gradient(180deg,#15191C,#101315);
+  border-bottom:1px solid var(--rule2)}
+.rail .brand{display:flex;align-items:center;gap:9px;padding-right:12px;border-right:1px solid var(--rule);height:100%}
+.rail svg{width:19px;height:19px;flex:none}
+.rail .nm{font:700 12.5px/1.15 var(--sans)} .rail .nm i{font-style:normal;color:var(--t3);font-weight:400}
+.rail .sub{font:500 8.5px/1 var(--mono);letter-spacing:.17em;color:var(--acc);text-transform:uppercase;margin-top:3px}
+.grow{flex:1}
+.chips{display:flex;gap:6px;align-items:center}
+.chip{display:flex;align-items:center;gap:6px;height:25px;padding:0 9px;border:1px solid var(--rule2);
+  background:var(--sunk);font:500 9.5px/1 var(--mono);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--t2);white-space:nowrap}
+.led{width:6px;height:6px;border-radius:50%;background:var(--t4);flex:none}
+.chip.on{color:var(--t1)} .chip.on .led{background:var(--ok);box-shadow:0 0 7px rgba(63,185,80,.75)}
+.chip.hot{color:#FFD9A8;border-color:rgba(255,153,51,.4)}
+.chip.hot .led{background:var(--acc);box-shadow:0 0 7px rgba(255,153,51,.8);animation:blink 1.05s steps(2,end) infinite}
+.chip.err{color:#F0A08C;border-color:rgba(210,75,46,.45)} .chip.err .led{background:var(--bad)}
+.chip a{color:inherit;text-decoration:none}
+@keyframes blink{50%{opacity:.32}}
+@media(max-width:560px){.rail{gap:8px;padding:0 10px} .rail .brand{padding-right:8px}
+  .rail .nm i{display:none} .chip{padding:0 6px;letter-spacing:.08em} #cLink{display:none}}
+
+.shell{padding:calc(var(--rail) + 12px) 14px 28px;max-width:1100px;margin:0 auto}
+.cols{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:900px){.cols{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+
+.panel{background:var(--panel);border:1px solid var(--rule);min-width:0}
+.phead{display:flex;align-items:center;gap:10px;height:33px;padding:0 12px;border-bottom:1px solid var(--rule);background:var(--panel2)}
+.phead h2{margin:0;font:600 10px/1 var(--mono);letter-spacing:.19em;text-transform:uppercase;color:var(--t2)}
+.phead .tag{font:500 9.5px/1 var(--mono);letter-spacing:.12em;color:var(--t3);margin-left:auto}
+.bay.live .phead{background:linear-gradient(90deg,rgba(255,153,51,.13),transparent)}
+.bay.live .phead h2{color:var(--acc)}
+
+/* elevation: the column, the rack under it, the pinion */
+.elev{background:var(--sunk);border-bottom:1px solid var(--rule);padding:8px 12px 4px}
+.elev svg{display:block;width:100%;height:auto}
+.tele{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--rule)}
+.tele div{padding:8px 10px;border-right:1px solid var(--rule);min-width:0}
+.tele div:last-child{border-right:0}
+.tele b{display:block;font:600 15px/1.15 var(--mono);margin-top:5px;white-space:nowrap}
+.tele b.dim{color:var(--t3);font-weight:500} .tele b.hot{color:var(--acc)}
+@media(max-width:560px){.tele{grid-template-columns:repeat(3,1fr)} .tele div:nth-child(3){border-right:0}
+  .tele div:nth-child(n+4){border-top:1px solid var(--rule)}}
+
+.act{display:flex;gap:1px;background:var(--rule)}
+.act button{flex:1;height:46px;border:0;background:var(--panel2);color:var(--t1);
+  font:600 10.5px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;cursor:pointer;
+  transition:background .12s,color .12s}
+.act button:hover:not(:disabled){background:#1E2429}
+.act button.primary{background:var(--acc);color:#17120A}
+.act button.primary:hover:not(:disabled){background:#FFA84D}
+.act button:disabled{color:var(--t4);cursor:not-allowed;background:var(--panel2)}
+.act button:focus-visible{outline:2px solid var(--acc);outline-offset:-3px}
+
+/* jog slider */
+.jog{padding:10px 12px 12px;border-top:1px solid var(--rule)}
+.jog .row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.jog output{font:600 12px/1 var(--mono);color:var(--acc);min-width:64px;text-align:right}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:30px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--rule2)}
+input[type=range]::-moz-range-track{height:4px;background:var(--rule2)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-11px;
+  border-radius:50%;background:var(--panel2);border:2px solid var(--acc)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--panel2);border:2px solid var(--acc)}
+input[type=range]:disabled::-webkit-slider-thumb{border-color:var(--t4)}
+.hint{font:11px/1.4 var(--sans);color:var(--t3);margin-top:6px}
+
+/* forms */
+.form{padding:10px 12px 12px;display:grid;gap:10px}
+.field{display:grid;gap:5px}
+.field .row{display:flex;align-items:center;gap:10px}
+.num{width:84px;height:32px;border:1px solid var(--rule2);background:var(--sunk);color:var(--t1);
+  font:600 13px/1 var(--mono);padding:0 8px;text-align:right}
+.num:focus{outline:1px solid var(--acc);border-color:var(--acc)}
+.unit{font:500 9.5px/1 var(--mono);color:var(--t3);letter-spacing:.1em;width:22px}
+.btnrow{display:flex;gap:1px;background:var(--rule);margin-top:2px}
+.btnrow button{flex:1;height:38px;border:0;background:var(--panel2);color:var(--t1);
+  font:600 10px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
+.btnrow button.primary{background:var(--acc);color:#17120A}
+.btnrow button:disabled{color:var(--t4);cursor:not-allowed}
+.calrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.saved{font:500 9.5px/1 var(--mono);letter-spacing:.13em;color:var(--ok);text-transform:uppercase;min-height:10px}
+
+/* toggle */
+.tog{display:flex;align-items:center;justify-content:space-between;padding:12px}
+.tog p{margin:0;font-size:12px;color:var(--t2);max-width:70%}
+.sw{width:52px;height:28px;border:1px solid var(--rule2);background:var(--sunk);position:relative;cursor:pointer;border-radius:14px}
+.sw i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--t3);transition:left .15s,background .15s}
+.sw.on{border-color:rgba(255,153,51,.5)} .sw.on i{left:27px;background:var(--acc)}
+
+.tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
+.tbl td{padding:6px 12px;border-bottom:1px solid var(--rule);color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.k{color:var(--acc);width:48px} .tbl td.w{color:var(--t1)}
+.tbl td.d{color:var(--t3);max-width:160px}
+
+/* PIN gate */
+.gate{position:fixed;inset:0;z-index:30;background:rgba(11,13,15,.94);display:none;align-items:center;justify-content:center;padding:20px}
+.gate.show{display:flex}
+.gate .panel{width:100%;max-width:340px}
+.gate input{width:100%;height:44px;border:1px solid var(--rule2);background:var(--sunk);color:var(--t1);
+  font:600 20px/1 var(--mono);letter-spacing:.5em;text-align:center}
+.gate .bad{color:var(--bad);font:11px/1.4 var(--sans);min-height:16px;margin-top:6px}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:40;background:var(--panel2);
+  border:1px solid var(--rule2);padding:8px 14px;font:500 10px/1 var(--mono);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--t1);opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.toast.err{border-color:rgba(210,75,46,.6);color:#F0A08C}
+</style></head>
+<body>
+
+<header class="rail">
+  <div class="brand">
+    <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M6 31 L20 6 L34 31 Z" fill="none" stroke="#FF9933" stroke-width="4"/></svg>
+    <div><div class="nm">shopkeeper <i>NANO</i></div><div class="sub">control</div></div>
+  </div>
+  <div class="grow"></div>
+  <div class="chips">
+    <div class="chip" id="cLink"><span class="led"></span><span id="cLinkT">LINK</span></div>
+    <div class="chip" id="cLock"><span class="led"></span><span id="cLockT">LOCK</span></div>
+    <div class="chip"><a href="/">TERMINAL</a></div>
+  </div>
+</header>
+
+<main class="shell">
+  <div class="cols">
+    <div class="stack" id="bays"></div>
+    <div class="stack">
+
+      <section class="panel">
+        <div class="phead"><h2>Stroke timing</h2><span class="tag" id="timTag">live</span></div>
+        <div class="form">
+          <div class="field">
+            <span class="lbl">Travel — full open or close</span>
+            <div class="row">
+              <input type="range" id="travelR" min="150" max="5000" step="10">
+              <input type="number" class="num" id="travelN" min="150" max="5000" step="10">
+              <span class="unit">ms</span>
+            </div>
+          </div>
+          <div class="field">
+            <span class="lbl">Detach — signal cut after settle</span>
+            <div class="row">
+              <input type="range" id="detachR" min="0" max="3000" step="10">
+              <input type="number" class="num" id="detachN" min="0" max="3000" step="10">
+              <span class="unit">ms</span>
+            </div>
+          </div>
+          <div class="hint">Applied to the next move and saved on the board. Shorter detach quietens the servo sooner; too short and a loaded stroke stops a hair early.</div>
+          <div class="btnrow">
+            <button id="timReset">Revert</button>
+            <button class="primary" id="timApply">Apply</button>
+          </div>
+          <div class="saved" id="timSaved"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="phead"><h2>Calibration</h2><span class="tag">pulse width, µs</span></div>
+        <div class="form" id="cal"></div>
+      </section>
+
+      <section class="panel">
+        <div class="phead"><h2>Scripted demo</h2><span class="tag" id="demoTag"></span></div>
+        <div class="tog">
+          <p>The attract performance opens and secures every bay on its own. Switch it off while you are driving from here.</p>
+          <div class="sw" id="demoSw" role="switch" aria-checked="false" tabindex="0"><i></i></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="phead"><h2>Log</h2><span class="tag" id="logTag"></span></div>
+        <table class="tbl"><tbody id="log"></tbody></table>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<div class="gate" id="gate">
+  <div class="panel">
+    <div class="phead"><h2>Operator PIN</h2></div>
+    <div class="form">
+      <input id="pin" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="····">
+      <div class="bad" id="pinBad"></div>
+      <div class="btnrow"><button class="primary" id="pinGo">Unlock</button></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const el = (t, c, h) => { const e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; };
+
+// ── transport ─────────────────────────────────────────────────────────────
+async function api(path, method = "GET", body) {
+  const o = { method, headers: {} };
+  if (body !== undefined) { o.headers["Content-Type"] = "application/json"; o.body = JSON.stringify(body); }
+  const r = await fetch(path, o);
+  let j = {}; try { j = await r.json(); } catch (e) {}
+  if (r.status === 403 && j.error === "locked") { showGate(); }
+  return { ok: r.ok, status: r.status, ...j };
+}
+let toastT;
+function toast(msg, bad) {
+  const t = $("#toast"); t.textContent = msg; t.className = "toast show" + (bad ? " err" : "");
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 1600);
+}
+
+// ── state ─────────────────────────────────────────────────────────────────
+let S = null;                 // last /api/state
+let jogging = {};             // drawer id -> true while the slider is held
+let timDirty = false;
+const bayDom = {};            // drawer id -> nodes
+
+// ── bay card ──────────────────────────────────────────────────────────────
+function elevSvg() {
+  // Side elevation of the new build: a tall column standing on a base rail,
+  // the rack sliding along the rail, the pinion turning beneath it. The rack
+  // translates by pos; the pinion rotates by the same stroke fraction.
+  return `<svg viewBox="0 0 380 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <defs><pattern id="teeth" width="8" height="10" patternUnits="userSpaceOnUse">
+      <path d="M0 10 L2 4 L6 4 L8 10" fill="none" stroke="#5F686F" stroke-width="1.4"/></pattern></defs>
+    <rect x="20" y="96" width="350" height="10" fill="#171B1E" stroke="#2E353B"/>
+    <rect x="30" y="14" width="46" height="82" fill="#121517" stroke="#3E464C"/>
+    <rect x="34" y="18" width="38" height="8" fill="#0E1113" stroke="#2E353B"/>
+    <g class="rack"><rect x="100" y="84" width="150" height="12" fill="#0E1113" stroke="#5F686F"/>
+      <rect x="100" y="76" width="150" height="8" fill="url(#teeth)"/>
+      <rect x="100" y="84" width="150" height="12" fill="none" stroke="#FF9933" stroke-width="1.2" class="rackHi" opacity="0"/></g>
+    <g class="pinion" transform="translate(236 100)"><circle r="12" fill="#1E2429" stroke="#FF9933" stroke-width="2"/>
+      <g stroke="#FF9933" stroke-width="2"><line x1="-10" y1="0" x2="10" y2="0"/><line x1="0" y1="-10" x2="0" y2="10"/>
+      <line x1="-7" y1="-7" x2="7" y2="7"/><line x1="7" y1="-7" x2="-7" y2="7"/></g><circle r="3" fill="#FF9933"/></g>
+    <rect x="222" y="60" width="52" height="30" rx="2" fill="#1B3A8A" stroke="#4B8BBE" opacity=".9"/>
+    <text x="248" y="79" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="8" fill="#BFD6F5">SG90</text>
+    <text x="20" y="10" font-family="ui-monospace,Menlo,monospace" font-size="8" letter-spacing="1.5" fill="#5F686F">COLUMN</text>
+    <text x="175" y="66" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="8" letter-spacing="1.5" fill="#5F686F" class="mmT">0.0 MM</text>
+  </svg>`;
+}
+
+function buildBay(d) {
+  const card = el("section", "panel bay");
+  card.innerHTML = `
+    <div class="phead"><h2>${d.name}</h2><span class="tag">GPIO ${d.pin}</span><span class="tag st">SHUT</span></div>
+    <div class="elev">${elevSvg()}</div>
+    <div class="tele">
+      <div><span class="lbl">Position</span><b class="pos">0%</b></div>
+      <div><span class="lbl">Pulse</span><b class="us">—</b></div>
+      <div><span class="lbl">Stroke</span><b class="mm">—</b></div>
+      <div><span class="lbl">Cycles</span><b class="cyc">0</b></div>
+      <div><span class="lbl">Servo</span><b class="pwr dim">IDLE</b></div>
+    </div>
+    <div class="act"><button class="close">Close</button><button class="primary open">Open</button></div>
+    <div class="jog">
+      <span class="lbl">Jog — hold the rack anywhere on the stroke</span>
+      <div class="row"><input type="range" class="jogR" min="0" max="1000" step="1" value="0"><output class="jogO">0%</output></div>
+    </div>`;
+  const n = {
+    card, st: $(".st", card), pos: $(".pos", card), us: $(".us", card), mm: $(".mm", card),
+    cyc: $(".cyc", card), pwr: $(".pwr", card), open: $(".open", card), close: $(".close", card),
+    jogR: $(".jogR", card), jogO: $(".jogO", card), rack: $(".rack", card), rackHi: $(".rackHi", card),
+    pinion: $(".pinion", card), mmT: $(".mmT", card),
+  };
+  n.open.onclick = () => move(d.id, true);
+  n.close.onclick = () => move(d.id, false);
+  let last = 0, pend = null;
+  const send = () => {
+    pend = null; last = Date.now();
+    const dd = S && S.drawers.find(x => x.id === d.id); if (!dd) return;
+    const f = n.jogR.value / 1000;
+    const us = Math.round(dd.closed_us + (dd.open_us - dd.closed_us) * f);
+    api("/api/cal", "POST", { id: d.id, jog_us: us });
+  };
+  const onInput = () => {
+    jogging[d.id] = true;
+    n.jogO.textContent = (n.jogR.value / 10).toFixed(0) + "%";
+    paintPos(n, n.jogR.value / 1000, S && S.drawers.find(x => x.id === d.id));
+    const dt = Date.now() - last;
+    if (dt >= 90) send(); else if (!pend) pend = setTimeout(send, 90 - dt);
+  };
+  const onRelease = () => { setTimeout(() => { jogging[d.id] = false; }, 400); };
+  n.jogR.addEventListener("input", onInput);
+  n.jogR.addEventListener("change", onRelease);
+  n.jogR.addEventListener("pointerup", onRelease);
+  n.jogR.addEventListener("touchend", onRelease);
+  return n;
+}
+
+function paintPos(n, f, d) {
+  const span = d ? Math.abs(d.open_us - d.closed_us) : 1700;
+  const mm = d ? d.travel_mm * f : 0;
+  // open = the rack runs out from the column, to the right; the pinion sits
+  // under it for the whole stroke and turns R·θ for the same fraction
+  n.rack.setAttribute("transform", `translate(${(110 * f).toFixed(1)} 0)`);
+  const deg = (span / 2000) * 180 * f;
+  n.pinion.setAttribute("transform", `translate(236 100) rotate(${deg.toFixed(1)})`);
+  n.mmT.textContent = mm.toFixed(1) + " MM";
+  n.pos.textContent = Math.round(f * 100) + "%";
+}
+
+async function move(id, open) {
+  const r = await api("/api/drawer", "POST", { id, open });
+  if (!r.ok) toast(r.error === "moving" ? "still moving" : "refused: " + (r.error || r.status), true);
+  else poll(true);
+}
+
+function renderBays() {
+  const host = $("#bays");
+  for (const d of S.drawers) {
+    let n = bayDom[d.id];
+    if (!n) { n = bayDom[d.id] = buildBay(d); host.appendChild(n.card); }
+    const live = d.busy;
+    n.card.classList.toggle("live", live);
+    n.st.textContent = d.walking ? "SEARCHING" : live ? (d.open ? "SECURING" : "OPENING") : d.open ? "OPEN" : "SHUT";
+    n.us.textContent = d.us + " µs";
+    n.mm.textContent = d.travel_mm.toFixed(1) + " mm";
+    n.cyc.textContent = d.cycles;
+    n.pwr.textContent = d.powered ? "POWERED" : "IDLE";
+    n.pwr.className = d.powered ? "pwr hot" : "pwr dim";
+    n.pos.className = live ? "pos hot" : "pos";
+    n.rackHi.setAttribute("opacity", live ? "1" : "0");
+    n.open.disabled = live || S.locked;
+    n.close.disabled = live || S.locked;
+    n.jogR.disabled = live || S.locked;
+    if (!jogging[d.id]) {
+      paintPos(n, d.pos, d);
+      n.jogR.value = Math.round(d.pos * 1000);
+      n.jogO.textContent = Math.round(d.pos * 100) + "%";
+    }
+  }
+}
+
+// ── stroke timing ─────────────────────────────────────────────────────────
+const tR = $("#travelR"), tN = $("#travelN"), dR = $("#detachR"), dN = $("#detachN");
+function link(a, b) { a.addEventListener("input", () => { b.value = a.value; timDirty = true; $("#timSaved").textContent = ""; }); }
+link(tR, tN); link(tN, tR); link(dR, dN); link(dN, dR);
+function fillTiming(t) { tR.value = tN.value = t.TRAVEL_MS; dR.value = dN.value = t.DETACH_AFTER_MS; }
+$("#timReset").onclick = () => { if (S) { fillTiming(S.timing); timDirty = false; $("#timSaved").textContent = ""; } };
+$("#timApply").onclick = async () => {
+  const r = await api("/api/timing", "POST", { travel_ms: +tN.value, detach_ms: +dN.value });
+  if (r.ok) { timDirty = false; fillTiming(r.timing); $("#timSaved").textContent = "saved · travel " + r.timing.TRAVEL_MS + " ms · detach " + r.timing.DETACH_AFTER_MS + " ms"; toast("timing applied"); }
+  else toast("timing refused", true);
+};
+
+// ── calibration ───────────────────────────────────────────────────────────
+const calDom = {};
+function renderCal() {
+  const host = $("#cal");
+  for (const d of S.drawers) {
+    let c = calDom[d.id];
+    if (!c) {
+      const w = el("div", "field");
+      w.innerHTML = `<span class="lbl">${d.name}</span>
+        <div class="calrow">
+          <div class="row"><span class="unit" style="width:46px">SHUT</span><input type="number" class="num cl" min="400" max="2600" step="5"></div>
+          <div class="row"><span class="unit" style="width:46px">OPEN</span><input type="number" class="num op" min="400" max="2600" step="5"></div>
+        </div>
+        <div class="btnrow"><button class="test">Test shut</button><button class="test2">Test open</button><button class="primary save">Save</button></div>
+        <div class="saved"></div>`;
+      c = calDom[d.id] = { w, cl: $(".cl", w), op: $(".op", w), save: $(".save", w), saved: $(".saved", w), dirty: false };
+      c.cl.oninput = c.op.oninput = () => { c.dirty = true; c.saved.textContent = ""; };
+      $(".test", w).onclick = () => api("/api/cal", "POST", { id: d.id, jog_us: +c.cl.value });
+      $(".test2", w).onclick = () => api("/api/cal", "POST", { id: d.id, jog_us: +c.op.value });
+      c.save.onclick = async () => {
+        const r = await api("/api/cal", "POST", { id: d.id, closed_us: +c.cl.value, open_us: +c.op.value });
+        if (r.ok) { c.dirty = false; c.saved.textContent = "saved · " + r.closed_us + ".." + r.open_us + " µs · " + r.travel_mm + " mm"; toast("calibration saved"); }
+        else toast("calibration refused", true);
+      };
+      host.appendChild(w);
+    }
+    if (!c.dirty) { c.cl.value = d.closed_us; c.op.value = d.open_us; }
+    c.save.disabled = S.locked || d.busy;
+  }
+}
+
+// ── demo switch ───────────────────────────────────────────────────────────
+const sw = $("#demoSw");
+async function setDemo(on) {
+  const r = await api("/api/demo", "POST", { on });
+  if (r.ok) { sw.classList.toggle("on", r.demo_on); sw.setAttribute("aria-checked", r.demo_on); toast(r.demo_on ? "demo on" : "demo off"); }
+}
+sw.onclick = () => setDemo(!sw.classList.contains("on"));
+sw.onkeydown = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); sw.click(); } };
+
+// ── log ───────────────────────────────────────────────────────────────────
+function renderLog() {
+  const tb = $("#log"); tb.innerHTML = "";
+  for (const e of S.log.slice(0, 12)) {
+    const tr = el("tr");
+    tr.innerHTML = `<td class="k">${e.drawer == null ? "—" : "BAY " + (e.drawer + 1)}</td><td class="w">${e.what}</td><td class="d">${e.detail || ""}</td><td class="d">${fmtUp(e.up)}</td>`;
+    tb.appendChild(tr);
+  }
+  $("#logTag").textContent = S.log.length + " events";
+}
+function fmtUp(s) { s = Math.max(0, Math.round(S.uptime - (s || 0))); return s < 60 ? s + "s ago" : s < 3600 ? Math.floor(s / 60) + "m ago" : Math.floor(s / 3600) + "h ago"; }
+
+// ── PIN gate ──────────────────────────────────────────────────────────────
+function showGate() { $("#gate").classList.add("show"); setTimeout(() => $("#pin").focus(), 50); }
+$("#pinGo").onclick = async () => {
+  const r = await api("/api/unlock", "POST", { pin: $("#pin").value });
+  if (r.ok) { $("#gate").classList.remove("show"); $("#pin").value = ""; $("#pinBad").textContent = ""; poll(true); }
+  else $("#pinBad").textContent = "PIN rejected";
+};
+$("#pin").onkeydown = e => { if (e.key === "Enter") $("#pinGo").click(); };
+
+// ── rail chips ────────────────────────────────────────────────────────────
+function renderRail() {
+  const link = $("#cLink"); link.className = "chip on"; $("#cLinkT").textContent = S.net || "LINK";
+  const lock = $("#cLock");
+  lock.className = "chip " + (S.bypass ? "err" : S.locked ? "" : "on");
+  $("#cLockT").textContent = S.bypass ? "BYPASSED" : S.locked ? "LOCKED" : "UNLOCKED " + S.left + "s";
+  sw.classList.toggle("on", !!S.demo_on); sw.setAttribute("aria-checked", !!S.demo_on);
+  $("#demoTag").textContent = S.demo ? (S.demo.stage + (S.demo.tag ? " · " + S.demo.tag : "")) : (S.demo_on ? "armed" : "off");
+  $("#timTag").textContent = "travel " + S.timing.TRAVEL_MS + " ms · detach " + S.timing.DETACH_AFTER_MS + " ms";
+}
+
+// ── poll loop ─────────────────────────────────────────────────────────────
+let pollT, offline = false;
+async function poll(now) {
+  clearTimeout(pollT);
+  try {
+    const r = await fetch("/api/state", { cache: "no-store" });
+    S = await r.json();
+    if (offline) { offline = false; toast("link restored"); }
+    if (!timDirty) fillTiming(S.timing);
+    renderRail(); renderBays(); renderCal(); renderLog();
+    if (S.locked && !S.bypass) showGate(); else $("#gate").classList.remove("show");
+  } catch (e) {
+    if (!offline) { offline = true; $("#cLink").className = "chip err"; $("#cLinkT").textContent = "NO LINK"; }
+  }
+  const busy = S && S.drawers.some(d => d.busy);
+  pollT = setTimeout(poll, busy ? 120 : 800);
+}
+poll(true);
+})();
+</script>
+</body></html>
