@@ -21,6 +21,14 @@ with LoRa sensors, GSM/SMS fallback, and solar-backed controls.
   backup. Same conventions as the dashboard (trilingual `L` dict, theme
   tokens, no build step). Docs in `home/README.md`.
   Branch: `claude/household-inventory-tracker-qje7gi`.
+- `fod/index.html` — **FOD Guard**, a single-file CCTV foreign-object detection gate
+  for a machine cell: per-job master image + drag-marked inspection zone, per-cycle
+  orientation verification (rotation/shift-searched NCC) and foreign-object diff
+  detection, HTTP relay trigger that locks the door only when all is clear, cycle log.
+  Central mode: per-job camera/relay URLs + CHECK ALL MACHINES let one networked PC
+  supervise many machines. Same conventions (trilingual `L` dict, theme tokens, no
+  build step). Docs in `fod/README.md`, hardware in `fod/BOM.md`.
+  Branch: `claude/foreign-object-detection-cctv-d3tjm7`.
 - `shopkeeper/` — vendored source of https://github.com/Piyushmishra29/shopkeeper
   (MIT), a motorised PIN-controlled tool crib: ESP32-S3 MicroPython firmware +
   browser UI, parametric Python CAD, bench tools. Meshes/renders omitted; see
