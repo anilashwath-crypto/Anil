@@ -40,6 +40,24 @@ Basic/Digest login is handled server-side. Open the URL it prints from any phone
 PC and set the app's camera snapshot URL to `/snapshot.jpg`. Port 8000 busy? Set
 `FOD_PORT=8010` in the environment.
 
+## One-command camera configuration
+
+`fod/camera_setup.py` applies the recommended camera settings over the camera's own
+HTTP API (CP Plus / Dahua-family) — no clicking through menus:
+
+```sh
+python3 fod/camera_setup.py <camera-ip> admin PASSWORD
+```
+
+Sets the clock to the computer's time, removes the OSD time/name overlays from the
+encoded image, forces colour mode (no IR auto-switch), 50 Hz anti-flicker, and best
+snapshot quality — each change verified by reading it back; spellings from different
+firmware generations are tried automatically and unsupported settings are reported,
+never fatal. Optional: `--ntp` (enable time sync; verify the timezone in the camera
+UI afterwards), `--static-ip` (pin the current address so the router can never move
+it), `--reboot-weekly` (Sunday 03:00), `--dry-run` (show what would be sent).
+**Re-capture each job's master afterwards** — the picture changes.
+
 ## Field manual
 
 `fod/GUIDE.html` is the full commissioning reference: how the detection works in depth,
