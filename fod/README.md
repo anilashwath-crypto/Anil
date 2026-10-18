@@ -37,8 +37,19 @@ It checks the camera (camera_doctor), serves the app to **every device on the
 network**, and serves the camera at `/snapshot.jpg` on the **same address** — same
 origin as the app, so CORS and mixed-content rules never apply, and the camera's
 Basic/Digest login is handled server-side. Open the URL it prints from any phone or
-PC and set the app's camera snapshot URL to `/snapshot.jpg`. Port 8000 busy? Set
+PC — **the app detects `/snapshot.jpg` and configures itself** (a hand-entered
+camera URL or chosen device is never overwritten). Port 8000 busy? Set
 `FOD_PORT=8010` in the environment.
+
+**Windows auto-start:** run once
+
+```bat
+fod\install_windows.bat <camera-ip> admin PASSWORD [port]
+```
+
+It writes `fod\start_fod.bat` (contains the camera password — keep the PC account
+protected) and a Task Scheduler entry "FOD Guard" that launches the server at every
+logon, then starts it immediately. Remove with `schtasks /Delete /F /TN "FOD Guard"`.
 
 ## One-command camera configuration
 
