@@ -91,7 +91,7 @@
 </head>
 <body>
 <header>
-  <h1>🛡️ FOD Guard <small><span data-i="subtitle">CCTV foreign-object &amp; orientation check</span> · v2026-10-18</small></h1>
+  <h1>🛡️ FOD Guard <small><span data-i="subtitle">CCTV foreign-object &amp; orientation check</span> · v2026-10-18b</small></h1>
   <select id="langSel" class="pill" aria-label="Language">
     <option value="en">EN</option><option value="kn">ಕನ್ನಡ</option><option value="hi">हिंदी</option>
   </select>
@@ -483,15 +483,24 @@ async function grabFrame(snapUrl){
 }
 
 /* ============================== image math ============================== */
-function toGray(canvas,rx,ry,rw,rh,ow,oh){
-  // draw ROI of canvas scaled into an offscreen ow×oh, return blurred Float32 gray
+function toChan(canvas,rx,ry,rw,rh,ow,oh){
+  // draw ROI of canvas scaled into an offscreen ow×oh; return blurred Float32
+  // channels: g (luma, for alignment + brightness diff) and cb/cr (chroma, so
+  // colour-only intruders — e.g. a green object as bright as the steel — diff too)
   const c=document.createElement("canvas");c.width=ow;c.height=oh;
   const cx=c.getContext("2d",{willReadFrequently:true});
   cx.drawImage(canvas,rx,ry,rw,rh,0,0,ow,oh);
-  const d=cx.getImageData(0,0,ow,oh).data,g=new Float32Array(ow*oh);
-  for(let i=0,p=0;i<g.length;i++,p+=4)g[i]=0.299*d[p]+0.587*d[p+1]+0.114*d[p+2];
-  return blur3(blur3(g,ow,oh),ow,oh);
+  const d=cx.getImageData(0,0,ow,oh).data;
+  const g=new Float32Array(ow*oh),cb=new Float32Array(ow*oh),cr=new Float32Array(ow*oh);
+  for(let i=0,p=0;i<g.length;i++,p+=4){
+    const R=d[p],G=d[p+1],B=d[p+2];
+    g[i]=0.299*R+0.587*G+0.114*B;
+    cb[i]=-0.169*R-0.331*G+0.5*B+128;
+    cr[i]=0.5*R-0.419*G-0.081*B+128;
+  }
+  return {g:blur3(blur3(g,ow,oh),ow,oh),cb:blur3(cb,ow,oh),cr:blur3(cr,ow,oh)};
 }
+function toGray(canvas,rx,ry,rw,rh,ow,oh){return toChan(canvas,rx,ry,rw,rh,ow,oh).g;}
 function blur3(g,w,h){
   const o=new Float32Array(g.length);
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
@@ -550,29 +559,38 @@ function findAlignment(M,C,w,h){
   }
   return best;
 }
-/* Diff master vs aligned current, return foreign-object blobs [{x,y,w,h,area}] in analysis coords */
+/* Diff master vs aligned current (M/C are toChan objects), return foreign-object
+   blobs [{x,y,w,h,area}] in analysis coords. A pixel differs when its normalised
+   brightness moves by more than diffThresh OR its chroma moves by more than
+   diffThresh/2 (after subtracting the mean chroma shift, so a camera
+   white-balance drift does not flag the whole zone). */
 function findBlobs(M,C,w,h,al,diffThresh,minAreaPx){
   const cx=w/2,cy=h/2,cos=Math.cos(al.th*Math.PI/180),sin=Math.sin(al.th*Math.PI/180);
   // normalise illumination on both sides
   const norm=g=>{let s=0,ss=0;for(let i=0;i<g.length;i++){s+=g[i];ss+=g[i]*g[i];}
     const m=s/g.length,sd=Math.max(Math.sqrt(Math.max(ss/g.length-m*m,0)),1e-3);
     const o=new Float32Array(g.length);for(let i=0;i<g.length;i++)o[i]=(g[i]-m)/sd*40+128;return o;};
-  const Mn=norm(M);
-  const A=new Float32Array(w*h).fill(-1);
-  let s=0,ss=0,n=0;
+  const Mn=norm(M.g);
+  const A=new Float32Array(w*h).fill(-1),Ab=new Float32Array(w*h),Ar=new Float32Array(w*h);
+  let s=0,ss=0,n=0,sb=0,sr=0;
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
     const xr=cx+(x-cx)*cos-(y-cy)*sin+al.dx, yr=cy+(x-cx)*sin+(y-cy)*cos+al.dy;
-    const v=bilinear(C,w,h,xr,yr);
+    const v=bilinear(C.g,w,h,xr,yr);
     if(v===null)continue;
-    A[y*w+x]=v;s+=v;ss+=v*v;n++;
+    const i=y*w+x;
+    A[i]=v;Ab[i]=bilinear(C.cb,w,h,xr,yr);Ar[i]=bilinear(C.cr,w,h,xr,yr);
+    s+=v;ss+=v*v;n++;sb+=Ab[i]-M.cb[i];sr+=Ar[i]-M.cr[i];
   }
   if(!n)return [];
   const am=s/n,asd=Math.max(Math.sqrt(Math.max(ss/n-am*am,0)),1e-3);
+  const wb=sb/n,wr=sr/n;                       // global white-balance shift
+  const chromaThresh=Math.max(10,diffThresh*0.5);
   const mask=new Uint8Array(w*h);
   for(let y=2;y<h-2;y++)for(let x=2;x<w-2;x++){
     const i=y*w+x;if(A[i]<0)continue;
     const av=(A[i]-am)/asd*40+128;
-    if(Math.abs(av-Mn[i])>diffThresh)mask[i]=1;
+    const dc=Math.hypot(Ab[i]-M.cb[i]-wb,Ar[i]-M.cr[i]-wr);
+    if(Math.abs(av-Mn[i])>diffThresh||dc>chromaThresh)mask[i]=1;
   }
   // connected components (4-neigh flood fill)
   const blobs=[],seen=new Uint8Array(w*h),stack=[];
@@ -610,8 +628,8 @@ async function masterGray(job){
   const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;
   c.getContext("2d").drawImage(img,0,0);
   const r=roiPx(job,c.width,c.height),d=anaDims(r.w,r.h);
-  const g=toGray(c,r.x,r.y,r.w,r.h,d.w,d.h);
-  masterCache[job.id]={g,w:d.w,h:d.h,fw:c.width,fh:c.height};
+  const ch=toChan(c,r.x,r.y,r.w,r.h,d.w,d.h);
+  masterCache[job.id]={g:ch.g,cb:ch.cb,cr:ch.cr,w:d.w,h:d.h,fw:c.width,fh:c.height};
   return masterCache[job.id];
 }
 
@@ -789,14 +807,14 @@ async function runCheck(){
     const M=await masterGray(job);
     // ROI in the live frame, scaled from master frame size in case resolutions differ
     const r=roiPx(job,f.w,f.h);
-    const C=toGray(f.canvas,r.x,r.y,r.w,r.h,M.w,M.h);
-    const al=findAlignment(M.g,C,M.w,M.h);
+    const C=toChan(f.canvas,r.x,r.y,r.w,r.h,M.w,M.h);
+    const al=findAlignment(M.g,C.g,M.w,M.h);
     const orientOk=al.score>=job.orientThresh&&Math.abs(al.th)<=6;
     const present=al.score>=job.orientThresh;
     let blobs=[];
     if(orientOk){
       const minAreaPx=Math.max(6,Math.round(M.w*M.h*job.minArea/100));
-      blobs=findBlobs(M.g,C,M.w,M.h,al,job.diffThresh,minAreaPx);
+      blobs=findBlobs(M,C,M.w,M.h,al,job.diffThresh,minAreaPx);
     }
     const ok=orientOk&&blobs.length===0;
     showResult(job,f,r,M,al,orientOk,present,blobs,ok);
@@ -984,7 +1002,7 @@ if(navigator.mediaDevices&&navigator.mediaDevices.enumerateDevices)listDevices()
 })();
 
 /* exposed for headless self-test */
-window.FOD={toGray,blur3,bilinear,nccAt,findAlignment,findBlobs,state:()=>S};
+window.FOD={toGray,toChan,blur3,bilinear,nccAt,findAlignment,findBlobs,state:()=>S};
 </script>
 </body>
 </html>
