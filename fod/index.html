@@ -91,7 +91,7 @@
 </head>
 <body>
 <header>
-  <h1>🛡️ FOD Guard <small><span data-i="subtitle">CCTV foreign-object &amp; orientation check</span> · v2026-10-18b</small></h1>
+  <h1>🛡️ FOD Guard <small><span data-i="subtitle">CCTV foreign-object &amp; orientation check</span> · v2026-10-18c</small></h1>
   <select id="langSel" class="pill" aria-label="Language">
     <option value="en">EN</option><option value="kn">ಕನ್ನಡ</option><option value="hi">हिंदी</option>
   </select>
@@ -213,6 +213,13 @@
     </div>
     <p class="note" data-i="ip_note">The snapshot URL must return a JPEG and allow cross-origin access (CORS). Most DVR/IP cameras expose one (e.g. /snapshot.jpg, /cgi-bin/snapshot.cgi). If blocked, serve this page from the same gateway or use a USB capture dongle on the CCTV's analogue/HDMI output.</p>
     <div class="row">
+      <label data-i="detail_label">Analysis detail</label>
+      <select id="detailSel" class="field grow">
+        <option value="std" data-i="detail_std">Standard — fast, for phones/tablets</option>
+        <option value="high" data-i="detail_high">High — 2× finer, for a PC (re-capture masters!)</option>
+      </select>
+    </div>
+    <div class="row">
       <button id="testCamBtn" class="ghost">🔍 <span data-i="test_cam">Test camera</span></button>
       <span class="note grow" id="testCamOut"></span>
     </div>
@@ -305,7 +312,10 @@ cam_diag_nofeed:"No frame — start the camera first (device mode) or fill the s
 cam_diag_cors:"The browser could not read the image (CORS, mixed content, or camera unreachable). Open the URL in a new browser tab: if a photo shows, run  python3 fod/snapshot_proxy.py  on THIS computer and use  http://localhost:8090/?u=<camera URL>  here; if no photo shows, fix the URL/network first",
 cam_diag_auth:"Camera needs a login — put it inside the proxy URL:  http://localhost:8090/?u=http://user:password@<camera-ip>/…",
 cam_diag_http:"Camera answered {s} — the snapshot path is wrong; check the camera manual (CP Plus/Dahua: /cgi-bin/snapshot.cgi, Hikvision: /ISAPI/Streaming/channels/101/picture)",
-cam_auto:"Camera connected automatically through this server (/snapshot.jpg) — ready to grab the master"},
+cam_auto:"Camera connected automatically through this server (/snapshot.jpg) — ready to grab the master",
+detail_label:"Analysis detail",
+detail_std:"Standard — fast, for phones/tablets",
+detail_high:"High — 2× finer, for a PC (re-capture masters!)"},
 kn:{subtitle:"CCTV ಪರಕೀಯ ವಸ್ತು & ದಿಕ್ಕು ಪರಿಶೀಲನೆ",monitor:"ಮಾನಿಟರ್",jobs:"ಜಾಬ್‌ಗಳು",settings:"ಸೆಟ್ಟಿಂಗ್ಸ್",log:"ಲಾಗ್",
 ready:"ಸಿದ್ಧ — ಜಾಬ್ ಆಯ್ಕೆಮಾಡಿ ಚೆಕ್ ನಡೆಸಿ",checking:"ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ…",clear:"ಎಲ್ಲವೂ ಸರಿ — ಬಾಗಿಲು ಲಾಕ್",
 fault:"ದೋಷ — ಸೈಕಲ್ ಪ್ರಾರಂಭಿಸಬೇಡಿ",start_cam:"ಕ್ಯಾಮೆರಾ ಪ್ರಾರಂಭಿಸಿ",stop_cam:"ಕ್ಯಾಮೆರಾ ನಿಲ್ಲಿಸಿ",back_live:"ಲೈವ್‌ಗೆ ಹಿಂತಿರುಗಿ",
@@ -340,7 +350,10 @@ cam_diag_nofeed:"ಫ್ರೇಮ್ ಇಲ್ಲ — ಮೊದಲು ಕ್ಯ�
 cam_diag_cors:"ಬ್ರೌಸರ್ ಚಿತ್ರ ಓದಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ (CORS, ಮಿಶ್ರ ವಿಷಯ, ಅಥವಾ ಕ್ಯಾಮೆರಾ ತಲುಪುತ್ತಿಲ್ಲ). URL ಅನ್ನು ಹೊಸ ಟ್ಯಾಬ್‌ನಲ್ಲಿ ತೆರೆಯಿರಿ: ಫೋಟೋ ಕಂಡರೆ ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ  python3 fod/snapshot_proxy.py  ಚಲಾಯಿಸಿ ಇಲ್ಲಿ  http://localhost:8090/?u=<ಕ್ಯಾಮೆರಾ URL>  ಬಳಸಿ; ಫೋಟೋ ಕಾಣದಿದ್ದರೆ ಮೊದಲು URL/ನೆಟ್‌ವರ್ಕ್ ಸರಿಪಡಿಸಿ",
 cam_diag_auth:"ಕ್ಯಾಮೆರಾಗೆ ಲಾಗಿನ್ ಬೇಕು — ಪ್ರಾಕ್ಸಿ URL ಒಳಗೆ ಸೇರಿಸಿ:  http://localhost:8090/?u=http://user:password@<ಕ್ಯಾಮೆರಾ-ip>/…",
 cam_diag_http:"ಕ್ಯಾಮೆರಾ {s} ಉತ್ತರಿಸಿದೆ — ಸ್ನಾಪ್‌ಶಾಟ್ ಪಥ ತಪ್ಪು; ಕ್ಯಾಮೆರಾ ಕೈಪಿಡಿ ನೋಡಿ (CP Plus/Dahua: /cgi-bin/snapshot.cgi, Hikvision: /ISAPI/Streaming/channels/101/picture)",
-cam_auto:"ಈ ಸರ್ವರ್ ಮೂಲಕ ಕ್ಯಾಮೆರಾ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸಂಪರ್ಕಗೊಂಡಿದೆ (/snapshot.jpg) — ಮಾಸ್ಟರ್ ಸೆರೆಹಿಡಿಯಲು ಸಿದ್ಧ"},
+cam_auto:"ಈ ಸರ್ವರ್ ಮೂಲಕ ಕ್ಯಾಮೆರಾ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸಂಪರ್ಕಗೊಂಡಿದೆ (/snapshot.jpg) — ಮಾಸ್ಟರ್ ಸೆರೆಹಿಡಿಯಲು ಸಿದ್ಧ",
+detail_label:"ವಿಶ್ಲೇಷಣೆಯ ವಿವರ",
+detail_std:"ಸಾಮಾನ್ಯ — ವೇಗ, ಫೋನ್/ಟ್ಯಾಬ್ಲೆಟ್‌ಗಾಗಿ",
+detail_high:"ಹೆಚ್ಚು — 2× ಸೂಕ್ಷ್ಮ, PC ಗಾಗಿ (ಮಾಸ್ಟರ್ ಮರು-ಸೆರೆಹಿಡಿಯಿರಿ!)"},
 hi:{subtitle:"CCTV बाहरी वस्तु व दिशा जाँच",monitor:"मॉनिटर",jobs:"जॉब",settings:"सेटिंग्स",log:"लॉग",
 ready:"तैयार — जॉब चुनें और साइकिल जाँच चलाएँ",checking:"जाँच हो रही है…",clear:"सब ठीक — दरवाज़ा लॉक",
 fault:"त्रुटि — साइकिल शुरू न करें",start_cam:"कैमरा शुरू करें",stop_cam:"कैमरा बंद करें",back_live:"लाइव पर लौटें",
@@ -375,7 +388,10 @@ cam_diag_nofeed:"फ्रेम नहीं — पहले कैमरा �
 cam_diag_cors:"ब्राउज़र छवि नहीं पढ़ सका (CORS, मिश्रित सामग्री, या कैमरा अनुपलब्ध)। URL को नए टैब में खोलें: फोटो दिखे तो इसी कंप्यूटर पर  python3 fod/snapshot_proxy.py  चलाएँ और यहाँ  http://localhost:8090/?u=<कैमरा URL>  डालें; फोटो न दिखे तो पहले URL/नेटवर्क ठीक करें",
 cam_diag_auth:"कैमरे को लॉगिन चाहिए — प्रॉक्सी URL के अंदर डालें:  http://localhost:8090/?u=http://user:password@<कैमरा-ip>/…",
 cam_diag_http:"कैमरे ने {s} जवाब दिया — स्नैपशॉट पथ गलत है; कैमरा मैनुअल देखें (CP Plus/Dahua: /cgi-bin/snapshot.cgi, Hikvision: /ISAPI/Streaming/channels/101/picture)",
-cam_auto:"कैमरा इस सर्वर के ज़रिए अपने आप जुड़ गया (/snapshot.jpg) — मास्टर कैप्चर के लिए तैयार"}
+cam_auto:"कैमरा इस सर्वर के ज़रिए अपने आप जुड़ गया (/snapshot.jpg) — मास्टर कैप्चर के लिए तैयार",
+detail_label:"विश्लेषण विवरण",
+detail_std:"सामान्य — तेज़, फोन/टैबलेट के लिए",
+detail_high:"उच्च — 2× सूक्ष्म, PC के लिए (मास्टर दोबारा कैप्चर करें!)"}
 };
 let lang = "en";
 const t = (k,v)=>{let s=(L[lang]&&L[lang][k])||L.en[k]||k;if(v)for(const p in v)s=s.replace("{"+p+"}",v[p]);return s;};
@@ -386,13 +402,15 @@ function applyLang(){
 
 /* ============================== state ============================== */
 const KEY="fodguard_v1";
-let S = {jobs:[],settings:{camMode:"device",deviceId:"",snapUrl:"",lockUrl:"",unlockUrl:"",relayMethod:"GET",lang:"en",theme:""},log:[]};
+let S = {jobs:[],settings:{camMode:"device",deviceId:"",snapUrl:"",lockUrl:"",unlockUrl:"",relayMethod:"GET",lang:"en",theme:"",detail:"std"},log:[]};
 try{const raw=localStorage.getItem(KEY);if(raw)S=Object.assign(S,JSON.parse(raw));}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){alert("Storage full — delete old jobs or clear history. ("+e.message+")");}}
 
 const $=id=>document.getElementById(id);
-const CAP_W=640;                 // capture resolution
-const ANA=144;                   // max analysis dimension inside ROI
+// capture width / max analysis dimension inside ROI; "high" doubles both,
+// halving the smallest detectable object and sharpening the orientation score
+const CAP_W=()=>S.settings.detail==="high"?1280:640;
+const ANA=()=>S.settings.detail==="high"?288:144;
 let stream=null, ipTimer=null, autoTimer=null, checking=false;
 let editingJobId=null, editorMaster=null, editorRoi=null, roiDrag=null;
 let lastFrame=null;              // {canvas} latest grabbed full frame
@@ -469,14 +487,14 @@ async function grabFrame(snapUrl){
     const src=await fetchSnapshot(url);
     const img=new Image();
     await new Promise((res,rej)=>{img.onload=res;img.onerror=()=>rej(new Error("load"));img.src=src;});
-    const h=Math.round(CAP_W*img.naturalHeight/img.naturalWidth)||480;
-    wk.width=CAP_W;wk.height=h;ctx.drawImage(img,0,0,CAP_W,h);
+    const W=CAP_W(),h=Math.round(W*img.naturalHeight/img.naturalWidth)||480;
+    wk.width=W;wk.height=h;ctx.drawImage(img,0,0,W,h);
     URL.revokeObjectURL(src);
   }else{
     const v=$("vid");
     if(!stream||!v.videoWidth)return null;
-    const h=Math.round(CAP_W*v.videoHeight/v.videoWidth);
-    wk.width=CAP_W;wk.height=h;ctx.drawImage(v,0,0,CAP_W,h);
+    const W=CAP_W(),h=Math.round(W*v.videoHeight/v.videoWidth);
+    wk.width=W;wk.height=h;ctx.drawImage(v,0,0,W,h);
   }
   lastFrame={canvas:wk,w:wk.width,h:wk.height};
   return lastFrame;
@@ -618,7 +636,7 @@ function roiPx(job,fw,fh){
   return {x:Math.round(r.x*fw),y:Math.round(r.y*fh),w:Math.max(8,Math.round(r.w*fw)),h:Math.max(8,Math.round(r.h*fh))};
 }
 function anaDims(rw,rh){
-  const sc=Math.min(ANA/rw,ANA/rh,1);
+  const A=ANA(),sc=Math.min(A/rw,A/rh,1);
   return {w:Math.max(24,Math.round(rw*sc)),h:Math.max(24,Math.round(rh*sc))};
 }
 async function masterGray(job){
@@ -907,6 +925,7 @@ function loadSettingsUI(){
   $("lockUrl").value=S.settings.lockUrl;
   $("unlockUrl").value=S.settings.unlockUrl;
   $("relayMethod").value=S.settings.relayMethod;
+  $("detailSel").value=S.settings.detail||"std";
   toggleCamRows();
 }
 function toggleCamRows(){
@@ -920,6 +939,7 @@ function saveSettingsFromUI(){
   S.settings.lockUrl=$("lockUrl").value.trim();
   S.settings.unlockUrl=$("unlockUrl").value.trim();
   S.settings.relayMethod=$("relayMethod").value;
+  S.settings.detail=$("detailSel").value;
   S.settings.deviceId=$("deviceSel").value||S.settings.deviceId;
   save();
 }
@@ -942,6 +962,7 @@ $("testCamBtn").onclick=async()=>{
   }
 };
 $("deviceSel").onchange=()=>{saveSettingsFromUI();if(stream)startCamera();};
+$("detailSel").onchange=()=>{saveSettingsFromUI();for(const k in masterCache)delete masterCache[k];};
 $("exportBtn").onclick=async()=>{
   const json=JSON.stringify(S);
   const name="fodguard-backup-"+new Date().toISOString().slice(0,10)+".json";
