@@ -41,6 +41,14 @@ PC — **the app detects `/snapshot.jpg` and configures itself** (a hand-entered
 camera URL or chosen device is never overwritten). Port 8000 busy? Set
 `FOD_PORT=8010` in the environment.
 
+**Camera IP unknown?** Start without one — `python3 fod/home_server.py - admin
+PASSWORD` — and press **📡 Scan network for cameras** in the app's Settings: the
+server sweeps the subnet, the app lists every web device (camera-looking ones
+flagged 📷), and one click on **Use** connects it through the server
+(`/snapshot.jpg?ip=<camera-ip>`) and runs the camera test. The same per-camera URLs
+go into each job's Central-mode field, so **one server proxies every machine's
+camera** (all using the same login).
+
 **Windows auto-start:** run once
 
 ```bat
