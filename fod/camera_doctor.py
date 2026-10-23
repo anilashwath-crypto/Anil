@@ -86,9 +86,63 @@ def local_subnet():
     return ip, [socket.inet_ntoa(struct.pack(">I", base + i)) for i in range(1, 255)]
 
 
-def scan():
-    me, hosts = local_subnet()
-    print(f"This computer is {me} — scanning {hosts[0]}–{hosts[-1]} for web devices (port 80)…")
+def local_ips():
+    """All IPv4 addresses of this computer (every connected network), loopback excluded."""
+    ips = set()
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        ips.add(s.getsockname()[0])
+    except OSError:
+        pass
+    finally:
+        s.close()
+    try:  # on Windows this lists every adapter (Wi-Fi + Ethernet + ...)
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            ips.add(info[4][0])
+    except OSError:
+        pass
+    return sorted(ip for ip in ips if not ip.startswith("127."))
+
+
+def subnet_hosts(ip):
+    base = struct.unpack(">I", socket.inet_aton(ip))[0] & 0xFFFFFF00
+    return [socket.inet_ntoa(struct.pack(">I", base + i)) for i in range(1, 255)]
+
+
+def local_subnets():
+    """One (my-ip, hosts) entry per distinct /24 this computer is connected to."""
+    out, seen = [], set()
+    for ip in local_ips():
+        base = ip.rsplit(".", 1)[0]
+        if base in seen:
+            continue
+        seen.add(base)
+        out.append((ip, subnet_hosts(ip)))
+    return out or [local_subnet()]
+
+
+def scan(net=None):
+    """Sweep for web devices. net='192.168.1' (or any address in it) limits the
+    sweep to that /24; default sweeps every network this computer is on."""
+    if net:
+        probe_ip = ".".join((net.split(".") + ["0", "0", "0"])[:3]) + ".1"
+        bases = [(f"(requested {net})", subnet_hosts(probe_ip))]
+    else:
+        bases = local_subnets()
+    found = []
+    for me, hosts in bases:
+        print(f"This computer is {me} — scanning {hosts[0]}–{hosts[-1]} for web devices (port 80)…")
+        found += scan_hosts(hosts)
+    if not found:
+        print("No web devices found. The camera is off, on another network, or Wi-Fi dropped it.")
+    else:
+        print(f"\n{len(found)} device(s) answered. Re-run with the camera's IP and login:\n"
+              f"  python3 fod/camera_doctor.py <ip> admin PASSWORD")
+    return found
+
+
+def scan_hosts(hosts):
     found, lock, todo = [], threading.Lock(), list(hosts)
 
     def worker():
@@ -116,11 +170,6 @@ def scan():
     threads = [threading.Thread(target=worker) for _ in range(48)]
     [t.start() for t in threads]
     [t.join() for t in threads]
-    if not found:
-        print("No web devices found. The camera is off, on another network, or Wi-Fi dropped it.")
-    else:
-        print(f"\n{len(found)} device(s) answered. Re-run with the camera's IP and login:\n"
-              f"  python3 fod/camera_doctor.py <ip> admin PASSWORD")
     return found
 
 

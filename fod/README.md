@@ -37,8 +37,47 @@ It checks the camera (camera_doctor), serves the app to **every device on the
 network**, and serves the camera at `/snapshot.jpg` on the **same address** — same
 origin as the app, so CORS and mixed-content rules never apply, and the camera's
 Basic/Digest login is handled server-side. Open the URL it prints from any phone or
-PC and set the app's camera snapshot URL to `/snapshot.jpg`. Port 8000 busy? Set
+PC — **the app detects `/snapshot.jpg` and configures itself** (a hand-entered
+camera URL or chosen device is never overwritten). Port 8000 busy? Set
 `FOD_PORT=8010` in the environment.
+
+**Camera IP unknown?** Start without one — `python3 fod/home_server.py - admin
+PASSWORD` — and press **📡 Scan network for cameras** in the app's Settings: the
+server sweeps **every network the server PC is connected to** (Wi-Fi + Ethernet),
+the app lists every web device (camera-looking ones flagged 📷), and one click on
+**Use** connects it through the server (`/snapshot.jpg?ip=<camera-ip>`) and runs
+the camera test. Cameras on another subnet the PC can route to? Type it in the box
+next to the button (e.g. `192.168.1`) and scan again. The same per-camera URLs
+go into each job's Central-mode field, so **one server proxies every machine's
+camera** (all using the same login).
+
+**Windows auto-start:** run once
+
+```bat
+fod\install_windows.bat <camera-ip> admin PASSWORD [port]
+```
+
+It writes `fod\start_fod.bat` (contains the camera password — keep the PC account
+protected) and a Task Scheduler entry "FOD Guard" that launches the server at every
+logon, then starts it immediately. Remove with `schtasks /Delete /F /TN "FOD Guard"`.
+
+## One-command camera configuration
+
+`fod/camera_setup.py` applies the recommended camera settings over the camera's own
+HTTP API (CP Plus / Dahua-family) — no clicking through menus:
+
+```sh
+python3 fod/camera_setup.py <camera-ip> admin PASSWORD
+```
+
+Sets the clock to the computer's time, removes the OSD time/name overlays from the
+encoded image, forces colour mode (no IR auto-switch), 50 Hz anti-flicker, and best
+snapshot quality — each change verified by reading it back; spellings from different
+firmware generations are tried automatically and unsupported settings are reported,
+never fatal. Optional: `--ntp` (enable time sync; verify the timezone in the camera
+UI afterwards), `--static-ip` (pin the current address so the router can never move
+it), `--reboot-weekly` (Sunday 03:00), `--dry-run` (show what would be sent).
+**Re-capture each job's master afterwards** — the picture changes.
 
 ## Field manual
 
