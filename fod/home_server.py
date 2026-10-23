@@ -108,7 +108,14 @@ def main():
             super().do_GET()
 
         def handle_scan(self):
-            found = cd.scan()  # prints progress to the server console too
+            qs = cd.urllib.parse.parse_qs(cd.urllib.parse.urlsplit(self.path).query)
+            net = (qs.get("net") or [None])[0]
+            if net:
+                probe = ".".join((net.split(".") + ["0", "0", "0"])[:3]) + ".0"
+                if not lan_addr(probe):
+                    self.send_error(400, "net must be a local-network IPv4 subnet, e.g. 192.168.1")
+                    return
+            found = cd.scan(net=net)  # prints progress to the server console too
             body = json.dumps([
                 {"ip": f_ip, "tag": tag, "camera": bool(mark)}
                 for f_ip, tag, mark in sorted(found)

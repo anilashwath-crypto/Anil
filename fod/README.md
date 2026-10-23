@@ -43,9 +43,11 @@ camera URL or chosen device is never overwritten). Port 8000 busy? Set
 
 **Camera IP unknown?** Start without one — `python3 fod/home_server.py - admin
 PASSWORD` — and press **📡 Scan network for cameras** in the app's Settings: the
-server sweeps the subnet, the app lists every web device (camera-looking ones
-flagged 📷), and one click on **Use** connects it through the server
-(`/snapshot.jpg?ip=<camera-ip>`) and runs the camera test. The same per-camera URLs
+server sweeps **every network the server PC is connected to** (Wi-Fi + Ethernet),
+the app lists every web device (camera-looking ones flagged 📷), and one click on
+**Use** connects it through the server (`/snapshot.jpg?ip=<camera-ip>`) and runs
+the camera test. Cameras on another subnet the PC can route to? Type it in the box
+next to the button (e.g. `192.168.1`) and scan again. The same per-camera URLs
 go into each job's Central-mode field, so **one server proxies every machine's
 camera** (all using the same login).
 

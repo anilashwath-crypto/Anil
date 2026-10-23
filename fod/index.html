@@ -91,7 +91,7 @@
 </head>
 <body>
 <header>
-  <h1>🛡️ FOD Guard <small><span data-i="subtitle">CCTV foreign-object &amp; orientation check</span> · v2026-10-23</small></h1>
+  <h1>🛡️ FOD Guard <small><span data-i="subtitle">CCTV foreign-object &amp; orientation check</span> · v2026-10-23b</small></h1>
   <select id="langSel" class="pill" aria-label="Language">
     <option value="en">EN</option><option value="kn">ಕನ್ನಡ</option><option value="hi">हिंदी</option>
   </select>
@@ -214,7 +214,9 @@
     <p class="note" data-i="ip_note">The snapshot URL must return a JPEG and allow cross-origin access (CORS). Most DVR/IP cameras expose one (e.g. /snapshot.jpg, /cgi-bin/snapshot.cgi). If blocked, serve this page from the same gateway or use a USB capture dongle on the CCTV's analogue/HDMI output.</p>
     <div class="row">
       <button id="scanBtn" class="ghost">📡 <span data-i="scan_btn">Scan network for cameras</span></button>
+      <input id="scanNet" class="field grow" placeholder="192.168.1">
     </div>
+    <p class="note" data-i="scan_net_note">Scans every network this server is connected to. Cameras on a different subnet? Type it (e.g. 192.168.1) and scan — the server machine must be able to reach that network.</p>
     <div id="scanOut"></div>
     <div class="row">
       <label data-i="detail_label">Analysis detail</label>
@@ -324,7 +326,8 @@ scan_btn:"Scan network for cameras",
 scan_busy:"Scanning the network (10–20 s)…",
 scan_none:"No web devices answered — check the camera is powered and on this network",
 scan_use:"Use",
-scan_err:"Scan unavailable — it works when this page is served by  python3 fod/home_server.py  on a computer in the camera\u2019s network"},
+scan_err:"Scan unavailable — it works when this page is served by  python3 fod/home_server.py  on a computer in the camera\u2019s network",
+scan_net_note:"Scans every network this server is connected to. Cameras on a different subnet? Type it (e.g. 192.168.1) and scan — the server machine must be able to reach that network."},
 kn:{subtitle:"CCTV ಪರಕೀಯ ವಸ್ತು & ದಿಕ್ಕು ಪರಿಶೀಲನೆ",monitor:"ಮಾನಿಟರ್",jobs:"ಜಾಬ್‌ಗಳು",settings:"ಸೆಟ್ಟಿಂಗ್ಸ್",log:"ಲಾಗ್",
 ready:"ಸಿದ್ಧ — ಜಾಬ್ ಆಯ್ಕೆಮಾಡಿ ಚೆಕ್ ನಡೆಸಿ",checking:"ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ…",clear:"ಎಲ್ಲವೂ ಸರಿ — ಬಾಗಿಲು ಲಾಕ್",
 fault:"ದೋಷ — ಸೈಕಲ್ ಪ್ರಾರಂಭಿಸಬೇಡಿ",start_cam:"ಕ್ಯಾಮೆರಾ ಪ್ರಾರಂಭಿಸಿ",stop_cam:"ಕ್ಯಾಮೆರಾ ನಿಲ್ಲಿಸಿ",back_live:"ಲೈವ್‌ಗೆ ಹಿಂತಿರುಗಿ",
@@ -367,7 +370,8 @@ scan_btn:"ಕ್ಯಾಮೆರಾಗಳಿಗಾಗಿ ನೆಟ್‌ವರ್
 scan_busy:"ನೆಟ್‌ವರ್ಕ್ ಸ್ಕ್ಯಾನ್ ಆಗುತ್ತಿದೆ (10–20 ಸೆ)…",
 scan_none:"ಯಾವುದೇ ಸಾಧನ ಉತ್ತರಿಸಲಿಲ್ಲ — ಕ್ಯಾಮೆರಾ ಆನ್ ಆಗಿದೆಯೇ ಮತ್ತು ಇದೇ ನೆಟ್‌ವರ್ಕ್‌ನಲ್ಲಿದೆಯೇ ಪರಿಶೀಲಿಸಿ",
 scan_use:"ಬಳಸಿ",
-scan_err:"ಸ್ಕ್ಯಾನ್ ಲಭ್ಯವಿಲ್ಲ — ಕ್ಯಾಮೆರಾ ನೆಟ್‌ವರ್ಕ್‌ನ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ  python3 fod/home_server.py  ಮೂಲಕ ಈ ಪುಟ ಸರ್ವ್ ಆದಾಗ ಮಾತ್ರ ಕೆಲಸ ಮಾಡುತ್ತದೆ"},
+scan_err:"ಸ್ಕ್ಯಾನ್ ಲಭ್ಯವಿಲ್ಲ — ಕ್ಯಾಮೆರಾ ನೆಟ್‌ವರ್ಕ್‌ನ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿ  python3 fod/home_server.py  ಮೂಲಕ ಈ ಪುಟ ಸರ್ವ್ ಆದಾಗ ಮಾತ್ರ ಕೆಲಸ ಮಾಡುತ್ತದೆ",
+scan_net_note:"ಸರ್ವರ್ ಸಂಪರ್ಕಗೊಂಡಿರುವ ಪ್ರತಿ ನೆಟ್‌ವರ್ಕ್ ಸ್ಕ್ಯಾನ್ ಆಗುತ್ತದೆ. ಕ್ಯಾಮೆರಾಗಳು ಬೇರೆ ಸಬ್‌ನೆಟ್‌ನಲ್ಲಿವೆಯೇ? ಅದನ್ನು ಟೈಪ್ ಮಾಡಿ (ಉದಾ. 192.168.1) ಸ್ಕ್ಯಾನ್ ಮಾಡಿ — ಸರ್ವರ್ ಯಂತ್ರ ಆ ನೆಟ್‌ವರ್ಕ್ ತಲುಪುವಂತಿರಬೇಕು."},
 hi:{subtitle:"CCTV बाहरी वस्तु व दिशा जाँच",monitor:"मॉनिटर",jobs:"जॉब",settings:"सेटिंग्स",log:"लॉग",
 ready:"तैयार — जॉब चुनें और साइकिल जाँच चलाएँ",checking:"जाँच हो रही है…",clear:"सब ठीक — दरवाज़ा लॉक",
 fault:"त्रुटि — साइकिल शुरू न करें",start_cam:"कैमरा शुरू करें",stop_cam:"कैमरा बंद करें",back_live:"लाइव पर लौटें",
@@ -410,7 +414,8 @@ scan_btn:"कैमरों के लिए नेटवर्क स्कै
 scan_busy:"नेटवर्क स्कैन हो रहा है (10–20 से)…",
 scan_none:"किसी डिवाइस ने जवाब नहीं दिया — देखें कि कैमरा चालू है और इसी नेटवर्क पर है",
 scan_use:"उपयोग करें",
-scan_err:"स्कैन उपलब्ध नहीं — यह तभी काम करता है जब यह पेज कैमरा नेटवर्क के कंप्यूटर पर  python3 fod/home_server.py  से सर्व हो"}
+scan_err:"स्कैन उपलब्ध नहीं — यह तभी काम करता है जब यह पेज कैमरा नेटवर्क के कंप्यूटर पर  python3 fod/home_server.py  से सर्व हो",
+scan_net_note:"सर्वर जिस-जिस नेटवर्क से जुड़ा है, सब स्कैन होते हैं। कैमरे किसी और सबनेट पर हैं? उसे टाइप करें (जैसे 192.168.1) और स्कैन करें — सर्वर मशीन उस नेटवर्क तक पहुँच सकनी चाहिए।"}
 };
 let lang = "en";
 const t = (k,v)=>{let s=(L[lang]&&L[lang][k])||L.en[k]||k;if(v)for(const p in v)s=s.replace("{"+p+"}",v[p]);return s;};
@@ -985,7 +990,8 @@ $("detailSel").onchange=()=>{saveSettingsFromUI();for(const k in masterCache)del
 $("scanBtn").onclick=async()=>{
   const out=$("scanOut");out.textContent="\u23f3 "+t("scan_busy");
   try{
-    const r=await fetch("/scan",{cache:"no-store"});
+    const net=$("scanNet").value.trim();
+    const r=await fetch("/scan"+(net?"?net="+encodeURIComponent(net):""),{cache:"no-store"});
     if(!r.ok)throw new Error("HTTP "+r.status);
     const list=await r.json();
     out.textContent="";
