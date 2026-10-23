@@ -29,6 +29,8 @@ The server must run on a machine on the same LAN as the printer (not the cloud s
 | `p1s_stop` | Cancel print (needs `confirm=True`) |
 | `p1s_set_light` | Chamber / work light |
 | `p1s_set_speed` | silent / standard / sport / ludicrous |
+| `p1s_set_auto_refill` | AMS filament backup on/off (auto-switch to a matching spool on runout) |
+| `p1s_check_refill_pairs` | Which AMS slots have a matching backup spool |
 | `p1s_set_temperature` | Nozzle ≤ 300 °C, bed ≤ 100 °C (P1S limits) |
 | `p1s_set_fan` | part / aux / chamber, 0–100 % |
 | `p1s_home` | G28 |

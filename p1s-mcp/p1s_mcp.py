@@ -302,6 +302,42 @@ def p1s_set_speed(profile: str) -> str:
     return f"speed {profile}"
 
 
+AUTO_SWITCH_BIT = 10  # home_flag bit reported for "AMS filament backup" (community-documented)
+
+
+@mcp.tool()
+def p1s_set_auto_refill(enabled: bool = True) -> dict:
+    """Turn AMS filament backup (auto-refill) on/off so a print continues on a second spool when the first runs out.
+
+    The backup spool only gets used if it matches the running one in material, brand AND colour (as
+    entered in the AMS slot settings). Returns the printer's home_flag before/after so the change can be verified.
+    """
+    p = printer()
+    before = p.refresh().get("home_flag")
+    p.publish({"print": {"command": "print_option", "option": 0, "auto_switch_filament": bool(enabled)}})
+    time.sleep(1.5)
+    after = p.refresh().get("home_flag")
+    bit = (after >> AUTO_SWITCH_BIT) & 1 if isinstance(after, int) else None
+    return {"requested": enabled, "home_flag_before": before, "home_flag_after": after,
+            "auto_switch_bit": bit,
+            "verified": None if bit is None else bool(bit) == bool(enabled),
+            "note": "If verified is false/None, set it on the printer: Settings > AMS > 'AMS filament backup'."}
+
+
+@mcp.tool()
+def p1s_check_refill_pairs() -> list[dict]:
+    """List AMS slots that have a matching backup spool (same type, colour, brand) - i.e. which refills can happen."""
+    ams = (printer().refresh().get("ams") or {}).get("ams", [])
+    groups: dict[tuple, list[str]] = {}
+    for u in ams:
+        for t in u.get("tray", []):
+            if t.get("tray_type"):
+                key = (t.get("tray_type"), (t.get("tray_color") or "").upper(), t.get("tray_sub_brands") or "")
+                groups.setdefault(key, []).append(f'unit{u.get("id")}/slot{int(t.get("id", 0)) + 1}')
+    return [{"type": k[0], "colour": k[1], "brand": k[2], "slots": v, "refill_ready": len(v) > 1}
+            for k, v in groups.items()]
+
+
 @mcp.tool()
 def p1s_set_temperature(nozzle_c: int | None = None, bed_c: int | None = None) -> str:
     """Set nozzle and/or bed target temperature (clamped to P1S limits: nozzle 300, bed 100). 0 = off."""
